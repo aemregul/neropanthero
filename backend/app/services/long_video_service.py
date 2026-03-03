@@ -26,7 +26,7 @@ class VideoSegment:
     status: str  # pending, generating, completed, failed
     video_url: Optional[str] = None
     reference_image_url: Optional[str] = None
-    model: Optional[str] = "veo"  # Varsayılan model Veo 3.1
+    model: Optional[str] = "kling"  # Varsayılan model Kling (daha güvenilir)
     error: Optional[str] = None
 
 
@@ -97,11 +97,11 @@ class LongVideoService:
                 if isinstance(desc, dict):
                     prompt_txt = desc.get("prompt", str(desc))
                     ref_img = desc.get("reference_image_url")
-                    model_val = desc.get("model", "veo")
+                    model_val = "kling"  # Uzun videolarda tutarlılık için her zaman Kling
                 else:
                     prompt_txt = str(desc)
                     ref_img = None
-                    model_val = "veo"
+                    model_val = "kling"
                     
                 dur = min(segment_duration, remaining_duration)
                 # API sadece 5 veya 10 kabul ediyor — en yakına snap
@@ -350,59 +350,59 @@ class LongVideoService:
         segment: VideoSegment,
         aspect_ratio: str
     ):
-        """Tek bir segment üret. Retry logic ile."""
+        """Tek bir segment üret — doğrudan fal_client ile. Retry logic ile."""
+        import fal_client
+        
+        # Kling endpoint mapping
+        KLING_ENDPOINTS = {
+            "t2v": "fal-ai/kling-video/v3/pro/text-to-video",
+            "i2v": "fal-ai/kling-video/v3/pro/image-to-video",
+        }
+        
         for attempt in range(self.MAX_RETRIES + 1):
             try:
                 segment.status = "generating"
+                has_image = bool(segment.reference_image_url)
+                mode = "i2v" if has_image else "t2v"
+                endpoint = KLING_ENDPOINTS[mode]
                 
-                # Sadece veo ve kling destekleniyor
-                model_to_use = segment.model or "veo"
-                if model_to_use not in ("veo", "kling"):
-                    model_to_use = "veo"  # Diğer modeller kaldırıldı
-                duration = int(segment.duration)
-                
-                
-                payload = {
+                arguments = {
                     "prompt": segment.prompt,
                     "duration": segment.duration,
                     "aspect_ratio": aspect_ratio,
-                    "model": model_to_use,
                 }
-                if segment.reference_image_url:
-                    payload["image_url"] = segment.reference_image_url
-                    print(f"   🖼️ Sahne {segment.order + 1} referans görselli (image-to-video)")
+                if has_image:
+                    arguments["image_url"] = segment.reference_image_url
                 
-                if model_to_use == "veo":
-                    print(f"   🎬 Sahne {segment.order + 1} Veo ile üretiliyor (deneme {attempt+1})...")
-                    from app.services.google_video_service import GoogleVideoService
-                    veo_svc = GoogleVideoService()
-                    result_dict = await veo_svc.generate_video(payload)
-                    
-                    from types import SimpleNamespace
-                    if result_dict.get("success"):
-                        result = SimpleNamespace(success=True, data={"video_url": result_dict.get("video_url")}, error=None)
-                    else:
-                        result = SimpleNamespace(success=False, data=None, error=result_dict.get("error"))
-                else:
-                    print(f"   🎬 Sahne {segment.order + 1} {model_to_use.upper()} ile üretiliyor (deneme {attempt+1})...")
-                    result = await fal.execute("generate_video", payload)
+                print(f"   🎬 Sahne {segment.order + 1} KLING ile üretiliyor (deneme {attempt+1}, endpoint: {endpoint})...")
+                print(f"   📝 Prompt: {segment.prompt[:80]}...")
                 
-                if result.success and result.data:
-                    segment.video_url = result.data.get("video_url")
-                    segment.status = "completed"
-                    print(f"   ✅ Sahne {segment.order + 1} tamamlandı (Model: {model_to_use})")
-                    return  # Başarılı, çık
-                else:
-                    error_msg = result.error or "Video üretilemedi"
-                    print(f"   ⚠️ Sahne {segment.order + 1} başarısız (deneme {attempt+1}): {error_msg}")
-                    
-                    # Veo başarısız olduysa Kling'e fallback
-                    if model_to_use == "veo" and attempt < self.MAX_RETRIES:
-                        print(f"   🔄 Kling'e geçiliyor...")
-                        segment.model = "kling"
-                    elif attempt >= self.MAX_RETRIES:
+                try:
+                    result = await asyncio.wait_for(
+                        fal_client.subscribe_async(
+                            endpoint,
+                            arguments=arguments,
+                            with_logs=True,
+                        ),
+                        timeout=300  # 5 dakika
+                    )
+                except asyncio.TimeoutError:
+                    print(f"   ⏱️ Sahne {segment.order + 1} 5dk timeout! (deneme {attempt+1})")
+                    if attempt >= self.MAX_RETRIES:
                         segment.status = "failed"
-                        segment.error = error_msg
+                        segment.error = "Video üretimi zaman aşımına uğradı (5dk)"
+                    continue
+                
+                if result and "video" in result:
+                    segment.video_url = result["video"]["url"]
+                    segment.status = "completed"
+                    print(f"   ✅ Sahne {segment.order + 1} tamamlandı! URL: {segment.video_url[:80]}...")
+                    return  # Başarılı
+                else:
+                    print(f"   ⚠️ Sahne {segment.order + 1} geçersiz yanıt (deneme {attempt+1}): {result}")
+                    if attempt >= self.MAX_RETRIES:
+                        segment.status = "failed"
+                        segment.error = f"Geçersiz API yanıtı"
                         
             except Exception as e:
                 print(f"   ❌ Sahne {segment.order + 1} hata (deneme {attempt+1}): {e}")
@@ -410,9 +410,7 @@ class LongVideoService:
                     segment.status = "failed"
                     segment.error = str(e)
                 else:
-                    # Retry ile Kling'e fallback
-                    segment.model = "kling"
-                    await asyncio.sleep(2)  # Kısa bekleme
+                    await asyncio.sleep(2)
     
     async def _stitch_segments(self, job: LongVideoJob) -> str:
         """

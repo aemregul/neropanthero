@@ -301,7 +301,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                     {/* Media content */}
                     <div className="max-w-[85vw] max-h-[75vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
                         {selectedAsset.type === "video" ? (
-                            <video src={selectedAsset.url} controls autoPlay className="max-w-full max-h-[75vh] rounded-lg" />
+                            <video src={selectedAsset.url} controls autoPlay muted playsInline preload="metadata" className="max-w-full max-h-[75vh] rounded-lg" />
                         ) : selectedAsset.type === "audio" ? (
                             <div className="flex flex-col items-center gap-4 p-8">
                                 <span className="text-6xl">🎵</span>
@@ -465,7 +465,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                                                         src={`${asset.url}#t=0.1`}
                                                         className="w-full h-full object-cover"
                                                         muted loop playsInline preload="metadata"
-                                                        onMouseOver={e => { const p = e.currentTarget.play(); if (p) p.catch(() => { }); }}
+                                                        onMouseOver={e => { e.currentTarget.play().catch(() => { }); }}
                                                         onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                                                     />
                                                 )}

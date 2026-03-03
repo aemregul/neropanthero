@@ -1,6 +1,6 @@
 # Pepper Root AI Agency — Proje Dokümantasyonu
 
-> **Son Güncelleme:** 3 Mart 2026
+> **Son Güncelleme:** 4 Mart 2026
 > **Repo:** [github.com/aemregul/PepperRootAiAgency](https://github.com/aemregul/PepperRootAiAgency)
 
 Bu dosya projenin tüm özelliklerini, mimarisini ve nasıl çalıştığını açıklar. Yeni bir AI oturumu veya ekip üyesi bu dosyayı okuyarak projeyi tamamen anlayabilir.
@@ -33,7 +33,7 @@ Pepper Root AI Agency, **agent-first** (ajantik) bir AI yaratıcı stüdyodur. K
 | **Primary LLM** | OpenAI GPT-4o |
 | **Vision** | GPT-4o Vision, Claude Sonnet 4 |
 | **Görsel AI** | fal.ai (Nano Banana, Flux.2, DALL-E vb.) |
-| **Video AI** | fal.ai (Kling 3.0, Sora 2), Google Veo 3.1 |
+| **Video AI** | fal.ai (Kling 3.0 Pro — varsayılan), Google Veo 3.1 (timeout korumalı) |
 | **Ses AI** | OpenAI Whisper/TTS, ElevenLabs, Mirelo SFX |
 | **Arama** | Pinecone (vektör), SerpAPI (web) |
 | **Auth** | Google OAuth 2.0, JWT |
@@ -101,7 +101,7 @@ Bu guard'lar `orchestrator.py`'de `_process_tool_calls_for_stream` içinde, tool
 | Araç | Ne Yapar | Nasıl Çalışır |
 |---|---|---|
 | `generate_video` | Kısa video üretir (≤10s) | Text-to-video veya image-to-video. 5 model: Kling 3.0, Sora 2, Seedance 1.5, Hailuo 02, Kling 2.5 Turbo |
-| `generate_long_video` | Uzun video üretir (15-180s) | Sahne planı oluşturur → her sahneyi paralel üretir → FFmpeg ile crossfade birleştirir. Kullanıcıdan onay ister |
+| `generate_long_video` | Uzun video üretir (15-180s) | Sahne planı oluşturur → kullanıcıdan onay ister → her sahneyi Kling ile doğrudan fal_client.subscribe_async çağırarak üretir → FFmpeg ile crossfade birleştirir. 5dk timeout + retry logic |
 | `edit_video` | Videoyu görsel olarak düzenler | AI ile nesne silme, stil değiştirme |
 | `advanced_edit_video` | **[Phase 23]** FFmpeg video post-production | 10 operasyon: trim (kırp), speed (0.25x–4x), fade-in/out, text overlay (7 pozisyon), reverse (boomerang), resize (aspect ratio), concat (birleştir), loop (tekrarla), filter (9 filtre: grayscale, sepia, vintage, blur vb.), extract_frame (kare çıkar) |
 
@@ -262,10 +262,16 @@ Tüm modeller `fal_models.py`'de tanımlı, `fal_plugin_v2.py` ile çağrılır.
 # PostgreSQL container başlat
 docker start pepperroot-db
 
-# Backend çalıştır
+# Backend çalıştır (production — uzun video üretimi sırasında restart olmaz)
+cd /Users/emre/PepperRootAiAgency/backend
+source venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Backend çalıştır (development — dosya değişikliğinde auto-reload)
 cd /Users/emre/PepperRootAiAgency/backend
 source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# ⚠️ --reload modunda arka plan video task'ları dosya değişikliğinde iptal olur!
 
 # Frontend çalıştır
 cd /Users/emre/PepperRootAiAgency/frontend
@@ -307,6 +313,7 @@ npm run dev
 | **28** | **3 Mart** | **Agent Intelligence Upgrade** — Hafıza/tercih/episodic memory entegrasyonu, stream auth fix, unified context builder (`_build_enriched_context`), entity list & plugin context enjeksiyonu, auto-summary stream desteği |
 | **29** | **3 Mart** | **Security & Deploy Readiness** — Tüm endpoint'lere auth + ownership validation, CORS/FRONTEND_URL/BACKEND_URL env variable'lara taşındı, SECRET_KEY güvenlik uyarısı, 3 kullanılmayan servis silindi, `_process_chat` user izolasyonu |
 | **30** | **3 Mart** | **Smart Agent Features** — 👍/👎 Geri bildirim sistemi (episodic memory + prompt learning), benzer başarılı prompt referansları, model başarı istatistikleri, 10 prompt template, frontend feedback UI, tüm API çağrılarına auth header |
+| **31** | **4 Mart** | **Long Video Production Fix & Stability** — Aşağıdaki başlıkta detaylandırılmıştır |
 
 ---
 
@@ -316,7 +323,7 @@ npm run dev
 |---|---|
 | Agent Araç Sayısı | 36 |
 | AI Model Sayısı | 31 (admin toggle ile yönetilebilir) |
-| Toplam Faz | 30 (tümü tamamlandı) |
+| Toplam Faz | 31 (tümü tamamlandı) |
 | Backend Satır | ~15.000+ |
 | Frontend Satır | ~5.000+ |
 | Python | 3.14 |
@@ -330,9 +337,10 @@ npm run dev
 - [ ] Canlı ortam testleri
 - [ ] Redis production kurulumu
 - [ ] Rate limiting production ayarları
-- [ ] Sohbet içi geri bildirim mekanizması (👍/👎)
+- [x] ~~Sohbet içi geri bildirim mekanizması (👍/👎)~~ ✅ Phase 30
 - [ ] Model kullanım geçmişi tracking
 - [ ] System prompt sadeleştirme (guard'lara güvenme)
+- [ ] Uzun video paralel üretim (karakter yoksa)
 
 ---
 
@@ -350,3 +358,40 @@ npm run dev
 | 6 | Core memory | Projeler arası uzun vadeli hafıza |
 | 7 | Entity listesi | Kullanıcının TÜM entity'leri (@tag ile eşleştirme) |
 | 8 | Plugin listesi | Projede yüklü eklentilerin stil bilgisi |
+
+---
+
+## 🎬 Phase 31 — Long Video Production Fix & Stability (4 Mart 2026)
+
+### Sorun
+Uzun video üretimi (30s-3dk) çalışmıyordu:
+- `long_video_service` → `fal_plugin_v2.execute()` wrapper üzerinden fal.ai'ye gidiyordu
+- Wrapper'daki smart router + model check + iç `subscribe_async` katmanları event loop'ta bloklanıyordu
+- Veo API timeout mekanizması yoktu → 45+ dakika askıda kalıyordu
+- `--reload` modu dosya değişikliğinde backend'i restart ediyordu → arka plan video task'ları ölüyordu
+
+### Çözüm
+| Değişiklik | Dosya | Detay |
+|---|---|---|
+| **Doğrudan fal_client çağrısı** | `long_video_service.py` | `fal_plugin_v2` wrapper yerine `fal_client.subscribe_async` doğrudan çağrılıyor |
+| **Varsayılan model: Kling** | `long_video_service.py` | Tüm segment'ler Kling ile üretiliyor (güvenilir, ~130s/segment) |
+| **5dk API timeout** | `long_video_service.py`, `fal_plugin_v2.py` | Hem Veo hem fal.ai çağrılarına `asyncio.wait_for(timeout=300)` |
+| **Progress kartı genişletildi** | `orchestrator.py` | 11 adım×5s→20 adım×10s (200s kapsama, Kling süresini karşılıyor) |
+| **Backend --reload kaldırıldı** | Çalıştırma komutu | Production modunda `--reload` yok → arka plan task'ları korunuyor |
+| **Lightbox muted autoPlay** | `ChatPanel.tsx`, `AssetsPanel.tsx` | Tarayıcı autoPlay politikası için `muted` eklendi |
+| **Onay akışı iyileştirildi** | `orchestrator.py` | Uzun video planı text-only, onay keyword'leri tanımlandı, geri dönüş engellendi |
+
+### Uzun Video Akışı
+```
+Kullanıcı: "30 sn okyanus videosu"
+→ Agent sahne planı gösterir (text only, tool call yok)
+→ Kullanıcı: "onaylıyorum" / "evet" / "tamam"
+→ generate_long_video tool call
+→ long_video_service.create_and_process()
+  → Segment'lere böl (3×10s)
+  → Her segment için fal_client.subscribe_async (Kling, ~130s)
+  → Sıralı üretim (karakter tutarlılığı için zincirleme i2v)
+  → FFmpeg crossfade ile birleştir
+  → fal.ai storage'a yükle
+→ Sonuç video_url döner
+```

@@ -81,10 +81,12 @@ Otonom düşünen, problem çözen bir agent'sın. Başarısız olursan alternat
     12. **(VİDEO ANALİZİ):** `analyze_video` aracını sorun bildirimi, referans video, kalite kontrolü için kullan.
     13. **(UZUN VİDEO — KRİTİK):** Kullanıcı >10s video istediğinde:
    ⛔ ÖNCE PLAN GÖSTER, SONRA ONAY AL, SONRA `generate_long_video` ÇAĞIR!
-   - ADIM 1: Sahne planını oluştur ve kullanıcıya göster
+   - ADIM 1: Sahne planını SADECE TEXT OLARAK göster. ASLA plan gösterirken `generate_image` veya başka tool çağırma! Planla birlikte görsel üretme!
    - ADIM 2: Kullanıcıdan AÇIK ONAY al
    - ADIM 3: ONAY GELDİKTEN SONRA `generate_long_video` çağır
    ⛔ ONAYSIZ çağırma! ÖNEMLİ: Sonuç TEK BİR BİRLEŞTİRİLMİŞ VIDEO olmalı, ayrı ayrı parçalar değil!
+   ⛔ PLAN GÖSTERİRKEN ASLA TOOL ÇAĞIRMA! Sadece metin yanıtı ver!
+   ✅ ONAY TANIMLARI: Kullanıcı "onaylıyorum", "evet", "tamam", "başla", "yap", "ok", "onay" gibi bir şey dediğinde → bu bir ONAY'dır. Hemen `generate_long_video` çağır! "Yanlışlıkla onay verdin" ASLA deme!
     14. **(KLİP REFERANS ANALİZİ):** Kullanıcı bir video URL'si verip "buna benzer yap" derse → önce `analyze_video` ile analiz et, sonra plan göster.
     15. **(MÜZİK ENTEGRASYONu):** Uzun video ürettikten sonra kullanıcıya sor: "Videoya uygun bir müzik üretip ekleyeyim mi?"
 
@@ -880,6 +882,28 @@ Sen akıllı bir asistansın. Conversation history'yi HER ZAMAN kontrol et ve ba
         8. Plugin listesi (projede yüklü eklentiler)
         """
         extra_context = ""
+        
+        # 0. Kullanıcı adı — agent kullanıcıyı ismiyle tanısın
+        try:
+            from app.models.models import User as UserModel
+            user_result = await db.execute(
+                select(UserModel).where(UserModel.id == user_id)
+            )
+            current_user = user_result.scalar_one_or_none()
+            if current_user and current_user.full_name:
+                from datetime import datetime
+                now = datetime.now()
+                extra_context += f"\n\n--- 👤 KULLANICI ---\n"
+                extra_context += f"Kullanıcının adı: {current_user.full_name}\n"
+                extra_context += f"Email: {current_user.email}\n"
+                extra_context += f"📅 Bugünün tarihi: {now.strftime('%d %B %Y, %A')} (saat {now.strftime('%H:%M')})\n"
+                extra_context += f"ÖNEMLİ DAVRANIŞ KURALI: Kullanıcıya ismiyle hitap et, samimi ol. "
+                extra_context += f"Ama 'seni tanıyor musun' gibi sorularda DÜRÜST ol — "
+                extra_context += f"ismini ve hesabını biliyorsun ama kişisel tercihlerini/tarzını ancak birlikte çalıştıkça öğreneceksin. "
+                extra_context += f"Eğer aşağıda episodic memory veya user preferences varsa O BİLGİLERİ de kullan — "
+                extra_context += f"o zaman gerçekten tanıyorsun demektir."
+        except Exception as e:
+            print(f"⚠️ Kullanıcı adı hatası: {e}")
         
         # 1. @tag çözümleme (mevcut _build_entity_context)
         entity_context = await self._build_entity_context(db, session_id, user_message)
@@ -2006,12 +2030,58 @@ Konuşma:
             # Üretim — Veo: Google SDK, diğerleri: fal.ai
             print(f"🚀 [BG] Video üretiliyor ({model}): {prompt[:50]}...")
             await progress_service.send_progress(session_id, "video", 0.10, "Üretim başlatıldı")
-            if model == "veo":
-                from app.services.google_video_service import GoogleVideoService
-                veo_svc = GoogleVideoService()
-                result = await veo_svc.generate_video(video_payload)
-            else:
-                result = await self.fal_plugin._generate_video(video_payload)
+            
+            # Simüle edilmiş smooth progress (10% → 65% arası 5sn arayla)
+            import asyncio
+            progress_done = asyncio.Event()
+            
+            async def _smooth_progress():
+                # ~200 saniye kapsayacak şekilde 10sn arayla 20 adım
+                statuses = [
+                    (0.13, "🎬 Model hazırlanıyor..."),
+                    (0.16, "🎨 Görsel analiz ediliyor..."),
+                    (0.19, "🧠 Sahne planlanıyor..."),
+                    (0.22, "🎥 Render başlatılıyor..."),
+                    (0.25, "🎞️ Kare 1 oluşturuluyor..."),
+                    (0.28, "✨ Animasyon işleniyor..."),
+                    (0.31, "🎬 Hareket hesaplanıyor..."),
+                    (0.34, "🔄 Kare dizisi render..."),
+                    (0.37, "🎨 Detaylar ekleniyor..."),
+                    (0.40, "📹 Işık ve gölge..."),
+                    (0.43, "🎥 Fizik simülasyonu..."),
+                    (0.46, "✨ Doku işleme..."),
+                    (0.49, "🎬 Sahne derleniyor..."),
+                    (0.52, "🔄 Kalite kontrol..."),
+                    (0.55, "🎨 Renk düzeltme..."),
+                    (0.58, "📹 Son kareler..."),
+                    (0.61, "🎞️ Video kodlama..."),
+                    (0.64, "✨ Optimizasyon..."),
+                    (0.67, "📹 Neredeyse hazır..."),
+                    (0.68, "⏳ Son dokunuşlar..."),
+                ]
+                for pct, msg in statuses:
+                    if progress_done.is_set():
+                        return
+                    await asyncio.sleep(10)
+                    if progress_done.is_set():
+                        return
+                    try:
+                        await progress_service.send_progress(session_id, "video", pct, msg)
+                    except Exception:
+                        pass
+            
+            progress_task = asyncio.create_task(_smooth_progress())
+            
+            try:
+                if model == "veo":
+                    from app.services.google_video_service import GoogleVideoService
+                    veo_svc = GoogleVideoService()
+                    result = await veo_svc.generate_video(video_payload)
+                else:
+                    result = await self.fal_plugin._generate_video(video_payload)
+            finally:
+                progress_done.set()
+                progress_task.cancel()
             
             await progress_service.send_progress(session_id, "video", 0.70, "Video hazırlanıyor")
                 
@@ -4497,7 +4567,10 @@ Konuşma:
         DuckDuckGo ile metin araması yapar.
         """
         try:
-            from duckduckgo_search import DDGS
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS
             
             query = params.get("query")
             num_results = params.get("num_results", 5)
@@ -4536,7 +4609,10 @@ Konuşma:
         DuckDuckGo ile video arar.
         """
         try:
-            from duckduckgo_search import DDGS
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS
             
             query = params.get("query")
             num_results = params.get("num_results", 5)

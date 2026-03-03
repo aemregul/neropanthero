@@ -723,11 +723,23 @@ class FalPluginV2(PluginBase):
             # Bazı modeller (Minimax) image_url kabul etmeyebilir veya farklı isimlendirmiş olabilir, 
             # ancak standart fal.ai wrapperları genelde image_url standardını destekliyor.
             
-            result = await fal_client.subscribe_async(
-                selected_endpoint,
-                arguments=arguments,
-                with_logs=True,
-            )
+            logger.info(f"⏳ fal.ai video üretim başlatılıyor: {selected_endpoint}")
+            
+            import asyncio as _asyncio
+            try:
+                result = await _asyncio.wait_for(
+                    fal_client.subscribe_async(
+                        selected_endpoint,
+                        arguments=arguments,
+                        with_logs=True,
+                    ),
+                    timeout=300  # 5 dakika timeout
+                )
+            except _asyncio.TimeoutError:
+                logger.error(f"⏱️ fal.ai video 5dk timeout! ({selected_endpoint})")
+                return {"success": False, "error": f"Video üretimi zaman aşımına uğradı (5dk). Model: {model_family}"}
+            
+            logger.info(f"✅ fal.ai video yanıt alındı: {selected_endpoint}")
             
             if result and "video" in result:
                 response = {

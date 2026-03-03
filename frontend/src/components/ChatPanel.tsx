@@ -989,12 +989,13 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             if (currentFiles.length > 0) {
                 // 📊 Dosyalı isteklerde progress kartı simülasyonu
                 // with-files endpoint SSE kullanmadığı için yapay progress göster
-                setActiveGenerations([{ type: 'image', prompt: currentInput.slice(0, 80) }]);
+                // Video olmayan isteklerde progress kartı gösterme
+                // setActiveGenerations([{ type: 'image', prompt: currentInput.slice(0, 80) }]);
 
                 const response = await sendMessage(sessionId, currentInput, currentFiles, sessionId);
 
                 // Progress kartını kapat
-                setActiveGenerations([]);
+                // setActiveGenerations([]);
 
                 const responseContent = typeof response.response === 'string'
                     ? response.response
@@ -1111,7 +1112,11 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setLoadingStatus(status);
                     },
                     onGenerationStart: (generations) => {
-                        setActiveGenerations(generations);
+                        // Sadece video üretimleri için progress kartı göster
+                        const videoGens = generations.filter((g: { type: string }) => g.type === 'video' || g.type === 'long_video');
+                        if (videoGens.length > 0) {
+                            setActiveGenerations(videoGens);
+                        }
                     },
                     onGenerationComplete: () => {
                         // Dismiss image progress cards (synchronous tools)
@@ -1396,20 +1401,29 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex gap-3 max-w-[85%]">
+                                <div className="flex gap-3 max-w-[85%] group/feedback">
                                     <span className="text-xl shrink-0 mt-1">🫑</span>
                                     <div className="flex-1 flex flex-col gap-2">
-                                        {/* Text bubble */}
-                                        {msg.content && (
-                                            <div className="message-bubble message-ai">
-                                                <div className="text-sm lg:text-[15px] leading-relaxed whitespace-pre-wrap">
-                                                    {renderContent(msg.content, setLightboxImage)}
+                                        {/* Text bubble — strip inline images if image_url exists */}
+                                        {(() => {
+                                            let displayContent = msg.content || '';
+                                            if (msg.image_url) {
+                                                // Markdown image'ları kaldır: ![alt](url)
+                                                displayContent = displayContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
+                                                // [ÜRETİLEN GÖRSELLER: url] tag'lerini kaldır
+                                                displayContent = displayContent.replace(/\n?\n?\[(?:ÜRETİLEN (?:GÖRSELLER|VİDEOLAR)|Bu mesajda üretilen (?:görseller|videolar)):\s*[^\]]+\]/gi, '').trim();
+                                            }
+                                            return displayContent ? (
+                                                <div className="message-bubble message-ai">
+                                                    <div className="text-sm lg:text-[15px] leading-relaxed whitespace-pre-wrap">
+                                                        {renderContent(displayContent, setLightboxImage)}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            ) : null;
+                                        })()}
 
                                         {/* Media — outside bubble */}
-                                        {msg.image_url && !msg.content?.includes(msg.image_url) && (
+                                        {msg.image_url && (
                                             <img
                                                 src={msg.image_url}
                                                 alt="Üretilen görsel"
@@ -1459,7 +1473,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
 
                                         {/* 👍/👎 Feedback buttons */}
                                         {msg.id && (
-                                            <div className="flex items-center gap-1 mt-1 pl-1 group/feedback">
+                                            <div className="flex items-center gap-1 mt-1 pl-1">
                                                 {feedbackState[msg.id] !== 'down' && (
                                                     <button
                                                         onClick={async () => {
@@ -1467,8 +1481,8 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                                             try { await sendFeedback(msg.id, 1); } catch (e) { console.error(e); }
                                                         }}
                                                         className={`p-1 rounded-md transition-all ${feedbackState[msg.id] === 'up'
-                                                                ? 'text-green-500 bg-green-500/10'
-                                                                : 'text-white/30 hover:text-green-400 hover:bg-green-500/10 opacity-0 group-hover/feedback:opacity-100'
+                                                            ? 'text-green-500 bg-green-500/10'
+                                                            : 'text-white/30 hover:text-green-400 hover:bg-green-500/10 opacity-0 group-hover/feedback:opacity-100'
                                                             }`}
                                                         title="Beğen"
                                                         disabled={feedbackState[msg.id] === 'up'}
@@ -1483,8 +1497,8 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                                             try { await sendFeedback(msg.id, -1, 'other'); } catch (e) { console.error(e); }
                                                         }}
                                                         className={`p-1 rounded-md transition-all ${feedbackState[msg.id] === 'down'
-                                                                ? 'text-red-400 bg-red-500/10'
-                                                                : 'text-white/30 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover/feedback:opacity-100'
+                                                            ? 'text-red-400 bg-red-500/10'
+                                                            : 'text-white/30 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover/feedback:opacity-100'
                                                             }`}
                                                         title="Beğenme"
                                                         disabled={feedbackState[msg.id] === 'down'}
@@ -1889,7 +1903,9 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         src={lightboxVideo}
                         controls
                         autoPlay
+                        muted
                         playsInline
+                        preload="metadata"
                         className="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                         style={{ animation: "fadeIn 0.2s ease-out" }}
