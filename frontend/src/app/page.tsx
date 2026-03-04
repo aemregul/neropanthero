@@ -102,7 +102,7 @@ const demoSlides = [
     },
     {
         title: "Video Oluştur",
-        description: "Kling 2.5 Turbo Pro ile görsellerinizi profesyonel videolara dönüştürün. Tek tıkla animasyon.",
+        description: "Kling 3.0 Pro, Google Veo 3.1 veya Grok Video ile görsellerinizi profesyonel videolara dönüştürün. Tek tıkla sinematik animasyon.",
         icon: Video,
         color: "purple",
         example: "Bu görseli 5 saniyelik bir videoya çevir"
@@ -575,36 +575,36 @@ export default function LandingPage() {
                         <FeatureCard
                             icon={Image}
                             title="Görsel Üretimi"
-                            description="Nano Banana Pro ile yüksek kaliteli, tutarlı görseller. @karakter etiketiyle her zaman aynı yüz."
+                            description="Nano Banana Pro, Flux, ve Grok Imagine ile yüksek kaliteli, tutarlı görseller. @karakter etiketiyle her zaman aynı yüz."
                             color="emerald"
                             delay={0}
                         />
                         <FeatureCard
                             icon={Video}
-                            title="Video Oluşturma"
-                            description="Kling 2.5 Turbo Pro ile görsellerinizi canlı videolara dönüştürün. Tek tıkla animasyon."
+                            title="Sinematik Videolar"
+                            description="Kling 3.0 Pro, Google Veo 3.1 ve Hailuo ile görsellerinizi destansı videolara dönüştürün. Tek tıkla kusursuz akış."
                             color="cyan"
                             delay={100}
                         />
                         <FeatureCard
-                            icon={Wand2}
-                            title="Akıllı Düzenleme"
-                            description="Face Swap, upscale, arka plan kaldırma. AI kalite kontrolü ile otomatik düzeltme."
-                            color="purple"
+                            icon={Globe}
+                            title="Otonom Ajans (Swarm)"
+                            description="Siz sadece hedefinizi söyleyin ('Nike yaz kampanyası'). Copywriter Agent metni yazar, AI görselleri planlar ve sunar."
+                            color="orange"
                             delay={200}
                         />
                         <FeatureCard
-                            icon={Globe}
-                            title="Web Araştırması"
-                            description="İnternetten referans görseller bulun. Marka logoları ve stiller otomatik algılanır."
-                            color="orange"
+                            icon={Wand2}
+                            title="Self-Reflection (Otokontrol)"
+                            description="Görsel içinde hatalı metin mi var? Asistan kendi kendine okur, hatayı fark eder ve düzeltip size sunar."
+                            color="purple"
                             delay={300}
                         />
                         <FeatureCard
-                            icon={Zap}
-                            title="Redis Cache"
-                            description="~100x daha hızlı yanıtlar. Akıllı önbellekleme ile tekrar eden istekler anında."
-                            color="yellow"
+                            icon={Shield}
+                            title="Marka Kimliği (Brand Book)"
+                            description="Markanızın renklerini, yasaklı kelimelerini ve estetik zorunluluklarını sisteme öğretin, sınırların dışına asla çıkılmaz."
+                            color="pink"
                             delay={400}
                         />
                         <FeatureCard
