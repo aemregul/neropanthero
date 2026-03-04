@@ -1268,7 +1268,7 @@ Sen akıllı bir asistansın. Conversation history'yi HER ZAMAN kontrol et ve ba
             
         elif tool_name == "manage_core_memory":
             try:
-                from app.services.conversation_memory_service import conversation_memory
+                from app.services.preferences_service import preferences_service
                 
                 user_id = await get_user_id_from_session(db, session_id)
                 if not user_id:
@@ -1278,17 +1278,20 @@ Sen akıllı bir asistansın. Conversation history'yi HER ZAMAN kontrol et ve ba
                 category = tool_input.get("fact_category", "general")
                 fact = tool_input.get("fact_description", "")
                 
+                # Yeni JSONB persistence katmanını kullan
+                await preferences_service.learn_preference(
+                    db=db,
+                    user_id=user_id,
+                    action=action,
+                    category=category,
+                    fact=fact
+                )
+                
                 if action == "add":
-                    await conversation_memory.save_core_memory(user_id, category, fact)
                     msg = f"Kullanıcı tercihi hafızaya eklendi: {fact}"
                 elif action == "delete":
-                    deleted = await conversation_memory.delete_core_memory(user_id, fact)
-                    if deleted:
-                        msg = f"Kayıt başarıyla hafızadan silindi: {fact}"
-                    else:
-                        msg = f"Hafızada silinecek böyle bir bilgi bulunamadı: {fact}"
+                    msg = f"Kayıt başarıyla hafızadan silindi veya silinme denendi: {fact}"
                 elif action == "clear":
-                    await conversation_memory.clear_core_memories(user_id)
                     msg = "Tüm 'Core Memory' (Kişisel Bilgiler) sıfırlandı."
                 else:
                     msg = f"Bilinmeyen işlem türü (action): {action}"
@@ -1692,6 +1695,17 @@ Konuşma:
                                 physical_attributes[key] = attrs[key]
             
             # Entity açıklamasını ve fiziksel özellikleri prompt'a ekle
+            brand_guidelines = ""
+            if resolved_entities:
+                for entity in resolved_entities:
+                    if hasattr(entity, 'attributes') and entity.attributes:
+                        banned = entity.attributes.get("banned_words", [])
+                        aesthetic = entity.attributes.get("mandatory_aesthetic", "")
+                        if banned:
+                            brand_guidelines += f" ABSOLUTELY DO NOT INCLUDE: {', '.join(banned)}."
+                        if aesthetic:
+                            brand_guidelines += f" MANDATORY AESTHETIC RULES: {aesthetic}."
+
             if entity_description or physical_attributes:
                 prompt = await enhance_character_prompt(
                     base_prompt=f"{entity_description} {prompt}",
@@ -1703,6 +1717,11 @@ Konuşma:
                 from app.services.prompt_translator import enrich_prompt
                 prompt = await enrich_prompt(prompt)
                 print(f"✨ Prompt zenginleştirildi (genel): '{prompt[:80]}...'")
+            
+            # Brand Book kurallarını en sona güçlü bir şekilde ekle
+            if brand_guidelines:
+                prompt = f"{prompt} | BRAND BOOK STRICT GUIDELINES: {brand_guidelines}"
+                print(f"📖 Brand Book Kuralları Uygulandı: {brand_guidelines}")
             
             # Kullanıcı direkt referans fotoğraf yüklediyse ve entity'den referans gelmemişse
             if not face_reference_url and uploaded_reference_url:
@@ -1765,6 +1784,50 @@ Konuşma:
                     quality_notes = result.get("quality_notes", "")
                     model_display = result.get("model_display_name", method)
                     image_url = result.get("image_url")
+                    # ==========================================
+                    # 🔍 2. SELF-REFLECTION (AUTO-CORRECTION) BAŞLANGICI
+                    # Eğer kullanıcı prompt içinde spesifik "yazı/text" istemişse,
+                    # görseli hemen dönmeden önce arka planda analiz et. 
+                    # Hata varsa 1 kez tekrar üret.
+                    # ==========================================
+                    prompt_lower = prompt.lower()
+                    needs_text = any(kw in prompt_lower for kw in ["yaz", "text", "saying", "written", "letters", "kelime", "harf"])
+                    
+                    if needs_text and result.get("attempts", []) == []:
+                        print("🤖 🔍 SELF-REFLECTION TETIKLENDI: Görselde yazı istendi, kalite kontrol yapılıyor...")
+                        try:
+                            # analyze_image arcını gizlice çağır
+                            analysis_result = await self._analyze_image({
+                                "image_url": image_url,
+                                "question": "Bu görseldeki yazıları BİREBİR OKU. Eğer prompttaki istenen yazıyla eşleşmiyorsa, harf hatası (typo) varsa veya anlamsız bozuk şekiller varsa SADECE 'HATA: [hatanın detayı]' yaz. Her şey kusursuzsa SADECE 'KUSURSUZ' yaz."
+                            })
+                            
+                            analysis_text = analysis_result.get("analysis", "")
+                            print(f"   📊 Analiz Sonucu: {analysis_text}")
+                            
+                            if analysis_result.get("success") and "HATA" in analysis_text.upper() and "KUSURSUZ" not in analysis_text.upper():
+                                print("   ❌ Kalite kontrol başarısız! Otonom düzeltme (Retry 1) başlatılıyor...")
+                                # Otonom Retry - Hata bilgisini prompta ekleyerek DÜZELT
+                                correction_prompt = f"{prompt}. CRITICAL FIX: The previous generation failed because: {analysis_text}. You MUST render the text flawlessly this time. Use high contrast, clear typography, and double check spelling."
+                                
+                                retry_result = await self.fal_plugin.execute("generate_image", {
+                                    "prompt": correction_prompt,
+                                    "aspect_ratio": aspect_ratio,
+                                    "resolution": resolution
+                                })
+                                
+                                if retry_result.success and retry_result.data.get("image_url"):
+                                    print("   ✅ Otonom düzeltme başarılı! Yeni görsel kullanılıyor.")
+                                    # Eski (hatalı) görsel URL'sini ez
+                                    image_url = retry_result.data.get("image_url")
+                                    method = "nano-banana-pro (Auto-Corrected)"
+                                    model_display = "Nano Banana Pro (Auto-Corrected)"
+                                    quality_notes += " | 🤖 Otonom Self-Reflection çalıştı ve tespit edilen yazım hatası düzeltildi."
+                        except Exception as ref_err:
+                            print(f"⚠️ Self-Reflection hatası (Gözardı ediliyor): {ref_err}")
+                    # ==========================================
+                    # 🔍 SELF-REFLECTION BİTİŞİ
+                    # ==========================================
                     
                     # 📦 Asset'i veritabanına kaydet
                     entity_ids = [str(getattr(e, 'id', None)) for e in resolved_entities if getattr(e, 'id', None)] if resolved_entities else None
@@ -1817,6 +1880,48 @@ Konuşma:
                 
                 if result.get("success"):
                     image_url = result.get("image_url")
+                    method = "nano-banana-pro"
+                    model_display = "Nano Banana Pro"
+                    quality_notes = "Referans görsel olmadan Nano Banana Pro ile üretildi."
+                    
+                    # ==========================================
+                    # 🔍 2. SELF-REFLECTION (AUTO-CORRECTION) BAŞLANGICI
+                    # ==========================================
+                    prompt_lower = prompt.lower()
+                    needs_text = any(kw in prompt_lower for kw in ["yaz", "text", "saying", "written", "letters", "kelime", "harf"])
+                    
+                    if needs_text:
+                        print("🤖 🔍 SELF-REFLECTION TETIKLENDI (NON-REF): Görselde yazı istendi, kalite kontrol yapılıyor...")
+                        try:
+                            analysis_result = await self._analyze_image({
+                                "image_url": image_url,
+                                "question": "Bu görseldeki yazıları BİREBİR OKU. Eğer prompttaki istenen yazıyla eşleşmiyorsa, harf hatası (typo) varsa veya anlamsız bozuk şekiller varsa SADECE 'HATA: [hatanın detayı]' yaz. Her şey kusursuzsa SADECE 'KUSURSUZ' yaz."
+                            })
+                            
+                            analysis_text = analysis_result.get("analysis", "")
+                            print(f"   📊 Analiz Sonucu: {analysis_text}")
+                            
+                            if analysis_result.get("success") and "HATA" in analysis_text.upper() and "KUSURSUZ" not in analysis_text.upper():
+                                print("   ❌ Kalite kontrol başarısız! Otonom düzeltme (Retry 1) başlatılıyor...")
+                                correction_prompt = f"{prompt}. CRITICAL FIX: The previous generation failed because: {analysis_text}. You MUST render the text flawlessly this time. Use high contrast, clear typography, and double check spelling."
+                                
+                                retry_result = await self.fal_plugin.execute("generate_image", {
+                                    "prompt": correction_prompt,
+                                    "aspect_ratio": aspect_ratio,
+                                    "resolution": resolution
+                                })
+                                
+                                if retry_result.success and retry_result.data.get("image_url"):
+                                    print("   ✅ Otonom düzeltme başarılı! Yeni görsel kullanılıyor.")
+                                    image_url = retry_result.data.get("image_url")
+                                    method = "nano-banana-pro (Auto-Corrected)"
+                                    model_display = "Nano Banana Pro (Auto-Corrected)"
+                                    quality_notes += " | 🤖 Otonom Self-Reflection çalıştı ve tespit edilen yazım hatası düzeltildi."
+                        except Exception as ref_err:
+                            print(f"⚠️ Self-Reflection hatası (Gözardı ediliyor): {ref_err}")
+                    # ==========================================
+                    # 🔍 SELF-REFLECTION BİTİŞİ
+                    # ==========================================
                     
                     # 📦 Asset'i veritabanına kaydet
                     entity_ids = [str(getattr(e, 'id', None)) for e in resolved_entities if getattr(e, 'id', None)] if resolved_entities else None
@@ -1826,7 +1931,7 @@ Konuşma:
                         url=image_url,
                         asset_type="image",
                         prompt=prompt,
-                        model_name="nano-banana-pro",
+                        model_name=method,
                         model_params={
                             "aspect_ratio": aspect_ratio,
                             "resolution": resolution,
@@ -1837,16 +1942,16 @@ Konuşma:
                     
                     # 📊 İstatistik kaydet
                     user_id = await get_user_id_from_session(db, session_id)
-                    await StatsService.track_image_generation(db, user_id, "nano-banana-pro")
+                    await StatsService.track_image_generation(db, user_id, method)
                     
                     return {
                         "success": True,
                         "image_url": image_url,
-                        "model": "nano-banana-pro",
-                        "model_display_name": "Nano Banana Pro",
-                        "quality_notes": "Referans görsel olmadan Nano Banana Pro ile üretildi.",
-                        "message": "Görsel başarıyla üretildi (Nano Banana Pro).",
-                        "agent_decision": "Referans görsel yok, Nano Banana Pro kullanıldı"
+                        "model": method,
+                        "model_display_name": model_display,
+                        "quality_notes": quality_notes,
+                        "message": f"Görsel başarıyla üretildi ({model_display}).",
+                        "agent_decision": f"Referans görsel yok, {model_display} kullanıldı"
                     }
                 else:
                     return {
@@ -2201,10 +2306,22 @@ Konuşma:
             
             # Entity description injection (Prompt'a ekle - BG'ye gitmeden önce)
             enriched_prompt = prompt
+            brand_guidelines = ""
             if resolved_entities:
                 for entity in resolved_entities:
                     if hasattr(entity, 'description') and entity.description:
                         enriched_prompt = f"{entity.description}. {enriched_prompt}"
+                    if hasattr(entity, 'attributes') and entity.attributes:
+                        banned = entity.attributes.get("banned_words", [])
+                        aesthetic = entity.attributes.get("mandatory_aesthetic", "")
+                        if banned:
+                            brand_guidelines += f" ABSOLUTELY DO NOT INCLUDE: {', '.join(banned)}."
+                        if aesthetic:
+                            brand_guidelines += f" MANDATORY AESTHETIC RULES: {aesthetic}."
+
+            if brand_guidelines:
+                enriched_prompt = f"{enriched_prompt} | BRAND BOOK STRICT GUIDELINES: {brand_guidelines}"
+                print(f"📖 Video Brand Book Kuralları Uygulandı: {brand_guidelines}")
             
             # Eğer image-to-video isteniyorsa ama görsel yoksa, BG'de beklemesi yerine burada generate_image yapamaz mı? 
             # Hayır, her şey BG'ye gidebilir. Ama user'a hemen bir şey döndürmemiz lazım.
@@ -2379,6 +2496,28 @@ Konuşma:
         aspect_ratio = params.get("aspect_ratio", "16:9")
         scene_descriptions = params.get("scene_descriptions")
         user_id = await get_user_id_from_session(db, session_id)
+        
+        # 🎨 Brand Book Injection
+        brand_guidelines = ""
+        if resolved_entities:
+            for entity in resolved_entities:
+                if hasattr(entity, 'attributes') and entity.attributes:
+                    banned = entity.attributes.get("banned_words", [])
+                    aesthetic = entity.attributes.get("mandatory_aesthetic", "")
+                    if banned:
+                        brand_guidelines += f" ABSOLUTELY DO NOT INCLUDE: {', '.join(banned)}."
+                    if aesthetic:
+                        brand_guidelines += f" MANDATORY AESTHETIC RULES: {aesthetic}."
+
+        if brand_guidelines:
+            # Append brand guidelines to every single scene description to ensure consistency across the entire long video
+            for scene in scene_descriptions:
+                if isinstance(scene, dict) and "prompt" in scene:
+                    scene["prompt"] = f"{scene['prompt']} | BRAND BOOK STRICT GUIDELINES: {brand_guidelines}"
+                elif isinstance(scene, str):
+                    scene = f"{scene} | BRAND BOOK STRICT GUIDELINES: {brand_guidelines}"
+            prompt = f"{prompt} | BRAND BOOK STRICT GUIDELINES: {brand_guidelines}"
+            print(f"📖 Uzun Video Brand Book Kuralları Uygulandı: {brand_guidelines}")
         
         import asyncio
         task = asyncio.create_task(

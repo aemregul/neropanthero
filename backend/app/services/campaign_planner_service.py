@@ -21,12 +21,13 @@ PLAN_SYSTEM_PROMPT = """Sen profesyonel bir yaratıcı direktörsün. Kullanıc�
 
 KURALLAR:
 1. Her task (görev) bağımsız çalışabilmeli (mümkün olduğunca paralel).
-2. Prompt'lar İNGİLİZCE ve SON DERECE DETAYLI olmalı (composition, lighting, colors, mood).
+2. Prompt'lar İNGİLİZCE ve SON DERECE DETAYLI olmalı (composition, lighting, colors, mood). Metin yazarlığı (copywriting) görevleri için marka diline uygun brief'ler hazırla.
 3. Format→aspect_ratio eşleştirmesi: post=1:1, story/reel=9:16, cover/banner=16:9, thumbnail=16:9.
 4. Varyasyonlar oluştur — aynı promptun farklı açılmalarını yap (renk, kompozisyon, mood farkları).
 5. Marka bilgisi varsa HER prompt'a entegre et (renkler, ton, slogan).
 6. Video görevlerinde uygun model öner (kling=genel, veo=sinematik, sora2=hikaye, hailuo=kısa clip).
 7. Görsel görevlerinde uygun model öner (nano_banana=fotorealist, gpt_image=illustrasyon/anime, flux2=tipografi, recraft=logo/vektör).
+8. Metin görevleri (text) için reklam metni, sosyal medya açıklaması (caption) gibi hedefleri belirt.
 
 ÇIKTI FORMATI (JSON):
 {
@@ -35,11 +36,11 @@ KURALLAR:
   "tasks": [
     {
       "id": "task_1",
-      "type": "image",  // image | video | audio
-      "prompt": "Detaylı İngilizce üretim promptu...",
+      "type": "image",  // image | video | audio | text
+      "prompt": "Detaylı İngilizce üretim promptu... Text için brief",
       "format": "post",  // post | story | reel | cover | banner | thumbnail
       "aspect_ratio": "1:1",
-      "model": "nano_banana",  // Önerilen model
+      "model": "nano_banana",  // Önerilen model (Text için 'gpt-4o' vb. yazabilirsin)
       "label": "Türkçe kısa etiket (örn: 'Instagram Post 1 — Yaz Vibes')",
       "depends_on": null  // veya başka bir task id
     }
@@ -193,7 +194,7 @@ class CampaignPlannerService:
             {
                 "task_id": tid,
                 "type": r.get("type", "unknown"),
-                "url": r.get("image_url") or r.get("video_url") or r.get("audio_url"),
+                "url": r.get("image_url") or r.get("video_url") or r.get("audio_url") or r.get("text_content"),
                 "label": r.get("label", ""),
                 "model": r.get("model", ""),
             }
@@ -236,7 +237,48 @@ class CampaignPlannerService:
                 image_url_from_dep = dep.get("image_url")
         
         try:
-            if task_type == "image":
+            if task_type == "text":
+                # ==========================================
+                # 🤖 SWARM DELEGATION: COPYWRITER AGENT 
+                # ==========================================
+                print(f"🤖 [Copywriter Agent] Metin/Caption yazımı başlatıldı: {label}")
+                
+                # Extract brand attributes if available
+                brand_guidelines = ""
+                if resolved_entities:
+                    for entity in resolved_entities:
+                         if getattr(entity, 'entity_type', '') == 'brand':
+                             attrs = getattr(entity, 'attributes', {})
+                             banned = attrs.get('banned_words', [])
+                             tone = attrs.get('tone', 'profesyonel ve ilgi çekici')
+                             if banned:
+                                 brand_guidelines += f" KESİNLİKLE KULLANILMAYACAK KELİMELER: {', '.join(banned)}."
+                             brand_guidelines += f" MARKA TONU: {tone}."
+                
+                copywriter_prompt = f"Sen kreatif bir reklam ajansında usta bir Metin Yazarı (Copywriter) Agent'sın. Sana verilen içerik brief'ine göre viral potansiyeli yüksek, ilgi çekici sosyal medya kopyaları veya reklam metinleri yazacaksın.\n\nHEDEF/BRIEF: {prompt}\n{brand_guidelines}\n\nLütfen sadece oluşturduğun metni döndür, giriş veya çıkış cümlesi ekleme."
+
+                response = await self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "Sen usta bir Metin Yazarı (Copywriter) ajansısın."},
+                        {"role": "user", "content": copywriter_prompt}
+                    ],
+                    temperature=0.7,
+                )
+                
+                generated_text = response.choices[0].message.content
+                print(f"✅ [Copywriter Agent] Başarılı: {generated_text[:50]}...")
+                
+                # TODO: (Optional) Yazıyı asset olarak kaydet
+                return {
+                    "success": True,
+                    "type": "text",
+                    "text_content": generated_text,
+                    "label": label,
+                    "model": "copywriter_agent (gpt-4o)"
+                }
+
+            elif task_type == "image":
                 result = await orchestrator._generate_image(
                     db, session_id,
                     {"prompt": prompt, "aspect_ratio": aspect_ratio, "model": model},

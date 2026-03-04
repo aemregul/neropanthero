@@ -257,6 +257,8 @@ AGENT_TOOLS_ANTHROPIC = [
                         "tone": {"type": "string", "description": "Marka tonu (örn: Dinamik, Lüks, Samimi)"},
                         "target_audience": {"type": "string", "description": "Hedef kitle"},
                         "fonts": {"type": "array", "items": {"type": "string"}, "description": "Kullanılan fontlar"},
+                        "banned_words": {"type": "array", "items": {"type": "string"}, "description": "Marka iletişiminde KESİNLİKLE kullanılmaması gereken kelimeler/konseptler (Brand Book kuralları)"},
+                        "mandatory_aesthetic": {"type": "string", "description": "Üretilen tüm görsellerde zorunlu kılınan estetik kuralı (Örn: 'Sadece siyah font, karanlık arka plan, neon ışık', 'Pastel tonlar, aydınlık ortam')"},
                         "social_media": {
                             "type": "object",
                             "properties": {

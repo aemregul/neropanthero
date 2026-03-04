@@ -83,6 +83,34 @@ async def lifespan(app: FastAPI):
     
     yield
     
+    # === GRACEFUL SHUTDOWN (QUEUE DEGRADATION) ===
+    print(f"⏳ {settings.APP_NAME} duraklatılıyor. Devam eden arka plan görevleri bekleniyor...")
+    try:
+        from app.services.agent.orchestrator import _GLOBAL_BG_TASKS
+        import asyncio
+        
+        pending = [t for t in _GLOBAL_BG_TASKS if not t.done()]
+        if pending:
+            print(f"   ⚠️ Lütfen bekleyin! Devam eden {len(pending)} adet uzun video / yapay zeka jenerasyonu var.")
+            print(f"   ⏳ Veri kaybını önlemek için sonlandırılmaları bekleniyor (maks. 5 dakika)...")
+            
+            # 5 dakika (300 saniye) boyunca bitmelerini bekle
+            done, pending_after_timeout = await asyncio.wait(pending, timeout=300)
+            
+            if pending_after_timeout:
+                print(f"   ❌ {len(pending_after_timeout)} görev 5 dakika içinde tamamlanamadı ve iptal ediliyor!")
+                for t in pending_after_timeout:
+                    t.cancel()
+            else:
+                print(f"   ✅ Tüm arka plan üretimleri başarıyla tamamlandı ve kaydedildi.")
+        else:
+            print("   ✅ Bekleyen arka plan görevi yok.")
+    except ImportError:
+         print("   ℹ️ Arka plan görev yöneticisi bulunamadı.")
+    except Exception as e:
+         print(f"   ⚠️ Kapanış sırasında arka plan görev hatası (gözardı ediliyor): {e}")
+    # ==========================================
+
     # Cleanup
     if cache.is_connected:
         await cache.disconnect()

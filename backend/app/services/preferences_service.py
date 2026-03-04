@@ -86,12 +86,13 @@ class PreferencesService:
         self, 
         db: AsyncSession, 
         user_id: uuid.UUID, 
-        key: str, 
-        value: any
-    ) -> None:
+        action: str, 
+        category: str = None,
+        fact: str = None
+    ) -> dict:
         """
-        Agent tarafından öğrenilen tercihleri kaydet.
-        Örn: Kullanıcı hep 9:16 aspect ratio kullanıyorsa bunu öğren.
+        Agent tarafından öğrenilen tercihleri kaydet, sil veya temizle.
+        Long-Term Memory (RAG) için kullanılır.
         """
         result = await db.execute(
             select(UserPreferences).where(UserPreferences.user_id == user_id)
@@ -103,10 +104,28 @@ class PreferencesService:
             db.add(prefs)
         
         learned = prefs.learned_preferences or {}
-        learned[key] = value
-        prefs.learned_preferences = learned
+        
+        if action == "clear":
+            prefs.learned_preferences = {}
+        elif action == "add" and category and fact:
+            if category not in learned:
+                learned[category] = []
+            if fact not in learned[category]:
+                learned[category].append(fact)
+            prefs.learned_preferences = learned
+        elif action == "delete" and category and fact:
+            if category in learned and fact in learned[category]:
+                learned[category].remove(fact)
+                if not learned[category]:
+                    del learned[category]
+                prefs.learned_preferences = learned
+        
+        # force sqlalchemy to recognize mutation
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(prefs, "learned_preferences")
         
         await db.commit()
+        return prefs.learned_preferences
     
     async def get_preferences_for_prompt(self, db: AsyncSession, user_id: uuid.UUID) -> str:
         """
