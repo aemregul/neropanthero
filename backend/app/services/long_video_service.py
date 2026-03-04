@@ -310,9 +310,9 @@ class LongVideoService:
         """Video'nun son karesini çıkar, fal storage'a yükle, URL döndür."""
         import httpx
         import tempfile
-        import subprocess
         import os
         import fal_client
+        import asyncio
         
         with tempfile.TemporaryDirectory() as tmp_dir:
             video_path = os.path.join(tmp_dir, "video.mp4")
@@ -326,7 +326,7 @@ class LongVideoService:
                 with open(video_path, "wb") as f:
                     f.write(resp.content)
             
-            # Son kareyi çıkar
+            # Son kareyi çıkar - ASYNC olarak çalıştır
             cmd = [
                 "ffmpeg", "-y",
                 "-sseof", "-0.1",  # Son 0.1 saniye
@@ -335,14 +335,32 @@ class LongVideoService:
                 "-q:v", "2",
                 frame_path
             ]
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             
-            if proc.returncode != 0 or not os.path.exists(frame_path):
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            try:
+                # 30 saniye maksimum bekle
+                await asyncio.wait_for(proc.communicate(), timeout=30.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                print("⚠️ ffmpeg zaman aşımı")
                 return None
             
-            # fal'a yükle
-            frame_url = fal_client.upload_file(frame_path)
-            return frame_url
+            if proc.returncode != 0 or not os.path.exists(frame_path):
+                print(f"⚠️ ffmpeg başarısız oldu. Çıkış kodu: {proc.returncode}")
+                return None
+            
+            # fal'a yükle - Senkron olan bu fonksiyonu da Thread içine atalım:
+            try:
+                frame_url = await asyncio.to_thread(fal_client.upload_file, frame_path)
+                return frame_url
+            except Exception as e:
+                print(f"⚠️ Son kare fal'a yüklenemedi: {e}")
+                return None
     
     async def _generate_single_segment(
         self, 
@@ -350,59 +368,39 @@ class LongVideoService:
         segment: VideoSegment,
         aspect_ratio: str
     ):
-        """Tek bir segment üret — doğrudan fal_client ile. Retry logic ile."""
-        import fal_client
-        
-        # Kling endpoint mapping
-        KLING_ENDPOINTS = {
-            "t2v": "fal-ai/kling-video/v3/pro/text-to-video",
-            "i2v": "fal-ai/kling-video/v3/pro/image-to-video",
-        }
-        
+        """Tek bir segment üret — fal plugin üzerinden (kısa video ile aynı yol)."""
         for attempt in range(self.MAX_RETRIES + 1):
             try:
                 segment.status = "generating"
-                has_image = bool(segment.reference_image_url)
-                mode = "i2v" if has_image else "t2v"
-                endpoint = KLING_ENDPOINTS[mode]
                 
-                arguments = {
+                model_to_use = "kling"
+                
+                payload = {
                     "prompt": segment.prompt,
                     "duration": segment.duration,
                     "aspect_ratio": aspect_ratio,
+                    "model": model_to_use,
                 }
-                if has_image:
-                    arguments["image_url"] = segment.reference_image_url
+                if segment.reference_image_url:
+                    payload["image_url"] = segment.reference_image_url
+                    print(f"   🖼️ Sahne {segment.order + 1} referans görselli (image-to-video)")
                 
-                print(f"   🎬 Sahne {segment.order + 1} KLING ile üretiliyor (deneme {attempt+1}, endpoint: {endpoint})...")
-                print(f"   📝 Prompt: {segment.prompt[:80]}...")
+                print(f"   🎬 Sahne {segment.order + 1} {model_to_use.upper()} ile üretiliyor (deneme {attempt+1})...")
+                print(f"   📝 Prompt: {segment.prompt[:80]}...", flush=True)
                 
-                try:
-                    result = await asyncio.wait_for(
-                        fal_client.subscribe_async(
-                            endpoint,
-                            arguments=arguments,
-                            with_logs=True,
-                        ),
-                        timeout=300  # 5 dakika
-                    )
-                except asyncio.TimeoutError:
-                    print(f"   ⏱️ Sahne {segment.order + 1} 5dk timeout! (deneme {attempt+1})")
-                    if attempt >= self.MAX_RETRIES:
-                        segment.status = "failed"
-                        segment.error = "Video üretimi zaman aşımına uğradı (5dk)"
-                    continue
+                result = await fal.execute("generate_video", payload)
                 
-                if result and "video" in result:
-                    segment.video_url = result["video"]["url"]
+                if result.success and result.data:
+                    segment.video_url = result.data.get("video_url")
                     segment.status = "completed"
-                    print(f"   ✅ Sahne {segment.order + 1} tamamlandı! URL: {segment.video_url[:80]}...")
-                    return  # Başarılı
+                    print(f"   ✅ Sahne {segment.order + 1} tamamlandı (Model: {model_to_use})")
+                    return
                 else:
-                    print(f"   ⚠️ Sahne {segment.order + 1} geçersiz yanıt (deneme {attempt+1}): {result}")
+                    error_msg = result.error or "Video üretilemedi"
+                    print(f"   ⚠️ Sahne {segment.order + 1} başarısız (deneme {attempt+1}): {error_msg}")
                     if attempt >= self.MAX_RETRIES:
                         segment.status = "failed"
-                        segment.error = f"Geçersiz API yanıtı"
+                        segment.error = error_msg
                         
             except Exception as e:
                 print(f"   ❌ Sahne {segment.order + 1} hata (deneme {attempt+1}): {e}")
@@ -423,8 +421,8 @@ class LongVideoService:
         import fal_client
         import httpx
         import tempfile
-        import subprocess
         import os
+        import asyncio
         
         completed = sorted(
             [s for s in job.segments if s.status == "completed"],
@@ -484,7 +482,7 @@ class LongVideoService:
                         inputs.extend(["-i", p])
                     
                     # Her segment ~5s durations için offset hesapla
-                    # Get durations with ffprobe
+                    # Get durations with ffprobe asnyc
                     durations = []
                     for p in segment_paths:
                         probe_cmd = [
@@ -492,10 +490,17 @@ class LongVideoService:
                             "-show_entries", "format=duration",
                             "-of", "csv=p=0", p
                         ]
-                        probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, timeout=10)
+                        probe_proc = await asyncio.create_subprocess_exec(
+                            *probe_cmd,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
                         try:
-                            dur = float(probe_result.stdout.strip())
-                        except:
+                            stdout, stderr = await asyncio.wait_for(probe_proc.communicate(), timeout=10.0)
+                            dur_str = stdout.decode().strip()
+                            dur = float(dur_str)
+                        except Exception as probe_err:
+                            print(f"   ⚠️ ffprobe hatası: {probe_err}")
                             dur = 5.0
                         durations.append(dur)
                     
@@ -529,13 +534,23 @@ class LongVideoService:
                     ]
                     cmd = ["ffmpeg", "-y"] + cmd
                 
-                print(f"   🔧 FFmpeg crossfade birleştirme çalıştırılıyor...")
-                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                print(f"   🔧 FFmpeg crossfade birleştirme (ASYNC) çalıştırılıyor...")
+                
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                
+                try:
+                    await asyncio.wait_for(proc.communicate(), timeout=300.0)
+                except asyncio.TimeoutError:
+                    proc.kill()
+                    print("   ❌ FFmpeg crossfade timeout (300s)")
                 
                 if proc.returncode != 0:
                     # Crossfade başarısız — basit concat dene
                     print(f"   ⚠️ Crossfade başarısız, basit concat deneniyor...")
-                    print(f"   FFmpeg stderr: {proc.stderr[:300]}")
                     
                     concat_file = os.path.join(tmp_dir, "concat.txt")
                     with open(concat_file, "w") as f:
@@ -552,10 +567,20 @@ class LongVideoService:
                         "-movflags", "+faststart",
                         output_path
                     ]
-                    proc = subprocess.run(cmd_fallback, capture_output=True, text=True, timeout=300)
                     
-                    if proc.returncode != 0:
-                        print(f"   ❌ Concat de başarısız: {proc.stderr[:200]}")
+                    proc_fb = await asyncio.create_subprocess_exec(
+                        *cmd_fallback,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    
+                    try:
+                        await asyncio.wait_for(proc_fb.communicate(), timeout=300.0)
+                    except asyncio.TimeoutError:
+                        proc_fb.kill()
+                        
+                    if proc_fb.returncode != 0:
+                        print(f"   ❌ Concat de başarısız")
                         return completed[0].video_url
                 
                 if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
@@ -564,9 +589,9 @@ class LongVideoService:
                 
                 print(f"   ✅ Birleştirme tamamlandı: {os.path.getsize(output_path)} bytes")
                 
-                # 3. fal storage'a yükle
-                print("   ⬆️ fal.ai storage'a yükleniyor...")
-                final_url = fal_client.upload_file(output_path)
+                # 3. fal storage'a yükle (ASYNC thread pool kullanarak)
+                print("   ⬆️ fal.ai storage'a yükleniyor (ASYNC)...")
+                final_url = await asyncio.to_thread(fal_client.upload_file, output_path)
                 print(f"   ✅ Yüklendi: {final_url[:60]}...")
                 
                 return final_url

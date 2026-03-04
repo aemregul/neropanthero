@@ -570,19 +570,24 @@ Sen akıllı bir asistansın. Conversation history'yi HER ZAMAN kontrol et ve ba
                 yield f'event: generation_complete\ndata: {{"type": "image"}}\n\n'
             
             # Tool call sonrası final yanıt — STREAM olarak
-            final_stream = await self.async_client.chat.completions.create(
-                model=self.model,
-                max_tokens=4096,
-                messages=[{"role": "system", "content": full_system_prompt}] + messages,
-                stream=True
-            )
-            
-            streamed_text = ""
-            async for chunk in final_stream:
-                if chunk.choices and chunk.choices[0].delta.content:
-                    token = chunk.choices[0].delta.content
-                    streamed_text += token
-                    yield f"event: token\ndata: {json.dumps(token, ensure_ascii=False)}\n\n"
+            # Tool call sonrası final yanıt — STREAM olarak
+            if not result.get("is_background_task"):
+                final_stream = await self.async_client.chat.completions.create(
+                    model=self.model,
+                    max_tokens=4096,
+                    messages=[{"role": "system", "content": full_system_prompt}] + messages,
+                    stream=True
+                )
+                
+                streamed_text = ""
+                async for chunk in final_stream:
+                    if chunk.choices and chunk.choices[0].delta.content:
+                        token = chunk.choices[0].delta.content
+                        streamed_text += token
+                        yield f"event: token\ndata: {json.dumps(token, ensure_ascii=False)}\n\n"
+            else:
+                streamed_text = result.get("message", "🎬 Video üretimi arka planda başladı! Hazır olduğunda bildirim gelecek.")
+                yield f"event: token\ndata: {json.dumps(streamed_text, ensure_ascii=False)}\n\n"
             
             # Audio URL enjekte et — AI yanıtında yoksa markdown link olarak ekle
             pending_audio = result.get("_pending_audio_url")
@@ -790,6 +795,14 @@ Sen akıllı bir asistansın. Conversation history'yi HER ZAMAN kontrol et ve ba
         last_tool_failed = not tool_result.get("success", True)
         has_any_success = bool(result["images"] or result["videos"] or result.get("_pending_audio_url"))
         
+        # Eğer bu bir arka plan işlemiyse (uzun video gibi), GPT-4o'ya tekrar sorma!
+        # Direkt tool result içindeki mesajı nihai cevap olarak döndür.
+        if tool_result.get("is_background_task"):
+            print("🔄 BACKGROUND TASK DETECTED: Skipping final LLM completion call.")
+            messages.append({"role": "assistant", "content": tool_result.get("message", "İşlem arka planda başlatıldı.")})
+            result["is_background_task"] = True
+            return
+            
         # Retry logic: sadece son tool başarısızsa VE henüz başarılı sonuç yoksa VE limit aşılmamışsa
         retry_tool_choice = "auto"
         if last_tool_failed and not has_any_success and retry_count < MAX_RETRIES:
@@ -825,7 +838,7 @@ Sen akıllı bir asistansın. Conversation history'yi HER ZAMAN kontrol et ve ba
             # Audio URL enjekte et — AI dahil etmediyse markdown link olarak ekle
             pending_audio = result.get("_pending_audio_url")
             if pending_audio and pending_audio not in final_content:
-                final_content += f"\n\n[Müziği dinle]({pending_audio})"
+                final_content += f"\\n\\n[Müziği dinle]({pending_audio})"
                 result.pop("_pending_audio_url", None)
             messages.append({"role": "assistant", "content": final_content})
     
@@ -2262,6 +2275,12 @@ Konuşma:
                 except Exception:
                     translated_scenes = scene_descriptions
             
+            async def _on_progress(pct, msg):
+                try:
+                    await progress_service.send_progress(session_id, "long_video", pct / 100.0, msg)
+                except Exception:
+                    pass
+
             result = await long_video_service.create_and_process(
                 user_id=user_id,
                 session_id=session_id,
@@ -2269,6 +2288,7 @@ Konuşma:
                 total_duration=total_duration,
                 aspect_ratio=aspect_ratio,
                 scene_descriptions=translated_scenes,
+                progress_callback=_on_progress
             )
             
             async with async_session_maker() as db:

@@ -725,19 +725,124 @@ class FalPluginV2(PluginBase):
             
             logger.info(f"⏳ fal.ai video üretim başlatılıyor: {selected_endpoint}")
             
+            # subprocess ile çağır — fal_client.subscribe_async uvicorn event loop'unda takılıyor
             import asyncio as _asyncio
+            import sys as _sys
+            import json as _json
+            import tempfile as _tmpf
+            import os as _os2
+            import base64 as _b64
+            from app.core.config import settings as _settings
+            
+            _fal_key = _settings.FAL_KEY or ""
+            _args_b64 = _b64.b64encode(_json.dumps(arguments).encode()).decode()
+            
+            # Geçici Python dosyası oluştur (Base64 ile güvenli argüman aktarımı)
+            _script_content = f"""import asyncio, os, json, sys, base64, time
+os.environ["FAL_KEY"] = "{_fal_key}"
+
+def log(msg):
+    with open("/tmp/fal_subprocess_debug.log", "a") as f:
+        f.write(f"{{time.strftime('%H:%M:%S')}} - {{msg}}\\n")
+
+log("Subprocess started for endpoint: {selected_endpoint}")
+
+try:
+    import fal_client
+    log("fal_client imported successfully")
+except Exception as e:
+    log(f"Failed to import fal_client: {{e}}")
+    sys.exit(1)
+
+async def run():
+    args = json.loads(base64.b64decode("{_args_b64}").decode())
+    try:
+        log("Calling fal_client.submit_async...")
+        handler = await fal_client.submit_async("{selected_endpoint}", arguments=args)
+        request_id = handler.request_id
+        log(f"Submitted. Request ID: {{request_id}}")
+        
+        loop_count = 0
+        while True:
+            loop_count += 1
+            status = await fal_client.status_async("{selected_endpoint}", request_id, with_logs=True)
+            
+            # fal_client returns Queued(), InProgress(), Completed() objects.
+            # Best way to check is stringifying and checking for Not-Completed states
+            status_str = str(status).lower()
+            
+            if loop_count % 6 == 0:
+                log(f"Polling status... Current: {{status_str[:50]}}")
+            
+            # Wait if it's queued, in progress, or waiting
+            if "queue" in status_str or "progress" in status_str or "pend" in status_str or "run" in status_str:
+                await asyncio.sleep(5)
+                continue
+                
+            log(f"Final status reached: {{status_str[:50]}}")
+            result = await fal_client.result_async("{selected_endpoint}", request_id)
+            log("Result fetched successfully.")
+            json.dump(result, sys.stdout)
+            sys.stdout.flush()
+            break
+            
+    except Exception as e:
+        log(f"Error in submit-poll loop: {{e}}")
+        raise e
+
+log("Starting asyncio.run(run())")
+try:
+    asyncio.run(run())
+    log("asyncio.run(run()) finished successfully")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
+except Exception as e:
+    log(f"asyncio.run() crashed: {{e}}")
+    sys.stderr.flush()
+    os._exit(1)
+"""
+            _tmp_script = _tmpf.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp')
+            _tmp_script.write(_script_content)
+            _tmp_script.close()
+            _script_path = _tmp_script.name
+            
             try:
-                result = await _asyncio.wait_for(
-                    fal_client.subscribe_async(
-                        selected_endpoint,
-                        arguments=arguments,
-                        with_logs=True,
-                    ),
-                    timeout=300  # 5 dakika timeout
+                proc = await _asyncio.create_subprocess_exec(
+                    _sys.executable, _script_path,
+                    stdout=_asyncio.subprocess.PIPE,
+                    stderr=_asyncio.subprocess.PIPE,
                 )
-            except _asyncio.TimeoutError:
-                logger.error(f"⏱️ fal.ai video 5dk timeout! ({selected_endpoint})")
-                return {"success": False, "error": f"Video üretimi zaman aşımına uğradı (5dk). Model: {model_family}"}
+                
+                try:
+                    stdout, stderr = await _asyncio.wait_for(
+                        proc.communicate(),
+                        timeout=1200  # 20 dakika (uzun videolar ekstra uzun sürebilir)
+                    )
+                except _asyncio.TimeoutError:
+                    proc.kill()
+                    logger.error(f"⏱️ fal.ai video 20dk timeout! ({selected_endpoint})")
+                    return {"success": False, "error": f"Video üretimi zaman aşımına uğradı (20dk). Model: {model_family}"}
+                
+                _stderr_text = stderr.decode().strip()
+                if _stderr_text:
+                    logger.warning(f"fal subprocess stderr:\\n{_stderr_text}")  # Truncate kaldırıldı
+                
+                _stdout_text = stdout.decode().strip()
+                if not _stdout_text:
+                    logger.error(f"fal subprocess boş çıktı. Exit: {proc.returncode}. Stderr:\\n{_stderr_text}")
+                    return {"success": False, "error": f"Video subprocess boş yanıt. Exit: {proc.returncode}. Bakın backend logs."}
+                
+                try:
+                    result = _json.loads(_stdout_text)
+                except _json.JSONDecodeError:
+                    logger.error(f"fal subprocess JSON parse hatası: {_stdout_text[:500]}")
+                    return {"success": False, "error": f"Video subprocess geçersiz yanıt"}
+            finally:
+                try:
+                    _os2.unlink(_script_path)
+                except:
+                    pass
             
             logger.info(f"✅ fal.ai video yanıt alındı: {selected_endpoint}")
             

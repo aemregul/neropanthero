@@ -363,23 +363,23 @@ npm run dev
 
 ## 🎬 Phase 31 — Long Video Production Fix & Stability (4 Mart 2026)
 
-### Sorun
-Uzun video üretimi (30s-3dk) çalışmıyordu:
-- `long_video_service` → `fal_plugin_v2.execute()` wrapper üzerinden fal.ai'ye gidiyordu
-- Wrapper'daki smart router + model check + iç `subscribe_async` katmanları event loop'ta bloklanıyordu
-- Veo API timeout mekanizması yoktu → 45+ dakika askıda kalıyordu
-- `--reload` modu dosya değişikliğinde backend'i restart ediyordu → arka plan video task'ları ölüyordu
+### Sorunlar
+Uzun video üretimi (30s-3dk) birden fazla katmanlı bug yüzünden çalışmıyordu:
+1. **%89 Takılma**: Frontend `GenerationProgressCard.tsx` içinde sahte bir simülasyon (`90 * (1 - e^(-3*t))`) ile ilerleme barını 89%'a kadar doldurup orada bırakıyordu
+2. **Sessiz Segment Başarısızlığı**: `fal_plugin_v2.py` subprocess'inde `os._exit(0)` çağrısı stdout buffer'ını flush etmeden process'i öldürüyordu → Kling başarıyla ürettiği videoyu teslim edemiyordu
+3. **Progress Callback Eksikliği**: `orchestrator.py` `_run_long_video_bg` fonksiyonu `progress_callback` parametresini `create_and_process`'e geçmiyordu → gerçek ilerleme hiç frontend'e ulaşmıyordu
+4. **LLM Halüsinasyonu**: Arka plan video üretimi başlatıldıktan sonra GPT-4o'ya gereksiz bir "final completion" isteği atılıyordu → rastgele alakasız mesajlar (örn: "Yağmurlu gece caddesinde yürüyen adam") üretiliyordu
+5. **UnboundLocalError**: `fal_plugin_v2.py` `_generate_video` fonksiyonunda `except Exception as e:` bloğu dışında `str(e)` referansı → subprocess crash
 
-### Çözüm
+### Çözümler
 | Değişiklik | Dosya | Detay |
 |---|---|---|
-| **Doğrudan fal_client çağrısı** | `long_video_service.py` | `fal_plugin_v2` wrapper yerine `fal_client.subscribe_async` doğrudan çağrılıyor |
-| **Varsayılan model: Kling** | `long_video_service.py` | Tüm segment'ler Kling ile üretiliyor (güvenilir, ~130s/segment) |
-| **5dk API timeout** | `long_video_service.py`, `fal_plugin_v2.py` | Hem Veo hem fal.ai çağrılarına `asyncio.wait_for(timeout=300)` |
-| **Progress kartı genişletildi** | `orchestrator.py` | 11 adım×5s→20 adım×10s (200s kapsama, Kling süresini karşılıyor) |
-| **Backend --reload kaldırıldı** | Çalıştırma komutu | Production modunda `--reload` yok → arka plan task'ları korunuyor |
-| **Lightbox muted autoPlay** | `ChatPanel.tsx`, `AssetsPanel.tsx` | Tarayıcı autoPlay politikası için `muted` eklendi |
-| **Onay akışı iyileştirildi** | `orchestrator.py` | Uzun video planı text-only, onay keyword'leri tanımlandı, geri dönüş engellendi |
+| **stdout flush** | `fal_plugin_v2.py` | `os._exit(0)` öncesinde `sys.stdout.flush()` + `sys.stderr.flush()` eklendi |
+| **Progress callback bağlantısı** | `orchestrator.py` | `_run_long_video_bg` içinde `_on_progress(pct, msg)` → `progress_service.send_progress()` ile WebSocket'e gerçek ilerleme gönderiliyor |
+| **Background task flag propagation** | `orchestrator.py` | `_process_tool_calls_for_stream` içinde `result["is_background_task"] = True` set edilerek üst katmana taşınıyor |
+| **Final stream guard** | `orchestrator.py` | `process_message_stream` içinde `if not result.get("is_background_task"):` ile gereksiz GPT-4o completion engellendi |
+| **UnboundLocalError fix** | `fal_plugin_v2.py` | `return` ifadesi `except` bloğu içine taşındı, subprocess script'teki `{e}` → `{{e}}` escape edildi |
+| **Uvicorn production başlatma** | Operasyon | `nohup ... < /dev/null > /tmp/backend.log 2>&1 &` ile SIGTTIN suspend engellendi |
 
 ### Uzun Video Akışı
 ```
@@ -387,11 +387,16 @@ Kullanıcı: "30 sn okyanus videosu"
 → Agent sahne planı gösterir (text only, tool call yok)
 → Kullanıcı: "onaylıyorum" / "evet" / "tamam"
 → generate_long_video tool call
-→ long_video_service.create_and_process()
-  → Segment'lere böl (3×10s)
-  → Her segment için fal_client.subscribe_async (Kling, ~130s)
-  → Sıralı üretim (karakter tutarlılığı için zincirleme i2v)
-  → FFmpeg crossfade ile birleştir
-  → fal.ai storage'a yükle
-→ Sonuç video_url döner
+→ orchestrator._run_long_video_bg() (arka plan task)
+  → progress_callback ile WebSocket'e gerçek ilerleme (%5→%20→%40→%60→%80→%85→%100)
+  → long_video_service.create_and_process()
+    → Segment'lere böl (3×10s)
+    → Her segment için subprocess → fal_client.submit_async (Kling, ~130-300s)
+    → sys.stdout.flush() → JSON yanıt güvenle alınır
+    → Sıralı üretim (karakter tutarlılığı için zincirleme i2v → son frame çıkarma)
+    → FFmpeg crossfade ile birleştir
+    → fal.ai storage'a yükle
+→ WebSocket complete event → frontend video gösterir
+→ GPT-4o'ya final completion GÖNDERİLMEZ (halüsinasyon engeli)
 ```
+

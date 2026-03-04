@@ -237,12 +237,17 @@ async def _process_chat(
                 {"role": "user", "content": actual_message},
                 {"role": "assistant", "content": response_content}
             ]
-            await conversation_memory.save_conversation_summary(
-                user_id=session.user_id,
-                session_id=session.id,
+            summary_text = await conversation_memory.summarize_conversation(
                 messages=summary_messages,
-                project_name=session.title
+                session_title=session.title
             )
+            if summary_text:
+                await conversation_memory.save_conversation_summary(
+                    db=db,
+                    user_id=session.user_id,
+                    session_id=session.id,
+                    summary=summary_text
+                )
             print(f"💾 Auto-summary kaydedildi (proje: {session.title}, mesaj: {total_messages})")
         except Exception as e:
             print(f"⚠️ Auto-summary hatası: {e}")
@@ -563,12 +568,17 @@ async def chat_stream(
                             {"role": "user", "content": actual_message},
                             {"role": "assistant", "content": full_response}
                         ]
-                        await conversation_memory.save_conversation_summary(
-                            user_id=session.user_id,
-                            session_id=session.id,
+                        summary_text = await conversation_memory.summarize_conversation(
                             messages=summary_messages,
-                            project_name=session.title
+                            session_title=session.title
                         )
+                        if summary_text:
+                            await conversation_memory.save_conversation_summary(
+                                db=db,
+                                user_id=session.user_id,
+                                session_id=session.id,
+                                summary=summary_text
+                            )
                         print(f"💾 Stream auto-summary kaydedildi (proje: {session.title}, mesaj: {total_messages})")
                     except Exception as sum_err:
                         print(f"⚠️ Stream auto-summary hatası: {sum_err}")
