@@ -38,8 +38,8 @@ AGENT_TOOLS_ANTHROPIC = [
                 },
                 "model": {
                     "type": "string",
-                    "enum": ["auto", "nano_banana", "flux2", "flux2_max", "gpt_image", "reve", "seedream", "recraft"],
-                    "description": "Görsel modeli seç. auto=Smart Router. nano_banana=Fotorealist/portre(varsayılan). flux2=Hızlı+metin/tipografi. flux2_max=Maksimum kalite/detay. gpt_image=Anime/Ghibli/cartoon/illüstrasyon. reve=Yaratıcı/sanatsal. seedream=Hızlı+ucuz. recraft=Logo/vektör/marka."
+                    "enum": ["auto", "nano_banana", "flux2", "flux2_max", "gpt_image", "reve", "seedream", "recraft", "grok_imagine"],
+                    "description": "Görsel modeli seç. auto=Smart Router. nano_banana=Fotorealist/portre(varsayılan). flux2=Hızlı+metin/tipografi. flux2_max=Maksimum kalite/detay. gpt_image=Anime/Ghibli/cartoon/illüstrasyon. reve=Yaratıcı/sanatsal. seedream=Hızlı+ucuz. recraft=Logo/vektör/marka. grok_imagine=xAI Grok/yüksek estetik/hassas metin render."
                 },
                 "resolution": {
                     "type": "string",
@@ -110,7 +110,7 @@ AGENT_TOOLS_ANTHROPIC = [
     },
     {
         "name": "generate_video",
-        "description": "Kısa video üretir (5-10 saniye, ARKA PLAN GÖREVİ). Bu araç hemen video dönmez, üretimi arka planda başlatır. Üretim bittiğinde asistan otomatik olarak yeni bir mesajla videoyu paylaşacaktır. ÖNEMLİ: 10 saniyeden KISA veya 10 saniye video için BU ARACI kullan. 10 saniyeden UZUN istekler için generate_long_video kullan. BU ARACI TEK SEFERDE SADECE 1 KERE ÇAĞIR!",
+        "description": "SADECE 5-10 saniyelik KISA video üretir (ARKA PLAN GÖREVİ). ⚠️ KRİTİK KURAL: Kullanıcı 15 saniye, 20 saniye, 30 saniye, 1 dakika, 2 dakika veya daha UZUN video isterse BU ARACI KULLANMA! Bunun yerine generate_long_video kullan. Bu araç MAKSİMUM 10 saniye üretir. BU ARACI TEK SEFERDE SADECE 1 KERE ÇAĞIR!",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -120,8 +120,8 @@ AGENT_TOOLS_ANTHROPIC = [
                 "aspect_ratio": {"type": "string", "enum": ["16:9", "9:16", "1:1"], "description": "Video oranı"},
                 "model": {
                     "type": "string", 
-                    "enum": ["auto", "kling", "sora2", "veo", "seedance", "hailuo"], 
-                    "description": "Video modeli seç. auto=Smart Router(varsayılan). kling=En güvenilir, çoklu sahne(varsayılan). sora2=En uzun süre(~20s), çoklu sahne+ses, hikaye anlatımı. veo=En iyi fizik simülasyonu, sinematik, belgesel. seedance=Hızlı+ucuz, iyi kalite. hailuo=En hızlı(~5s), kısa clip/sosyal medya."
+                    "enum": ["auto", "kling", "sora2", "veo", "seedance", "hailuo", "grok_imagine_video"], 
+                    "description": "Video modeli seç. auto=Smart Router(varsayılan). kling=En güvenilir, çoklu sahne(varsayılan). sora2=En uzun süre(~20s), çoklu sahne+ses, hikaye anlatımı. veo=En iyi fizik simülasyonu, sinematik, belgesel. seedance=Hızlı+ucuz, iyi kalite. hailuo=En hızlı(~5s), kısa clip/sosyal medya. grok_imagine_video=xAI sinematik video+senkronize ses."
                 }
             },
             "required": ["prompt"]
@@ -142,7 +142,7 @@ AGENT_TOOLS_ANTHROPIC = [
     },
     {
         "name": "generate_long_video",
-        "description": "Uzun video üretir (30 saniye - 3 dakika, ARKA PLAN GÖREVİ). Çok aşamalı bir işlemdir ve arka planda yürütülür. ÖNEMLİ: Bu aracı çağırmadan ÖNCE kullanıcıya sahne planını göster ve ONAY al! Plan onayı OLMADAN çağırırsan HATA mesajı döner.",
+        "description": "15 saniyeden UZUN video üretir (15s - 3 dakika, ARKA PLAN GÖREVİ). ⚠️ KRİTİK: Kullanıcı 15 saniye, 20s, 30s, 1dk, 2dk, 3dk gibi SÜRELİ video isterse MUTLAKA BU ARACI kullan — generate_video KULLANMA! Çok aşamalı işlemdir. ÖNEMLİ: Bu aracı çağırmadan ÖNCE kullanıcıya sahne planını göster ve ONAY al! Plan onayı OLMADAN çağırırsan HATA mesajı döner.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -159,8 +159,8 @@ AGENT_TOOLS_ANTHROPIC = [
                             "reference_image_url": {"type": "string", "description": "Sahne için kullanılacak referans görselin URL'si (search_images'dan vb.)"},
                             "model": {
                                 "type": "string",
-                                "enum": ["auto", "kling", "sora2", "veo", "seedance", "hailuo"],
-                                "description": "Sahne video modeli. auto=varsayılan. Tercih: sora2 (uzun/hikaye), veo (sinematik), kling (genel)."
+                                "enum": ["auto", "kling", "sora2", "veo", "seedance", "hailuo", "grok_imagine_video"],
+                                "description": "Sahne video modeli. auto=varsayılan. Tercih: sora2 (uzun/hikaye), veo (sinematik), kling (genel), grok_imagine_video (sinematik+ses)."
                             }
                         },
                         "required": ["prompt"]

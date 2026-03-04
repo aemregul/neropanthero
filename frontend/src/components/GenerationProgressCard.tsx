@@ -51,8 +51,9 @@ export function GenerationProgressCard({
         };
     }, [status, estimatedTime]);
 
-    // Use external progress if provided and > 0, otherwise use simulated
-    const displayProgress = (externalProgress && externalProgress > 0) ? externalProgress : simulatedProgress;
+    // Use whichever is higher — simulated provides a smooth start, real progress takes over once it catches up
+    const realProgress = (externalProgress && externalProgress > 0) ? externalProgress : 0;
+    const displayProgress = Math.max(realProgress, simulatedProgress);
 
     // Status text based on progress
     const getStatusText = () => {

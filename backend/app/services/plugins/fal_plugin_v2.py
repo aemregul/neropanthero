@@ -49,6 +49,7 @@ class FalPluginV2(PluginBase):
         "fal-ai/reve/text-to-image": "reve",
         "fal-ai/bytedance/seedream/v4.5/text-to-image": "seedream",
         "fal-ai/recraft/v3/text-to-image": "recraft",
+        "xai/grok-imagine-image": "grok_imagine",
         # Edit
         "fal-ai/flux-kontext": "flux_kontext",
         "fal-ai/flux-pro/kontext": "flux_kontext_pro",
@@ -70,6 +71,8 @@ class FalPluginV2(PluginBase):
         "fal-ai/bytedance/seedance/v1.5/pro/fast/text-to-video": "seedance",
         "fal-ai/minimax/hailuo-02/standard/image-to-video": "hailuo",
         "fal-ai/minimax/hailuo-02/standard/text-to-video": "hailuo",
+        "xai/grok-imagine-video/text-to-video": "grok_imagine_video",
+        "xai/grok-imagine-video/image-to-video": "grok_imagine_video",
         # Utility
         "fal-ai/face-swap": "face_swap",
         "fal-ai/topaz": "topaz_upscale",
@@ -87,12 +90,14 @@ class FalPluginV2(PluginBase):
         "reve": "reve",
         "seedream": "seedream",
         "recraft": "recraft",
+        "grok_imagine": "grok_imagine",
         "kling": "kling",
         "sora2": "sora2",
         "veo": "veo_fast",
         "veo_quality": "veo_quality",
         "seedance": "seedance",
         "hailuo": "hailuo",
+        "grok_imagine_video": "grok_imagine_video",
     }
     
     def __init__(self):
@@ -335,6 +340,7 @@ class FalPluginV2(PluginBase):
         "reve": "fal-ai/reve/text-to-image",
         "seedream": "fal-ai/bytedance/seedream/v4.5/text-to-image",
         "recraft": "fal-ai/recraft/v3/text-to-image",
+        "grok_imagine": "xai/grok-imagine-image",
     }
     
     VIDEO_MODEL_MAP = {
@@ -344,6 +350,7 @@ class FalPluginV2(PluginBase):
         "veo_quality": {"i2v": "fal-ai/veo3.1/image-to-video", "t2v": "fal-ai/veo3.1"},
         "seedance": {"i2v": "fal-ai/bytedance/seedance/v1.5/pro/image-to-video", "t2v": "fal-ai/bytedance/seedance/v1.5/pro/fast/text-to-video"},
         "hailuo": {"i2v": "fal-ai/minimax/hailuo-02/standard/image-to-video", "t2v": "fal-ai/minimax/hailuo-02/standard/text-to-video"},
+        "grok_imagine_video": {"i2v": "xai/grok-imagine-video/image-to-video", "t2v": "xai/grok-imagine-video/text-to-video"},
     }
     
     async def _select_image_model(self, prompt: str, agent_model: str = "auto") -> tuple[str, str | None]:

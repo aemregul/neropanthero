@@ -132,6 +132,15 @@ IMAGE_GENERATION_MODELS = [
         best_for=["fast", "prototype", "quick_preview"],
         estimated_cost=0.005
     ),
+    FalModel(
+        name="Grok Imagine 1.0",
+        endpoint="xai/grok-imagine-image",
+        category=ModelCategory.IMAGE_GENERATION,
+        priority=Priority.ALTERNATIVE,
+        description="xAI'ın görsel üretim modeli. Yüksek estetik, hassas metin render, geniş stil yelpazesi.",
+        best_for=["aesthetic", "text_render", "realistic", "artistic", "versatile"],
+        estimated_cost=0.02
+    ),
 ]
 
 
@@ -388,6 +397,25 @@ VIDEO_GENERATION_MODELS = [
         best_for=["stylized", "effects", "artistic_video"],
         supports_reference=True,
         estimated_cost=0.08
+    ),
+    FalModel(
+        name="Grok Imagine Video (Image-to-Video)",
+        endpoint="xai/grok-imagine-video/image-to-video",
+        category=ModelCategory.VIDEO_GENERATION,
+        priority=Priority.ALTERNATIVE,
+        description="xAI sinematik video. Senkronize ses, fizik simülasyonu, 720p, 10s.",
+        best_for=["cinematic", "audio_sync", "physics", "image_to_video"],
+        supports_reference=True,
+        estimated_cost=0.10
+    ),
+    FalModel(
+        name="Grok Imagine Video (Text-to-Video)",
+        endpoint="xai/grok-imagine-video/text-to-video",
+        category=ModelCategory.VIDEO_GENERATION,
+        priority=Priority.ALTERNATIVE,
+        description="xAI metin-video. Senkronize ses, sinematik kalite.",
+        best_for=["cinematic", "audio_sync", "text_to_video"],
+        estimated_cost=0.10
     ),
 ]
 

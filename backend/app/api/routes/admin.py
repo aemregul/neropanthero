@@ -126,6 +126,7 @@ async def list_ai_models(db: AsyncSession = Depends(get_db)):
         ("reve", "Reve", "image", "fal", "Alternatif görsel üretim", "🌟"),
         ("seedream", "Seedream 4.5", "image", "fal", "ByteDance görsel modeli", "🌱"),
         ("recraft", "Recraft V3", "image", "fal", "Vektör tarzı ve illüstrasyon", "📐"),
+        ("grok_imagine", "Grok Imagine 1.0", "image", "xai", "xAI görsel üretim — yüksek estetik, hassas metin render", "🧠"),
         
         # 🎨 Görsel Düzenleme
         ("flux_kontext", "Flux Kontext", "edit", "fal", "Akıllı lokal görsel düzenleme", "🎯"),
@@ -144,6 +145,7 @@ async def list_ai_models(db: AsyncSession = Depends(get_db)):
         ("veo_google", "Veo 3.1 (Google SDK)", "video", "google", "Google GenAI SDK ile direkt video", "🔷"),
         ("seedance", "Seedance 1.5 Pro", "video", "fal", "ByteDance video modeli", "🌱"),
         ("hailuo", "Hailuo 02", "video", "fal", "Kısa/hızlı sosyal medya videoları", "📱"),
+        ("grok_imagine_video", "Grok Imagine Video", "video", "xai", "xAI sinematik video — senkronize ses + fizik simülasyonu", "🧠"),
         
         # 🔧 Araç & Utility
         ("face_swap", "Face Swap", "utility", "fal", "Yüz değiştirme — karakter tutarlılığı", "👤"),
@@ -514,6 +516,10 @@ async def get_model_distribution(db: AsyncSession = Depends(get_db)):
         "veo fallback kling": "Kling Video",
         "flux_kontext_native": "Flux Kontext",
         "flux kontext native": "Flux Kontext",
+        "grok_imagine": "Grok Imagine",
+        "grok-imagine-image": "Grok Imagine",
+        "grok_imagine_video": "Grok Imagine Video",
+        "grok-imagine-video": "Grok Imagine Video",
     })
     
     # Gizlenen iç model adları
@@ -535,6 +541,8 @@ async def get_model_distribution(db: AsyncSession = Depends(get_db)):
         "ElevenLabs": "#f97316", "Stable Audio": "#ea580c",
         "Whisper": "#c2410c", "MMAudio": "#9a3412",
         "Stil Aktarımı": "#db2777",
+        "Grok Imagine": "#4a4a4a",
+        "Grok Imagine Video": "#2d2d2d",
     }
     
     # Normalize et, grupla, topla

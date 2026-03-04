@@ -100,8 +100,8 @@ Bu guard'lar `orchestrator.py`'de `_process_tool_calls_for_stream` içinde, tool
 ### Video Üretim
 | Araç | Ne Yapar | Nasıl Çalışır |
 |---|---|---|
-| `generate_video` | Kısa video üretir (≤10s) | Text-to-video veya image-to-video. 5 model: Kling 3.0, Sora 2, Seedance 1.5, Hailuo 02, Kling 2.5 Turbo |
-| `generate_long_video` | Uzun video üretir (15-180s) | Sahne planı oluşturur → kullanıcıdan onay ister → her sahneyi Kling ile doğrudan fal_client.subscribe_async çağırarak üretir → FFmpeg ile crossfade birleştirir. 5dk timeout + retry logic |
+| `generate_video` | Kısa video üretir (≤10s) | Text-to-video veya image-to-video. 5 model: Kling 3.0, Sora 2, Seedance 1.5, Hailuo 02. **KRİTİK KURAL:** Maksimum 10 saniye uzunluğunda video üretir. Daha uzun videolar için `generate_long_video` kullanın. |
+| `generate_long_video` | Uzun video üretir (15-180s) | Sahne planı oluşturur → kullanıcıdan onay ister → her sahneyi Kling ile doğrudan fal_client.subscribe_async çağırarak üretir → FFmpeg ile crossfade birleştirir. 5dk timeout + retry logic. **KRİTİK KURAL:** Minimum 15 saniye uzunluğunda video üretir. Daha kısa videolar için `generate_video` kullanın. |
 | `edit_video` | Videoyu görsel olarak düzenler | AI ile nesne silme, stil değiştirme |
 | `advanced_edit_video` | **[Phase 23]** FFmpeg video post-production | 10 operasyon: trim (kırp), speed (0.25x–4x), fade-in/out, text overlay (7 pozisyon), reverse (boomerang), resize (aspect ratio), concat (birleştir), loop (tekrarla), filter (9 filtre: grayscale, sepia, vintage, blur vb.), extract_frame (kare çıkar) |
 
@@ -173,6 +173,11 @@ Admin paneli 3 sekmeden oluşur:
 - `frontend/src/components/AdminPanelModal.tsx` — Admin panel UI
 - `frontend/src/app/globals.css` — `.admin-tab` / `.admin-tab-active` CSS sınıfları
 
+### Phase 32: Grok Imagine Entegrasyonu & Tool İyileştirmeleri
+* **Grok Imagine Modelleri:** xAI'ın Grok Imagine 1.0 (Görsel) ve Grok Imagine Video (t2v/i2v) modelleri eklendi.
+* **Geniş Çaplı Entegrasyon:** Modeller `fal_plugin_v2.py` (Smart Router ve haritalamalar), `admin.py` (Marketplace & Toggle), ve `tools.py` (LLM enum listesi) dosyalarına eklendi. Toplam model sayısı 33'e çıktı.
+* **Routing Düzeltmesi:** GPT-4o'nun "30 saniyelik video üret" komutlarında yanlışlıkla kısa video aracını (`generate_video`) seçmesi engellendi. `generate_video` için maksimum 10 saniye limiti, `generate_long_video` için ise 15 saniye ve üzeri şartları araç açıklamalarına (description) **KRİTİK KURAL** olarak eklendi.  
+
 ---
 
 ## 🏪 Eklenti Mağazası (Plugin Marketplace)
@@ -212,16 +217,16 @@ Chat'te "plugin oluştur" → manage_plugin tool → DB (is_public=True, user_id
 
 ---
 
-## 🎬 31 AI Modeli (5 Kategori)
+## 🎬 33 AI Modeli (5 Kategori)
 
 Tüm modeller `fal_models.py`'de tanımlı, `fal_plugin_v2.py` ile çağrılır. GPT-4o prompt içeriğini analiz edip en uygun modeli seçer ("auto" mode).
 
 | Kategori | Sayı | Modeller |
 |---|---|---|
-| Görsel Üretim | 8 | Nano Banana Pro, Nano Banana 2, Flux.2, Flux 2 Max, GPT Image 1, Reve, Seedream 4.5, Recraft V3 |
+| Görsel Üretim | 9 | Nano Banana Pro, Nano Banana 2, Flux.2, Flux 2 Max, GPT Image 1, Reve, Seedream 4.5, Recraft V3, Grok Imagine 1.0 |
 | Görsel Düzenleme | 7 | Flux Kontext, Flux Kontext Pro, OmniGen V1, Flux Inpainting, Object Removal, Outpainting, Nano Banana 2 Edit |
-| Video | 7 | Kling 3.0 Pro, Sora 2 Pro, Veo 3.1 Fast, Veo 3.1 Quality, Veo 3.1 (Google SDK), Seedance 1.5, Hailuo 02 |
-| Ses & Müzik | 5 | ElevenLabs TTS, ElevenLabs SFX, Whisper STT, MMAudio (V2A), Stable Audio |
+| Video | 9 | Kling 3.0 Pro, Sora 2 Pro, Veo 3.1 Fast, Veo 3.1 Quality, Veo 3.1 (Google SDK), Seedance 1.5, Hailuo 02, Grok Imagine Video (t2v/i2v) |
+| Ses & Müzik | 4 | ElevenLabs TTS, ElevenLabs SFX, Whisper STT, Stable Audio |
 | Araç & Utility | 4 | Face Swap, Topaz Upscale, Background Removal, Style Transfer |
 
 ---
