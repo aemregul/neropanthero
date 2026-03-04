@@ -88,7 +88,7 @@ export default function LoginPage() {
                     className="flex items-center justify-center gap-3 mb-8 hover:opacity-80 transition-opacity"
                 >
                     <div className="relative">
-                        <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                        <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
                         <div className="absolute -inset-1 bg-emerald-500/20 rounded-full blur-md -z-10" />
                     </div>
                     <div className="text-center">

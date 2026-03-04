@@ -1258,7 +1258,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center py-16">
                             {/* Logo & Title */}
-                            <img src="/logo.png" alt="Logo" className="w-12 h-12 mb-4 object-contain" />
+                            <img src="/logo.png" alt="Logo" className="w-20 h-20 mb-4 object-contain" />
                             <h2 className="text-2xl font-bold mb-2">Pepper Root AI</h2>
                             <p className="text-sm mb-8" style={{ color: "var(--foreground-muted)" }}>
                                 Yapay zeka destekli görsel üretim asistanın
@@ -1402,7 +1402,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                 </div>
                             ) : (
                                 <div className="flex gap-3 max-w-[85%] group/feedback">
-                                    <img src="/logo.png" alt="Logo" className="w-6 h-6 shrink-0 mt-1 object-contain" />
+                                    <img src="/logo.png" alt="Logo" className="w-8 h-8 shrink-0 mt-1 object-contain" />
                                     <div className="flex-1 flex flex-col gap-2">
                                         {/* Text bubble — strip inline images if image_url exists */}
                                         {(() => {
@@ -1516,7 +1516,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
 
                     {isLoading && (
                         <div className="flex gap-3">
-                            <img src="/logo.png" alt="Logo" className="w-6 h-6 shrink-0 object-contain" />
+                            <img src="/logo.png" alt="Logo" className="w-8 h-8 shrink-0 object-contain" />
                             <div className="message-bubble message-ai">
                                 {loadingStatus ? (
                                     <div className="flex items-center gap-2">

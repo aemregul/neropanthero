@@ -929,7 +929,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 {/* ── ICON RAIL ── */}
                 <div className="sidebar-rail">
                     {/* Logo */}
-                    <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+                    <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
 
                     {/* Main nav */}
                     <button
