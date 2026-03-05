@@ -342,7 +342,7 @@ export default function LandingPage() {
                         className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
                     >
                         <div className="relative">
-                            <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
+                            <span className="text-5xl">🫑</span>
                             <div className="absolute -inset-1 bg-emerald-500/20 rounded-full blur-md -z-10" />
                         </div>
                         <div>
@@ -697,7 +697,7 @@ export default function LandingPage() {
                             href="/login"
                             className="group relative inline-flex items-center gap-3 bg-white text-gray-900 px-10 py-5 rounded-2xl font-semibold text-lg transition-all hover:scale-105 shadow-2xl shadow-white/10 overflow-hidden"
                         >
-                            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                            <span className="text-4xl">🫑</span>
                             <span className="relative z-10">Ücretsiz Başla</span>
                             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
                         </Link>
@@ -713,7 +713,7 @@ export default function LandingPage() {
                 <div className="max-w-6xl mx-auto">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-3">
-                            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+                            <span className="text-3xl">🫑</span>
                             <div>
                                 <span className="text-white font-semibold">Pepper Root AI Agency</span>
                                 <span className="text-gray-500 text-sm block">Pepper Root gücüyle.</span>

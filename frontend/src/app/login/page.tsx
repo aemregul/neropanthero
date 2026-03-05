@@ -87,10 +87,7 @@ export default function LoginPage() {
                     href="/"
                     className="flex items-center justify-center gap-3 mb-8 hover:opacity-80 transition-opacity"
                 >
-                    <div className="relative">
-                        <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
-                        <div className="absolute -inset-1 bg-emerald-500/20 rounded-full blur-md -z-10" />
-                    </div>
+                    <span className="text-5xl">🫑</span>
                     <div className="text-center">
                         <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Pepper Root</h1>
                         <p className="text-emerald-400 text-sm -mt-1">AI Agency</p>

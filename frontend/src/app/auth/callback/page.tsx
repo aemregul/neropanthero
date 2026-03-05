@@ -35,7 +35,7 @@ function CallbackHandler() {
     return (
         <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
             <div className="text-center">
-                <img src="/logo.png" alt="Logo" className="w-20 h-20 mb-4 animate-pulse object-contain" />
+                <span className="text-6xl mb-4 animate-pulse">🫑</span>
                 <p className="text-gray-400">Giriş yapılıyor...</p>
                 <div className="flex items-center justify-center gap-2 mt-4">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -52,7 +52,7 @@ export default function AuthCallbackPage() {
         <Suspense fallback={
             <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
                 <div className="text-center">
-                    <img src="/logo.png" alt="Logo" className="w-20 h-20 mb-4 animate-pulse object-contain" />
+                    <span className="text-6xl mb-4 animate-pulse">🫑</span>
                     <p className="text-gray-400">Yükleniyor...</p>
                 </div>
             </div>
