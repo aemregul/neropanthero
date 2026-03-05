@@ -14,7 +14,10 @@ export const metadata: Metadata = {
   title: "Pepper Root AI Agency",
   description: "AI ile görsel, video ve içerik üretimi",
   icons: {
-    icon: "/icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+      { url: "/icon.png", sizes: "64x64", type: "image/png" },
+    ],
     apple: "/apple-icon.png",
   },
 };
