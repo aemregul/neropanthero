@@ -929,7 +929,9 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 {/* ── ICON RAIL ── */}
                 <div className="sidebar-rail">
                     {/* Logo */}
-                    <span className="text-4xl">🫑</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '4px 0', marginBottom: 8 }}>
+                        <span className="text-4xl">🫑</span>
+                    </div>
 
                     {/* Main nav */}
                     <button
