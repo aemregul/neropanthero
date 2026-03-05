@@ -12,6 +12,7 @@ psycopg[binary]
 # Validation & Settings
 pydantic
 pydantic-settings
+email-validator
 
 # Authentication
 python-jose[cryptography]
