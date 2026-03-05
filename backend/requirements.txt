@@ -26,6 +26,7 @@ aiohttp
 anthropic
 fal-client
 openai
+google-genai
 pinecone-client
 
 # Utilities

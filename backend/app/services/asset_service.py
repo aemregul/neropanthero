@@ -76,6 +76,19 @@ class AssetService:
         await db.commit()
         await db.refresh(asset)
         
+        # Model kullanım loglaması (fire-and-forget)
+        if model_name:
+            try:
+                from app.services.usage_tracker import log_model_usage
+                from app.models.models import Session
+                # Session'dan user_id al
+                result = await db.execute(select(Session).where(Session.id == session_id))
+                session = result.scalar_one_or_none()
+                user_id = session.user_id if session else None
+                await log_model_usage(db, user_id, model_name, asset_type)
+            except Exception:
+                pass  # Loglama hatası ana işlemi bozmamalı
+        
         return asset
     
     async def get_session_assets(
