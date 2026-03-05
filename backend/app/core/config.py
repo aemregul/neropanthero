@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # Güvenlik
     SECRET_KEY: str = "CHANGE-ME-IN-PRODUCTION"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200  # 30 gün (beni hatırla için)
     
     # AI APIs
     ANTHROPIC_API_KEY: Optional[str] = None
