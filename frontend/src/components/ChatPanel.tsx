@@ -1410,6 +1410,10 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                             if (msg.image_url) {
                                                 // Markdown image'ları kaldır: ![alt](url)
                                                 displayContent = displayContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
+                                                // Markdown link formatındaki image URL'lerini de kaldır: [text](url.png/jpg/webp...)
+                                                displayContent = displayContent.replace(/\[[^\]]*\]\([^)]*\.(?:png|jpg|jpeg|webp|gif|bmp|svg)(?:\?[^)]*)?\)/gi, '').trim();
+                                                // Standalone image URL'lerini kaldır (satır başındaki fal.media veya diğer image host URL'leri)
+                                                displayContent = displayContent.replace(/https?:\/\/[^\s]+\.(?:png|jpg|jpeg|webp|gif)(?:\?[^\s]*)?\s*/gi, '').trim();
                                                 // [ÜRETİLEN GÖRSELLER: url] tag'lerini kaldır
                                                 displayContent = displayContent.replace(/\n?\n?\[(?:ÜRETİLEN (?:GÖRSELLER|VİDEOLAR)|Bu mesajda üretilen (?:görseller|videolar)):\s*[^\]]+\]/gi, '').trim();
                                             }
