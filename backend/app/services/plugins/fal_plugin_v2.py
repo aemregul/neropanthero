@@ -837,8 +837,10 @@ except Exception as e:
                 
                 _stdout_text = stdout.decode().strip()
                 if not _stdout_text:
-                    logger.error(f"fal subprocess boş çıktı. Exit: {proc.returncode}. Stderr:\\n{_stderr_text}")
-                    return {"success": False, "error": f"Video subprocess boş yanıt. Exit: {proc.returncode}. Bakın backend logs."}
+                    # Subprocess boş çıktı verdi — stderr'den hata detayını al
+                    _stderr_short = _stderr_text[:300] if _stderr_text else "stderr de boş"
+                    logger.error(f"fal subprocess boş çıktı. Exit: {proc.returncode}. Stderr:\n{_stderr_text}")
+                    return {"success": False, "error": f"Video subprocess hatası (Exit {proc.returncode}): {_stderr_short}"}
                 
                 try:
                     result = _json.loads(_stdout_text)
