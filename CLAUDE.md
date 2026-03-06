@@ -1,18 +1,52 @@
 # Pepper Root AI Agency — Proje Dokümantasyonu
 
-> **Son Güncelleme:** 5 Mart 2026
+> **Son Güncelleme:** 6 Mart 2026
 > **Repo:** [github.com/aemregul/PepperRootAiAgency](https://github.com/aemregul/PepperRootAiAgency)
 
 Bu dosya projenin tüm özelliklerini, mimarisini ve nasıl çalıştığını açıklar. Yeni bir AI oturumu veya ekip üyesi bu dosyayı okuyarak projeyi tamamen anlayabilir.
 
 ---
 
+## 🚨 KRİTİK ÇALIŞMA KURALLARI (EN ÖNCELİKLİ!)
+
+Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje bozulabilir.
+
+### 1. Branch Tabanlı Geliştirme
+- **`main` branch'a direkt push YASAK.** Her değişiklik için yeni branch oluştur.
+- Branch'ı Vercel'de ayrı deploy olarak canlıya al ve test et.
+- Test başarılıysa `main`'e merge et. Başarısızsa düzelt, tekrar test et.
+- Branch isimlendirme: `fix/bug-adi`, `feat/ozellik-adi`, `hotfix/acil-duzeltme`
+
+### 2. Bir Şeyi Düzeltirken Başka Şeyleri Bozma
+- **Bir bug fix'e odaklanırken mevcut çalışan özellikleri ASLA bozma.**
+- Değişiklik yapmadan önce etki analizi yap: "Bu değişiklik hangi dosyaları, hangi özellikleri etkiler?"
+- Eğer bir fix başka bir özelliği bozabilecekse, **ÖNCE kullanıcıyı bilgilendir:**
+  - "Bu bug'ı şöyle çözeceğim, ama X özelliği etkilenebilir. Onay veriyor musun?"
+- Kullanıcıdan onay almadan riskli değişiklik YAPMA.
+
+### 3. Test Etmeden Push Yok
+- Her değişiklik **önce local'de test edilecek** (import kontrolü, syntax kontrolü, çalıştırma testi).
+- Sonra branch'ta Vercel'e deploy edilip **canlıda da test edilecek.**
+- Test edilmemiş kod kesinlikle `main`'e merge edilmez.
+
+### 4. Bilgilendirme Zorunluluğu
+- Ne yapacağını, hangi dosyaları değiştireceğini, potansiyel riskleri **önceden söyle.**
+- Sessizce dosya değiştirme, "bonus" özellik ekleme, veya planlanmamış değişiklik yapma.
+- Her değişiklik öncesi kısa bilgi ver: "X dosyasında Y değişikliği yapacağım, Z etkisi olabilir."
+
+### 5. Sadece İstenen Şeye Odaklan
+- Kullanıcının istediği değişikliği yap, ekstra "iyileştirme" ekleme.
+- Çalışan sisteme müdahale etme — "daha iyi olur" diye değişiklik yapma.
+- Bir sorun çözülmüyorsa zorlamadan kullanıcıyla konuş, birlikte karar verin.
+
+---
+
 ## 🧠 Proje Nedir?
 
-Pepper Root AI Agency, **agent-first** (ajantik) bir AI yaratıcı stüdyodur. Kullanıcı doğal dilde istek yapar; AI asistan planlar, üretir, düzenler ve adapte olur. Basit bir chatbot değil — otonom düşünen bir yaratıcı yönetmendir.
+Pepper Root AI Agency, **agent-first** (ajantik) bir AI yaratıcı stüdyodur. Kullanıcı doğal dilde istek yapar; AI asistan planlar, üretir, düzenler ve adapte olur.
 
 **Temel Yetkinlikler:**
-- 🖼️ Görsel üretim ve düzenleme (31 AI modeli, admin toggle ile yönetim)
+- 🖼️ Görsel üretim ve düzenleme (33 AI modeli, admin toggle ile yönetim)
 - 🎬 Video üretim ve post-production (FFmpeg + AI)
 - 🎵 Müzik/ses üretimi ve senkronizasyon
 - 🚀 Tek cümleden tam kampanya oluşturma (otonom)
@@ -31,9 +65,8 @@ Pepper Root AI Agency, **agent-first** (ajantik) bir AI yaratıcı stüdyodur. K
 | **Veritabanı** | PostgreSQL (Lokal: Docker `pepperroot-db` / Canlı: Railway Postgres) |
 | **Cache** | Redis (opsiyonel — yoksa DB fallback) |
 | **Primary LLM** | OpenAI GPT-4o |
-| **Vision** | GPT-4o Vision, Claude Sonnet 4 |
-| **Görsel AI** | fal.ai (Nano Banana, Flux.2, DALL-E vb.) |
-| **Video AI** | fal.ai (Kling 3.0 Pro — varsayılan), Google Veo 3.1 (timeout korumalı) |
+| **Görsel AI** | fal.ai (Nano Banana, Flux.2, GPT Image 1 vb.) |
+| **Video AI** | fal.ai (Kling 3.0 Pro — varsayılan), Google Veo 3.1 |
 | **Ses AI** | OpenAI Whisper/TTS, ElevenLabs, Mirelo SFX |
 | **Arama** | Pinecone (vektör), SerpAPI (web) |
 | **Auth** | Google OAuth 2.0, JWT |
@@ -49,16 +82,10 @@ PepperRootAiAgency/
 │   │   ├── services/
 │   │   │   ├── agent/           # orchestrator.py, tools.py (36 araç)
 │   │   │   ├── plugins/         # fal_plugin_v2.py, fal_models.py
-│   │   │   ├── campaign_planner_service.py   # Phase 22
-│   │   │   ├── video_editor_service.py       # Phase 23
-│   │   │   ├── audio_sync_service.py         # Phase 24
 │   │   │   ├── long_video_service.py
 │   │   │   ├── google_video_service.py
-│   │   │   ├── gemini_image_service.py
-│   │   │   ├── voice_audio_service.py
 │   │   │   ├── entity_service.py
 │   │   │   ├── asset_service.py
-│   │   │   ├── quality_control_service.py
 │   │   │   └── ...
 │   │   └── main.py
 │   └── requirements.txt
@@ -75,292 +102,163 @@ PepperRootAiAgency/
 
 ## 🤖 Agent Sistemi (36 Araç)
 
-Agent, GPT-4o tabanlıdır. Kullanıcının mesajını alır, hangi araçları kullanacağına karar verir ve çalıştırır. Tüm araç tanımları `tools.py`, handler'lar `orchestrator.py` dosyasındadır.
+Agent, GPT-4o tabanlıdır. Kullanıcının mesajını alır, hangi araçları kullanacağına karar verir ve çalıştırır. Araç tanımları `tools.py`, handler'lar `orchestrator.py` dosyasındadır.
 
-### Tool Call Guard'ları (Otomatik Koruma)
-| Guard | Engellenen | Tetikleyici | Açıklama |
-|---|---|---|---|
-| **Entity Guard** | `create_character`, `create_location`, `create_brand` | `generate_image` aynı batch'te | GPT-4o görsel üretirken prompttaki karakterleri otomatik entity yapmasını engeller |
-| **Plugin Guard** | `generate_image`, `edit_image` vb. | `manage_plugin` aynı batch'te | Plugin oluşturma isteğinde gereksiz görsel üretimini engeller |
-| **Video Duplicate Guard** | İkinci video çağrısı | Aynı batch'te 2x video | GPT-4o'nun aynı istek için duplikat video üretmesini engeller |
-
-Bu guard'lar `orchestrator.py`'de `_process_tool_calls_for_stream` içinde, tool call loop'unun başında çalışır.
-
-### Görsel Üretim & Düzenleme
-| Araç | Ne Yapar | Nasıl Çalışır |
+### Tool Call Guard'ları
+| Guard | Engellenen | Tetikleyici |
 |---|---|---|
-| `generate_image` | Yeni görsel üretir | Prompt → GPT-4o model seçer → fal.ai'ye gönderir. 9 model destekler (nano_banana, flux2, gpt_image, reve, seedream, recraft, flux2_max, flux_kontext, flux_schnell) |
-| `edit_image` | Mevcut görseli düzenler | Gemini 2.5 Flash ile maskesiz inpainting. "Gözlüğü sil", "arka planı değiştir" gibi komutlar. Yüz kimliğini koruma özellikli |
-| `outpaint_image` | Görsel boyutunu/formatını değiştirir | fal.ai ile canvas genişletme (1:1→16:9 gibi) |
-| `upscale_image` | Kaliteyi artırır | Topaz/Crystal upscaler ile 2x-4x büyütme |
-| `remove_background` | Arka planı kaldırır | BiRefNet V2 ile transparent PNG çıktı |
-| `generate_grid` | 3x3 grid oluşturur | 9 farklı açı/stil varyasyonu tek seferde |
-| `apply_style` | Stil uygular | Sinematik, Pop Art, Anime vb. preset stiller |
+| **Entity Guard** | `create_character/location/brand` | `generate_image` aynı batch'te |
+| **Plugin Guard** | `generate_image`, `edit_image` vb. | `manage_plugin` aynı batch'te |
+| **Video Duplicate Guard** | İkinci video çağrısı | Aynı batch'te 2x video |
 
-### Video Üretim
-| Araç | Ne Yapar | Nasıl Çalışır |
-|---|---|---|
-| `generate_video` | Kısa video üretir (≤10s) | Text-to-video veya image-to-video. 5 model: Kling 3.0, Sora 2, Seedance 1.5, Hailuo 02. **KRİTİK KURAL:** Maksimum 10 saniye uzunluğunda video üretir. Daha uzun videolar için `generate_long_video` kullanın. |
-| `generate_long_video` | Uzun video üretir (15-180s) | Sahne planı oluşturur → kullanıcıdan onay ister → her sahneyi Kling ile doğrudan fal_client.subscribe_async çağırarak üretir → FFmpeg ile crossfade birleştirir. 5dk timeout + retry logic. **KRİTİK KURAL:** Minimum 15 saniye uzunluğunda video üretir. Daha kısa videolar için `generate_video` kullanın. |
-| `edit_video` | Videoyu görsel olarak düzenler | AI ile nesne silme, stil değiştirme |
-| `advanced_edit_video` | **[Phase 23]** FFmpeg video post-production | 10 operasyon: trim (kırp), speed (0.25x–4x), fade-in/out, text overlay (7 pozisyon), reverse (boomerang), resize (aspect ratio), concat (birleştir), loop (tekrarla), filter (9 filtre: grayscale, sepia, vintage, blur vb.), extract_frame (kare çıkar) |
-
-### Ses & Müzik
-| Araç | Ne Yapar | Nasıl Çalışır |
-|---|---|---|
-| `generate_music` | AI müzik üretir | MiniMax ile prompttan müzik |
-| `add_audio_to_video` | Videoya ses/müzik ekler | Lokal FFmpeg ile birleştirme. Video + audio URL alır, çıktıyı fal.ai'ye yükler |
-| `transcribe_voice` | Ses→metin çeviri | OpenAI Whisper v3 (Türkçe/İngilizce) |
-| `audio_visual_sync` | **[Phase 24]** Ses-görüntü senkronizasyonu | 6 operasyon: analyze_audio (FFprobe analiz), detect_beats (enerji-tabanlı beat tespit), beat_cut_list (müzik beat'lerine göre sahne geçiş zamanlamaları), generate_sfx (Mirelo SFX ile videodan ses efekti), smart_mix (akıllı müzik mix — volume ducking + fade), tts_narration (TTS seslendirme overlay) |
-
-### Otonom Kampanya
-| Araç | Ne Yapar | Nasıl Çalışır |
-|---|---|---|
-| `plan_and_execute` | **[Phase 22]** Tek cümleden tam kampanya | Kullanıcı "Nike yaz kampanyası — 5 post, 2 video" der → GPT-4o detaylı üretim planı oluşturur (her task için prompt, format, model, bağımlılık) → bağımsız görevler paralel, bağımlı olanlar sıralı çalışır → tüm çıktılar toplanıp sunulur |
-| `generate_campaign` | Basit batch varyasyon üretimi | Tek prompttan farklı format/stilde çoklu görsel |
-
-### Entity (Karakter/Marka/Mekan) Yönetimi
-| Araç | Ne Yapar | Nasıl Çalışır |
-|---|---|---|
-| `create_character` | Karakter oluşturur | Ad, açıklama, referans fotoğraf → DB + vektör index. Sonraki üretimlerde yüz tutarlılığı sağlar |
-| `create_location` | Mekan oluşturur | "Karanlık lab" gibi → sonraki üretimlerde arka plan olarak kullanılır |
-| `create_brand` | Marka oluşturur | İsim, renkler (primary/secondary/accent), slogan, sektör → tüm üretimlere marka kimliği enjekte edilir |
-| `get_entity` / `list_entities` | Entity sorgula | Tag veya ID ile çek, tüm entity'leri listele |
-| `delete_entity` | Entity sil | Paralel çoklu silme destekler |
-| `semantic_search` | Doğal dil ile entity ara | Pinecone vektör DB ile "mavi elbiseli kadın" gibi aramalar |
-
-### Araştırma & Analiz
-| Araç | Ne Yapar | Nasıl Çalışır |
-|---|---|---|
-| `search_web` | Google araması | SerpAPI ile web araması yapıp sonuçları özetler |
-| `search_images` | Görsel araması | Google Images'dan referans görseller bulur |
-| `browse_url` | Web sayfası okuma | URL'yi çeker ve içeriğini analiz eder |
-| `research_brand` | Marka araştırması | Web'den marka bilgilerini toplar (renkler, ton, sektör) |
-| `analyze_image` | Görsel analizi | GPT-4o Vision ile görseli detaylı inceler (dövme, yüz, kompozisyon vb.) |
-| `analyze_video` | Video analizi | FFmpeg ile key frame çıkarır → GPT-4o Vision ile analiz eder |
-| `get_library_docs` | Kütüphane doku çeker | Context7 MCP ile 40+ kütüphanenin güncel API bilgisi |
-
-### Diğer
+### Görsel Araçları
 | Araç | Ne Yapar |
 |---|---|
-| `manage_core_memory` | Kullanıcı tercihlerini öğrenip hafızaya kaydeder (implicit) |
-| `manage_plugin` | Plugin oluştur/düzenle/sil (yaratıcı şablonlar) |
-| `save_style` | Stil şablonu kaydet |
-| `save_web_asset` | Web'den bulunan görseli Media Panel'e kaydet |
+| `generate_image` | Yeni görsel üretir (9 model destekler) |
+| `edit_image` | Mevcut görseli düzenler (maskesiz inpainting) |
+| `outpaint_image` | Görsel boyutunu/formatını değiştirir |
+| `upscale_image` | Kaliteyi artırır (Topaz 2x-4x) |
+| `remove_background` | Arka planı kaldırır (transparent PNG) |
+| `generate_grid` | 3x3 grid oluşturur (9 varyasyon) |
 
----
-
-## 🛡️ Admin Panel (Yönetim Paneli)
-
-Admin paneli 3 sekmeden oluşur:
-
-| Sekme | Ne Yapar |
+### Video Araçları
+| Araç | Ne Yapar |
 |---|---|
-| **Genel Bakış** | Toplam oturum, asset, mesaj, aktif model istatistikleri |
-| **AI Modeller** | 31 modelin açma/kapama toggle'ları. 5 kategori: Görsel (8), Düzenleme (7), Video (7), Ses (5), Araçlar (4) |
-| **Analitik** | Model kullanım dağılımı pie chart, günlük üretim trendleri line chart |
+| `generate_video` | Kısa video üretir (≤10s) — 5 model |
+| `generate_long_video` | Uzun video üretir (15-180s) — sahne planı + FFmpeg birleştirme |
+| `edit_video` | Videoyu görsel olarak düzenler |
+| `advanced_edit_video` | FFmpeg post-production (10 operasyon) |
 
-### Model Toggle Sistemi
-- Toggle admin panelden yapılır → DB `ai_models.is_enabled` güncellenir
-- Smart Router (`fal_plugin_v2.py`) her model seçiminde `is_model_enabled()` kontrol eder (16 yerde)
-- Kapalı model → fallback chain'den sonraki enabled model kullanılır
-- **Disabled Model Warning**: Kullanıcı açıkça kapalı bir model isterse ("nano banana 2 kullan"), agent kullanıcıya modelin kapalı olduğunu ve yerine hangi modelin kullanıldığını söyler
-- GPT-4o (LLM) admin panelde gösterilmez — tek LLM, kapatılamaz
-- `MASTER_MODELS` listesinde olmayan eski modeller DB'den otomatik temizlenir
+### Ses & Müzik
+| Araç | Ne Yapar |
+|---|---|
+| `generate_music` | AI müzik üretir (MiniMax) |
+| `add_audio_to_video` | Videoya ses/müzik ekler (FFmpeg) |
+| `audio_visual_sync` | Ses-görüntü senkronizasyonu (6 operasyon) |
 
-### Dosyalar
-- `backend/app/api/routes/admin.py` — CRUD + model seed + cleanup
-- `frontend/src/components/AdminPanelModal.tsx` — Admin panel UI
-- `frontend/src/app/globals.css` — `.admin-tab` / `.admin-tab-active` CSS sınıfları
-
-### Phase 32: Grok Imagine Entegrasyonu & Tool İyileştirmeleri
-* **Grok Imagine Modelleri:** xAI'ın Grok Imagine 1.0 (Görsel) ve Grok Imagine Video (t2v/i2v) modelleri eklendi.
-* **Geniş Çaplı Entegrasyon:** Modeller `fal_plugin_v2.py` (Smart Router ve haritalamalar), `admin.py` (Marketplace & Toggle), ve `tools.py` (LLM enum listesi) dosyalarına eklendi. Toplam model sayısı 33'e çıktı.
-* **Routing Düzeltmesi:** GPT-4o'nun "30 saniyelik video üret" komutlarında yanlışlıkla kısa video aracını (`generate_video`) seçmesi engellendi. `generate_video` için maksimum 10 saniye limiti, `generate_long_video` için ise 15 saniye ve üzeri şartları araç açıklamalarına (description) **KRİTİK KURAL** olarak eklendi.  
-
----
-
-## 🏪 Eklenti Mağazası (Plugin Marketplace)
-
-Kullanıcıların hazır yaratıcı şablonları keşfedip projelerine ekleyebildiği, kendi oluşturdukları plugin'leri toplulukla paylaşabildiği marketplace sistemi.
-
-### Özellikler
-- **41 resmi (seed) plugin**: 8 kategori — Sanat & Yaratıcı, Sosyal Medya, İş & Ticaret, Fotoğrafçılık, Moda & Güzellik, Oyun & Entertainment, Eğitim, Diğer
-- **Topluluk pluginleri**: Chat'ten `manage_plugin` ile oluşturulan pluginler otomatik `is_public=True` olarak marketplace'e yayınlanır
-- **3 sıralama modu**: Popüler (downloads), En İyi (rating), Yeni (recent)
-- **2 kategori filtresi**: Tümü (resmi + topluluk), Topluluk (sadece kullanıcı plugin'leri)
-- **Canlı arama**: İsim, açıklama, stil ve yazar üzerinde debounced arama (300ms)
-- **Plugin kartları**: İkon, isim, yazar, rating (⭐), indirme sayısı, stil etiketi, kamera açıları, kaynak rozeti (🏪 Resmi / 👤 Topluluk)
-- **Proje seçici popup**: "Projeye Ekle" butonuna tıklayınca mini proje listesi açılır, istenen projeye yüklenir
-- **Duplicate kontrolü**: Aynı plugin aynı projede zaten varsa "Bu plugin zaten ekli" uyarısı
-- **Plugin kopyalama**: Marketplace'ten yüklenen plugin, hedef projeye bağımsız bir kopya olarak kaydedilir
-
-### API Endpoints
-| Endpoint | Metod | Açıklama |
-|---|---|---|
-| `/admin/marketplace/plugins` | GET | Tüm plugin'leri getir (sort, category, search params) |
-| `/admin/marketplace/plugins/{id}/install` | POST | Plugin'i belirtilen session'a kopyala (body: `session_id`). Duplicate kontrolü yapar |
-| `/admin/creative-plugins/{id}/publish` | PATCH | Kullanıcı plugin'ini marketplace'e yayınla |
-
-### Akış
-```
-Chat'te "plugin oluştur" → manage_plugin tool → DB (is_public=True, user_id atanır)
-                         → Marketplace'te "Topluluk" filtresinde otomatik görünür
-                         → Diğer kullanıcılar "Projeye Ekle" → Proje seçici popup
-                         → Plugin hedef projeye kopyalanır (duplicate varsa hata)
-```
-
-### Dosyalar
-- `backend/app/api/routes/admin.py` — Marketplace endpoints + `MARKETPLACE_SEED_PLUGINS` (41 plugin)
-- `frontend/src/components/PluginMarketplaceModal.tsx` — Marketplace UI (proje seçici popup dahil)
-- `frontend/src/lib/api.ts` — `getMarketplacePlugins()`, `publishPlugin()`, `installMarketplacePlugin(pluginId, sessionId)`
+### Diğer Araçlar
+| Araç | Ne Yapar |
+|---|---|
+| `plan_and_execute` | Tek cümleden tam kampanya |
+| `create_character/location/brand` | Entity oluştur (@tag sistemi) |
+| `search_web/search_images/browse_url` | Web araştırma |
+| `research_brand` | Marka araştırması |
+| `manage_plugin` | Plugin CRUD |
+| `manage_core_memory` | Kullanıcı tercihleri hafıza |
 
 ---
 
 ## 🎬 33 AI Modeli (5 Kategori)
 
-Tüm modeller `fal_models.py`'de tanımlı, `fal_plugin_v2.py` ile çağrılır. GPT-4o prompt içeriğini analiz edip en uygun modeli seçer ("auto" mode).
-
 | Kategori | Sayı | Modeller |
 |---|---|---|
 | Görsel Üretim | 9 | Nano Banana Pro, Nano Banana 2, Flux.2, Flux 2 Max, GPT Image 1, Reve, Seedream 4.5, Recraft V3, Grok Imagine 1.0 |
 | Görsel Düzenleme | 7 | Flux Kontext, Flux Kontext Pro, OmniGen V1, Flux Inpainting, Object Removal, Outpainting, Nano Banana 2 Edit |
-| Video | 9 | Kling 3.0 Pro, Sora 2 Pro, Veo 3.1 Fast, Veo 3.1 Quality, Veo 3.1 (Google SDK), Seedance 1.5, Hailuo 02, Grok Imagine Video (t2v/i2v) |
-| Ses & Müzik | 4 | ElevenLabs TTS, ElevenLabs SFX, Whisper STT, Stable Audio |
+| Video | 9 | Kling 3.0 Pro, Sora 2 Pro, Veo 3.1 Fast, Veo 3.1 Quality, Veo 3.1 (Google SDK), Seedance 1.5, Hailuo 02, Grok Imagine Video |
+| Ses & Müzik | 4 | ElevenLabs TTS/SFX, Whisper STT, Stable Audio |
 | Araç & Utility | 4 | Face Swap, Topaz Upscale, Background Removal, Style Transfer |
+
+---
+
+## 🛡️ Admin Panel
+
+| Sekme | Ne Yapar |
+|---|---|
+| **Genel Bakış** | Toplam oturum, asset, mesaj, aktif model istatistikleri |
+| **AI Modeller** | 33 modelin açma/kapama toggle'ları (5 kategori) |
+| **Analitik** | Model kullanım dağılımı, günlük üretim trendleri |
+
+---
+
+## 🏪 Plugin Marketplace
+
+- 41 resmi plugin (8 kategori)
+- Topluluk pluginleri (chat'ten oluşturulan otomatik yayınlanır)
+- Sıralama: Popüler, En İyi, Yeni
+- Proje seçici popup ile yükleme, duplicate kontrolü
 
 ---
 
 ## 🖥️ Frontend Özellikleri
 
-### Chat Paneli (Merkez)
-- **SSE Streaming**: Harf harf animasyonlu yanıtlar (25-30ms/karakter)
-- **Çoklu görsel yükleme**: Tek seferde 10'a kadar (thumbnail önizleme)
-- **ChatGPT tarzı medya düzeni**: Medya text bubble dışında ayrı blok
-- **Video player**: Hover preview + lightbox modal (tam ekran)
-- **Video siyah ekran fix**: `#t=0.1` fragment + `onLoadedData`
-
-### Assets Panel (Sağ)
-- **6 kategori filtresi**: Tümü, Görsel, Video, Ses, Favoriler, Yüklemeler
-- **Yeniden eskiye sıralama**: En yeni medya en üstte
-- **Çoklu seçim & indirme**: Alt bardaki ☑️ butonla seçim modu, seçili medyaları toplu indirme
-- **Video hover oynatma**: Fareyle üzerine gelince otomatik preview
-- **Çöp kutusu**: Silinen asset'ler geri yüklenebilir (thumbnail'lı)
-
-### Sidebar (Sol)
-- **Proje yönetimi**: Oluştur, sil, geçiş yap
-- **Entity listesi**: Karakterler, Markalar, Mekanlar (hover'da çöp kutusu ile hızlı silme)
-- **Yaratıcı Eklentiler**: Proje bazlı plugin listesi, hover'da çöp kutusu ile hızlı silme
-- **Eklenti Mağazası**: Rail'deki butonla açılır
-- **Daraltılabilir**: 48px rail ↔ 200px genişleme
-
-### Auth
-- **Google OAuth 2.0 only** — tek tıkla giriş
-- **Hesabımı hatırla** toggle (localStorage vs sessionStorage)
-- **Multi-user izolasyonu**: Her kullanıcı sadece kendi verilerini görür
+- **Chat Paneli**: SSE streaming, çoklu görsel yükleme (10'a kadar), ChatGPT tarzı medya düzeni
+- **Assets Panel**: 6 kategori filtresi, çoklu seçim & indirme, video hover preview, çöp kutusu
+- **Sidebar**: Proje yönetimi, entity listesi, plugin listesi, daraltılabilir
+- **Auth**: Google OAuth 2.0, "Hesabımı hatırla" toggle
 
 ---
 
 ## 🔧 Çalıştırma Komutları
 
 ```bash
-# PostgreSQL container başlat
-docker start pepperroot-db
-
-# Backend çalıştır (production — uzun video üretimi sırasında restart olmaz)
+# Backend (production)
 cd /Users/emre/PepperRootAiAgency/backend
 source venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-# Backend çalıştır (development — dosya değişikliğinde auto-reload)
+# Backend (development — auto-reload)
 cd /Users/emre/PepperRootAiAgency/backend
 source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-# ⚠️ --reload modunda arka plan video task'ları dosya değişikliğinde iptal olur!
 
-# Frontend çalıştır
+# Frontend
 cd /Users/emre/PepperRootAiAgency/frontend
 npm run dev
 ```
 
-### URL'ler (Lokal)
-| Servis | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-| Swagger Docs | http://localhost:8000/docs |
-
-### URL'ler (Canlı / Production)
-| Servis | URL |
-|---|---|
-| Frontend (Vercel) | https://pepper-root-ai-agency.vercel.app |
-| Frontend (.com.tr) | https://pepperrootaiagency.com.tr (DNS yayılması bekleniyor) |
-| Backend (Railway) | https://pepperrootaiagency-production.up.railway.app |
-| Backend Docs | https://pepperrootaiagency-production.up.railway.app/docs |
-
-### Veritabanı (Lokal)
-- Container: `pepperroot-db`
-- User/Password: `postgres/postgres`
-- Database: `pepperroot`, Port: `5432`
-
-### Veritabanı (Canlı — Railway Postgres)
-- Railway panelinden **Postgres kutucuğu → Data** sekmesinde tablolar görüntülenebilir
-- Railway panelinden **Postgres → Query** sekmesinde SQL sorguları çalıştırılabilir
-- Bağlantı bilgileri: **Postgres → Connect** sekmesinde
-
-### Canlı Deploy Komutları
-```bash
-# Vercel'e frontend deploy (kök dizinden)
-cd /Users/emre/PepperRootAiAgency
-npx vercel --prod --yes
-npx vercel alias <deployment-url> pepper-root-ai-agency.vercel.app
-
-# Railway backend otomatik deploy: GitHub'a push yapınca Railway otomatik algılar
-cd /Users/emre/PepperRootAiAgency/backend
-git add . && git commit -m "mesaj" && git push
-```
+### URL'ler
+| Ortam | Frontend | Backend |
+|---|---|---|
+| Lokal | http://localhost:3000 | http://localhost:8000 |
+| Canlı | https://pepper-root-ai-agency.vercel.app | https://pepperrootaiagency-production.up.railway.app |
 
 ### Railway Environment Variables
 | Değişken | Açıklama |
 |---|---|
-| `DATABASE_URL` | `${Postgres.DATABASE_URL}` — Railway referans değişkeni (kod otomatik `postgresql+asyncpg://` formatına çevirir) |
+| `DATABASE_URL` | `${Postgres.DATABASE_URL}` — Railway referans |
 | `OPENAI_API_KEY` | OpenAI API anahtarı |
 | `FAL_KEY` | fal.ai API anahtarı |
 | `GOOGLE_CLIENT_ID` | Google OAuth Client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret |
-| `GOOGLE_REDIRECT_URI` | `https://pepperrootaiagency-production.up.railway.app/api/v1/auth/google/callback` |
-| `FRONTEND_URL` | `https://pepper-root-ai-agency.vercel.app` |
-| `BACKEND_URL` | `https://pepperrootaiagency-production.up.railway.app` |
-| `ALLOWED_ORIGINS` | `https://pepper-root-ai-agency.vercel.app,https://pepperrootaiagency.com.tr` |
-| `USE_REDIS` | `false` (Railway'de Redis kurulmadı) |
+| `GOOGLE_REDIRECT_URI` | Google OAuth callback URL |
+| `FRONTEND_URL` | Vercel frontend URL |
+| `BACKEND_URL` | Railway backend URL |
+| `ALLOWED_ORIGINS` | CORS izin verilen origins |
 
 ---
 
-## 📋 Faz Geçmişi (Tamamlanan Fazlar)
+## 🧠 Agent Context Sistemi
+
+`orchestrator.py` → `_build_enriched_context()` metodu:
+
+| # | Bileşen | Ne Enjekte Eder |
+|---|---|---|
+| 1 | Entity @tag çözümleme | Mesajdaki @tag'lerin detayları |
+| 2 | Proje bağlamı | Aktif proje adı, kategori |
+| 3 | Working Memory | Son 5 asset'in URL ve prompt'u |
+| 4 | Kullanıcı tercihleri | Aspect ratio, model, stil |
+| 5 | Episodic memory | Önemli olaylar |
+| 6 | Core memory | Projeler arası uzun vadeli hafıza |
+| 7 | Entity listesi | Kullanıcının TÜM entity'leri |
+| 8 | Plugin listesi | Projede yüklü eklentilerin stil bilgisi |
+
+---
+
+## 📋 Faz Geçmişi
 
 | Faz | Tarih | Açıklama |
 |---|---|---|
 | 1-4 | Ocak 2026 | Altyapı, Agent çekirdek, Entity sistemi, Video üretimi |
-| 5-6 | 30 Ocak | Plugin sistemi, Claude Vision, Roadmap/Task yönetimi |
-| 7-8 | 1-3 Şubat | Frontend, Auth (Google OAuth), OpenAI GPT-4o migration |
-| 9-10 | 3-6 Şubat | Redis cache, Global Wardrobe, Pinecone semantic search, Context7 |
-| 11-13 | 7-17 Şubat | Gemini image edit, Çoklu görsel yükleme, Core Memory, Web Vision |
-| 14-16 | 17-18 Şubat | UI redesign, Türkçe lokalizasyon, Autonomous Video Director |
-| 17-19.5 | 18-21 Şubat | Multi-model video engine (Veo 3.1), Face intelligence, Robustness |
-| 20-21 | 26 Şubat | 47 model entegrasyonu, Agent-driven model selection |
-| **22** | **27 Şubat** | **Full Autonomous Studio Orchestration** — `campaign_planner_service.py` |
-| **23** | **27 Şubat** | **Real-time Interactive Video Editing** — `video_editor_service.py` |
-| **24** | **27 Şubat** | **Audio-Visual Synchronization** — `audio_sync_service.py` |
-| **25** | **27 Şubat** | **Admin Panel** — Model toggle sistemi, disabled model warning, AI Servisleri kaldırıldı |
-| **26** | **1 Mart** | **Plugin Marketplace** — 41 resmi plugin, API-driven filtre/sıralama, topluluk yayınlama |
-| **27** | **1 Mart** | **Plugin & Entity Guards, UX Temizliği** — Proje seçici popup, duplicate kontrolü, auto-publish, Entity Guard, Plugin Guard, sidebar hızlı silme, Assets Panel çoklu seçim & indirme |
-| **28** | **3 Mart** | **Agent Intelligence Upgrade** — Hafıza/tercih/episodic memory entegrasyonu, stream auth fix, unified context builder (`_build_enriched_context`), entity list & plugin context enjeksiyonu, auto-summary stream desteği |
-| **29** | **3 Mart** | **Security & Deploy Readiness** — Tüm endpoint'lere auth + ownership validation, CORS/FRONTEND_URL/BACKEND_URL env variable'lara taşındı, SECRET_KEY güvenlik uyarısı, 3 kullanılmayan servis silindi, `_process_chat` user izolasyonu |
-| **30** | **3 Mart** | **Smart Agent Features** — 👍/👎 Geri bildirim sistemi (episodic memory + prompt learning), benzer başarılı prompt referansları, model başarı istatistikleri, 10 prompt template, frontend feedback UI, tüm API çağrılarına auth header |
-| **31** | **4 Mart** | **Long Video Production Fix & Stability** — Aşağıdaki başlıkta detaylandırılmıştır |
-| **32** | **4 Mart** | **Grok Imagine Entegrasyonu** — `fal_plugin_v2.py` / `tools.py` Grok entegre edildi, admin panel dahil 33 model oldu |
-| **33** | **5 Mart** | **Autonomous Agency Features** — Long-Term RAG Persistence, Self-Reflection Auto-Correction (Vision), Brand Book Constraints, Multi-Agent Swarm (Copywriter Agent), Graceful Degradation / Task Queue |
-| **34** | **5 Mart** | **Production Deploy** — Railway backend deploy (Nixpacks + Procfile), Vercel frontend deploy (CLI), PostgreSQL Railway Postgres bağlantısı, DATABASE_URL auto-convert (`postgresql://` → `postgresql+asyncpg://`), Alembic migration startup entegrasyonu, PORT `sh -c` wrapper, Google OAuth canlı ortam yapılandırması, `email-validator` dependency fix, CORS/ALLOWED_ORIGINS ayarları, Vercel alias yönetimi, logo → 🫑 emoji geri dönüşü |
+| 5-8 | Şubat 2026 | Plugin, Auth, Frontend, GPT-4o migration |
+| 9-13 | Şubat 2026 | Redis, Pinecone, Gemini edit, Core Memory |
+| 14-21 | Şubat 2026 | UI redesign, Multi-model video, 47 model |
+| 22-24 | 27 Şubat | Kampanya planlama, Video editing, Audio sync |
+| 25-27 | 1 Mart | Admin Panel, Plugin Marketplace, Guards & UX |
+| 28-30 | 3 Mart | Agent Intelligence, Security & Deploy, Feedback sistemi |
+| 31 | 4 Mart | Long Video Production Fix & Stability |
+| 32 | 4 Mart | Grok Imagine Entegrasyonu (33 model) |
+| 33 | 5 Mart | Autonomous Agency Features |
+| 34 | 5 Mart | Production Deploy (Railway + Vercel) |
 
 ---
 
@@ -368,92 +266,17 @@ git add . && git commit -m "mesaj" && git push
 
 | Metrik | Değer |
 |---|---|
-| Agent Araç Sayısı | 36 |
-| AI Model Sayısı | 33 (admin toggle ile yönetilebilir) |
-| Toplam Faz | 34 (tümü tamamlandı) |
-| Backend Satır | ~15.000+ |
-| Frontend Satır | ~5.000+ |
-| Canlı Backend | Railway (pepperrootaiagency-production.up.railway.app) |
-| Canlı Frontend | Vercel (pepper-root-ai-agency.vercel.app) |
-| Python | 3.14 |
-| Next.js | 16.1.6 |
+| Agent Araç | 36 |
+| AI Model | 33 |
+| Toplam Faz | 34 |
+| Canlı Backend | Railway |
+| Canlı Frontend | Vercel |
 
 ---
 
-## 📌 Eksikler / Yapılacaklar
+## 📌 Bilinen Sorunlar & Yapılacaklar
 
-- [x] ~~**Deploy**: Railway (Backend) + Vercel (Frontend)~~ ✅ Phase 34
-- [x] ~~Canlı ortam testleri~~ ✅ Phase 34 — Google OAuth, DB migration, CORS doğrulandı
-- [x] ~~Sohbet içi geri bildirim mekanizması (👍/👎)~~ ✅ Phase 30
-- [x] ~~Beni hatırla butonu~~ ✅ Token süresi 30 güne uzatıldı
-- [x] ~~Soru vs üretim ayırımı~~ ✅ System prompt'a guard eklendi
-- [x] ~~Görsel duplikasyonu~~ ✅ ChatPanel'de markdown link/URL image stripping
-- [x] ~~Favicon biber ikonu~~ ✅ PNG favicon (Chrome çalışıyor, Safari cache sorunu)
-- [x] ~~Sidebar biber ikonu ortalama~~ ✅ Genişlediğinde ortaya gelmesi
-- [x] ~~`.com.tr` domain DNS yayılması~~ ✅ A/CNAME kayıtları yapılandırıldı
-- [x] ~~HTTPS SSL sertifikaları~~ ✅ Vercel otomatik yönetiyor
-- [x] ~~Rate limiting~~ ✅ `rate_limit.py` (60/10/20 req/min)
-- [x] ~~Model kullanım geçmişi~~ ✅ `usage_tracker.py` (asset save otomatik log)
-- [x] ~~System prompt sadeleştirme~~ ✅ 132→66 satır, 15K→3.6K char (%76 azalma)
-- [x] ~~Monitoring / Hata takip~~ ✅ `monitoring.py` (istek süresi, hata log, yavaş uyarı)
-- [x] ~~Redis production kurulumu~~ ✅ `redis_enabled` auto-detect, Railway'de REDIS_URL verilince aktif
-- [x] ~~Uzun video paralel üretim~~ ✅ Karakter yoksa 3x paralel, varsa sıralı (i2v zincirleme)
-
----
-
-## 🧠 Agent Context Sistemi (Phase 28)
-
-`orchestrator.py` → `_build_enriched_context()` metodu hem `process_message` hem `process_message_stream` tarafından çağrılır.
-
-| # | Bileşen | Ne Enjekte Eder |
-|---|---|---|
-| 1 | Entity @tag çözümleme | Mesajdaki @tag'lerin detayları (fotoğraf URL dahil) |
-| 2 | Proje bağlamı | Aktif proje adı, kategori, açıklama |
-| 3 | Working Memory | Son 5 asset'in URL ve prompt'u |
-| 4 | Kullanıcı tercihleri | Aspect ratio, model, stil, auto-upscale |
-| 5 | Episodic memory | Önemli olaylar (tercih, oluşturma, geri bildirim) |
-| 6 | Core memory | Projeler arası uzun vadeli hafıza |
-| 7 | Entity listesi | Kullanıcının TÜM entity'leri (@tag ile eşleştirme) |
-| 8 | Plugin listesi | Projede yüklü eklentilerin stil bilgisi |
-
----
-
-## 🎬 Phase 31 — Long Video Production Fix & Stability (4 Mart 2026)
-
-### Sorunlar
-Uzun video üretimi (30s-3dk) birden fazla katmanlı bug yüzünden çalışmıyordu:
-1. **%89 Takılma**: Frontend `GenerationProgressCard.tsx` içinde sahte bir simülasyon (`90 * (1 - e^(-3*t))`) ile ilerleme barını 89%'a kadar doldurup orada bırakıyordu
-2. **Sessiz Segment Başarısızlığı**: `fal_plugin_v2.py` subprocess'inde `os._exit(0)` çağrısı stdout buffer'ını flush etmeden process'i öldürüyordu → Kling başarıyla ürettiği videoyu teslim edemiyordu
-3. **Progress Callback Eksikliği**: `orchestrator.py` `_run_long_video_bg` fonksiyonu `progress_callback` parametresini `create_and_process`'e geçmiyordu → gerçek ilerleme hiç frontend'e ulaşmıyordu
-4. **LLM Halüsinasyonu**: Arka plan video üretimi başlatıldıktan sonra GPT-4o'ya gereksiz bir "final completion" isteği atılıyordu → rastgele alakasız mesajlar (örn: "Yağmurlu gece caddesinde yürüyen adam") üretiliyordu
-5. **UnboundLocalError**: `fal_plugin_v2.py` `_generate_video` fonksiyonunda `except Exception as e:` bloğu dışında `str(e)` referansı → subprocess crash
-
-### Çözümler
-| Değişiklik | Dosya | Detay |
-|---|---|---|
-| **stdout flush** | `fal_plugin_v2.py` | `os._exit(0)` öncesinde `sys.stdout.flush()` + `sys.stderr.flush()` eklendi |
-| **Progress callback bağlantısı** | `orchestrator.py` | `_run_long_video_bg` içinde `_on_progress(pct, msg)` → `progress_service.send_progress()` ile WebSocket'e gerçek ilerleme gönderiliyor |
-| **Background task flag propagation** | `orchestrator.py` | `_process_tool_calls_for_stream` içinde `result["is_background_task"] = True` set edilerek üst katmana taşınıyor |
-| **Final stream guard** | `orchestrator.py` | `process_message_stream` içinde `if not result.get("is_background_task"):` ile gereksiz GPT-4o completion engellendi |
-| **UnboundLocalError fix** | `fal_plugin_v2.py` | `return` ifadesi `except` bloğu içine taşındı, subprocess script'teki `{e}` → `{{e}}` escape edildi |
-| **Uvicorn production başlatma** | Operasyon | `nohup ... < /dev/null > /tmp/backend.log 2>&1 &` ile SIGTTIN suspend engellendi |
-
-### Uzun Video Akışı
-```
-Kullanıcı: "30 sn okyanus videosu"
-→ Agent sahne planı gösterir (text only, tool call yok)
-→ Kullanıcı: "onaylıyorum" / "evet" / "tamam"
-→ generate_long_video tool call
-→ orchestrator._run_long_video_bg() (arka plan task)
-  → progress_callback ile WebSocket'e gerçek ilerleme (%5→%20→%40→%60→%80→%85→%100)
-  → long_video_service.create_and_process()
-    → Segment'lere böl (3×10s)
-    → Her segment için subprocess → fal_client.submit_async (Kling, ~130-300s)
-    → sys.stdout.flush() → JSON yanıt güvenle alınır
-    → Sıralı üretim (karakter tutarlılığı için zincirleme i2v → son frame çıkarma)
-    → FFmpeg crossfade ile birleştir
-    → fal.ai storage'a yükle
-→ WebSocket complete event → frontend video gösterir
-→ GPT-4o'ya final completion GÖNDERİLMEZ (halüsinasyon engeli)
-```
-
+- [ ] Rate limiting ve monitoring middleware sorunlu — devre dışı bırakıldı, stabil hale getirilecek
+- [ ] Video subprocess hatası — "boş yanıt Exit: 1" debug edilecek
+- [ ] System prompt dengelenmesi — çok kısa veya çok uzun olmamalı
+- [ ] Chat SSE streaming güvenilirliği — mesaj kesilme sorunu
