@@ -505,7 +505,7 @@ AGENT_TOOLS_ANTHROPIC = [
     },
     {
         "name": "manage_core_memory",
-        "description": "Kullanıcının kendisi hakkında verdiği bilgileri kalıcı hafızada (Core Memory) yönetir. Kullanıcı bir tercihi belirtirse ekle (add). Fikrini değiştirirse veya silmeni isterse sil (delete). Tüm hafızayı sıfırlamak isterse temizle (clear).",
+        "description": "Kullanıcının kendisi hakkında verdiği STABIL bilgileri kalıcı hafızada (Core Memory) yönetir. Sadece kimlik, stil, marka kuralı, çalışma biçimi gibi uzun ömürlü tercihleri kaydet. Sure, adet, model secimi, son referans veya tek seferlik gorev talimatlarini ASLA kaydetme. Kullanıcı bir tercihi belirtirse ekle (add). Fikrini değiştirirse veya silmeni isterse sil (delete). Tüm hafızayı sıfırlamak isterse temizle (clear).",
         "input_schema": {
             "type": "object",
             "properties": {

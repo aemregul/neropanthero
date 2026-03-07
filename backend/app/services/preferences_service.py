@@ -2,11 +2,15 @@
 User Preferences Service - Agent için kullanıcı tercihlerini yönetir.
 """
 import uuid
-from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import UserPreferences
+from app.services.memory_hygiene import (
+    ALLOWED_LEARNED_CATEGORIES,
+    is_stable_memory_fact,
+    sanitize_memory_text,
+)
 
 
 class PreferencesService:
@@ -29,7 +33,7 @@ class PreferencesService:
         prompt_lines = []
 
         for category, raw_values in learned.items():
-            if raw_values is None:
+            if category not in ALLOWED_LEARNED_CATEGORIES or raw_values is None:
                 continue
 
             values = raw_values if isinstance(raw_values, list) else [raw_values]
@@ -41,8 +45,10 @@ class PreferencesService:
                 else:
                     text = str(value).strip()
 
-                if text:
-                    cleaned_values.append(text)
+                if text and is_stable_memory_fact(category, text):
+                    sanitized = sanitize_memory_text(text)
+                    if sanitized:
+                        cleaned_values.append(sanitized)
 
             if not cleaned_values:
                 continue
@@ -149,6 +155,8 @@ class PreferencesService:
         if action == "clear":
             prefs.learned_preferences = {}
         elif action == "add" and category and fact:
+            if category not in ALLOWED_LEARNED_CATEGORIES or not is_stable_memory_fact(category, fact):
+                return learned
             if category not in learned:
                 learned[category] = []
             if fact not in learned[category]:

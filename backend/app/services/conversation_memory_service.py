@@ -7,13 +7,19 @@ Tek asistan, farklı projeler modeli:
 - Başarılı prompt'ları hatırla (Self-Learning)
 - Kullanıcı tercihlerini öğren
 """
-import json
 import uuid
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from typing import Dict, Any, List
+from datetime import datetime
 
 from openai import AsyncOpenAI
 from app.core.config import settings
+from app.services.memory_hygiene import (
+    ALLOWED_STYLE_PREFERENCE_KEYS,
+    has_conflicting_request_constraints,
+    is_stable_memory_fact,
+    sanitize_memory_text,
+    tokenize_memory_text,
+)
 
 
 class ConversationMemoryService:
@@ -141,37 +147,58 @@ Türkçe yaz. Sadece özet, başka bir şey yazma."""
         
         # Core Memories (Kullanıcı Gerçekleri)
         if memory.get("core_memories"):
-            core_text = "\n".join([f"- {m['fact']} (Kategori: {m.get('category', 'genel')})" for m in memory["core_memories"][-10:]])
-            parts.append(f"👤 KULLANICI HAKKINDA BİLDİKLERİN (CORE MEMORY):\n{core_text}")
+            core_lines = []
+            for item in memory["core_memories"][-10:]:
+                fact = item.get("fact", "")
+                category = item.get("category", "general")
+                if not is_stable_memory_fact(category, fact):
+                    continue
+                sanitized_fact = sanitize_memory_text(fact)
+                if sanitized_fact:
+                    core_lines.append(f"- {sanitized_fact} (Kategori: {category})")
+
+            if core_lines:
+                parts.append(
+                    "👤 KULLANICI HAKKINDA BİLDİKLERİN (CORE MEMORY):\n" + "\n".join(core_lines)
+                )
         
         # Geçmiş sohbet özetleri
         if memory.get("summaries"):
-            recent_summaries = memory["summaries"][-5:]  # Son 5 proje
-            summaries_text = "\n".join([
-                f"- {s['summary']}" for s in recent_summaries
-            ])
-            parts.append(f"📋 SON PROJELER:\n{summaries_text}")
+            summary_lines = []
+            for summary in memory["summaries"][-5:]:
+                sanitized_summary = sanitize_memory_text(summary.get("summary", ""))
+                if sanitized_summary:
+                    summary_lines.append(f"- {sanitized_summary}")
+
+            if summary_lines:
+                parts.append(f"📋 SON PROJELER:\n{'\n'.join(summary_lines)}")
         
         # Tercihler
         if memory.get("preferences"):
-            prefs = memory["preferences"]
-            prefs_text = ", ".join([f"{k}: {v}" for k, v in prefs.items()])
-            parts.append(f"⚙️ TERCİHLER: {prefs_text}")
-        
-        # Başarılı prompt'lar
-        if memory.get("successful_prompts"):
-            recent_prompts = memory["successful_prompts"][-3:]
-            prompts_text = "\n".join([
-                f"- \"{p['prompt'][:100]}\" (skor: {p.get('score', '?')})"
-                for p in recent_prompts
-            ])
-            parts.append(f"⭐ BAŞARILI PROMPTLAR:\n{prompts_text}")
+            pref_lines = []
+            for key, value in memory["preferences"].items():
+                fact = f"{key}: {value}"
+                if not is_stable_memory_fact("general", fact):
+                    continue
+                sanitized_fact = sanitize_memory_text(fact)
+                if sanitized_fact:
+                    pref_lines.append(sanitized_fact)
+
+            if pref_lines:
+                parts.append(f"⚙️ TERCİHLER: {', '.join(pref_lines)}")
         
         # Stil tercihleri
         if memory.get("style_preferences"):
-            style = memory["style_preferences"]
-            style_text = ", ".join([f"{k}: {v}" for k, v in style.items()])
-            parts.append(f"🎨 STİL: {style_text}")
+            style_lines = []
+            for key, value in memory["style_preferences"].items():
+                if key not in ALLOWED_STYLE_PREFERENCE_KEYS:
+                    continue
+                sanitized_value = sanitize_memory_text(str(value))
+                if sanitized_value:
+                    style_lines.append(f"{key}: {sanitized_value}")
+
+            if style_lines:
+                parts.append(f"🎨 STİL: {', '.join(style_lines)}")
         
         if not parts:
             return ""
@@ -203,6 +230,7 @@ Türkçe yaz. Sadece özet, başka bir şey yazma."""
         
         memory["successful_prompts"].append({
             "prompt": prompt,
+            "memory_prompt": sanitize_memory_text(prompt),
             "result_url": result_url,
             "score": score,
             "asset_type": asset_type,
@@ -229,18 +257,30 @@ Türkçe yaz. Sadece özet, başka bir şey yazma."""
         if not prompts:
             return []
         
-        # Basit kelime eşleştirmesi (Pinecone yoksa fallback)
-        query_words = set(query.lower().split())
+        query_words = tokenize_memory_text(query)
+        if not query_words:
+            return []
+
         scored = []
         
         for p in prompts:
-            prompt_words = set(p["prompt"].lower().split())
+            raw_prompt = p.get("prompt", "")
+            if has_conflicting_request_constraints(query, raw_prompt):
+                continue
+
+            memory_prompt = p.get("memory_prompt") or sanitize_memory_text(raw_prompt)
+            if not memory_prompt:
+                continue
+
+            prompt_words = tokenize_memory_text(memory_prompt)
             overlap = len(query_words & prompt_words)
             if overlap > 0:
-                scored.append((overlap, p))
+                enriched = dict(p)
+                enriched["memory_prompt"] = memory_prompt
+                scored.append((overlap, p.get("score", 0), enriched))
         
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [item[1] for item in scored[:limit]]
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return [item[2] for item in scored[:limit]]
     
     # ===============================
     # TERCİH ÖĞRENME
@@ -263,7 +303,11 @@ Türkçe yaz. Sadece özet, başka bir şey yazma."""
             "style_preferences": {}
         }
         
-        memory["preferences"][key] = value
+        fact = f"{key}: {value}"
+        if not is_stable_memory_fact("general", fact):
+            return
+
+        memory["preferences"][key] = sanitize_memory_text(str(value))
         await cache.set_json(memory_key, memory, ttl=604800)
     
     async def update_style_preference(
@@ -283,7 +327,14 @@ Türkçe yaz. Sadece özet, başka bir şey yazma."""
             "style_preferences": {}
         }
         
-        memory["style_preferences"][style_key] = style_value
+        if style_key not in ALLOWED_STYLE_PREFERENCE_KEYS:
+            return
+
+        sanitized_value = sanitize_memory_text(str(style_value))
+        if not sanitized_value:
+            return
+
+        memory["style_preferences"][style_key] = sanitized_value
         await cache.set_json(memory_key, memory, ttl=604800)
 
     # ===============================
@@ -308,12 +359,19 @@ Türkçe yaz. Sadece özet, başka bir şey yazma."""
             "core_memories": []
         }
         
+        if not is_stable_memory_fact(category, fact):
+            return
+
         if "core_memories" not in memory:
             memory["core_memories"] = []
-            
+
+        sanitized_fact = sanitize_memory_text(fact)
+        if not sanitized_fact:
+            return
+
         memory["core_memories"].append({
             "category": category,
-            "fact": fact,
+            "fact": sanitized_fact,
             "timestamp": datetime.utcnow().isoformat()
         })
         

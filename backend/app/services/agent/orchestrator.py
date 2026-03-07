@@ -20,6 +20,7 @@ from app.services.prompt_translator import translate_to_english, enhance_charact
 from app.services.context7.context7_service import context7_service
 from app.services.preferences_service import preferences_service
 from app.services.episodic_memory_service import episodic_memory
+from app.services.memory_hygiene import is_stable_memory_fact
 from app.models.models import Session as SessionModel, CreativePlugin
 
 # Global referans tutucu (FastAPI arka plan görevlerinin Garbage Collector tarafından silinmesini önler)
@@ -54,6 +55,8 @@ class AgentOrchestrator:
 ## KİMLİK & HAFIZA
 - Başarısız olursan alternatif dene, "yapamıyorum" deme.
 - Kullanıcı **EN AZ 3 KEZ** aynı stili/konuyu tekrarlarsa `manage_core_memory`(add) ile kaydet. Tek seferlik isteklerden tercih çıkarma.
+- Hafıza sadece arka plan bilgisidir. Kullanıcının BU MESAJDA verdiği süre, adet, model, referans ve görev talimatı her zaman hafızadan üstündür.
+- Geçmiş prompt'lardaki süre/adet/model bilgilerini aynen kopyalama. Bunları ancak mevcut mesajla çelişmiyorsa stil ilhamı olarak kullan.
 - Stil belirtilmezse HER ZAMAN FOTOREALİSTİK üret.
 
 ## ⚠️ SORU vs ÜRETİM AYIRIMI (EN KRİTİK KURAL!)
@@ -1016,9 +1019,10 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
             similar = await conversation_memory.find_similar_prompts(user_id, user_message, limit=3)
             if similar:
                 prompt_ctx = "\n\n--- 💡 GEÇMİŞ BAŞARILI PROMPT'LAR ---\n"
-                prompt_ctx += "Bu kullanıcı benzer istekler için daha önce bu prompt'larla güzel sonuçlar aldı. İlham al:\n"
+                prompt_ctx += "Bu örnekleri sadece stil/ton ilhamı için kullan. Süre, adet, model ve referans seçimlerinde mevcut kullanıcı mesajı her zaman baskındır:\n"
                 for idx, p in enumerate(similar, 1):
-                    prompt_ctx += f"{idx}. \"{p['prompt'][:100]}\" (skor: {p.get('score', '?')}, tip: {p.get('asset_type', '?')})\n"
+                    memory_prompt = p.get("memory_prompt") or p.get("prompt", "")
+                    prompt_ctx += f"{idx}. \"{memory_prompt[:100]}\" (skor: {p.get('score', '?')}, tip: {p.get('asset_type', '?')})\n"
                 extra_context += prompt_ctx
                 print(f"💡 Prompt learning eklendi: {len(similar)} referans")
         except Exception as e:
@@ -1279,6 +1283,13 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                 action = tool_input.get("action", "add")
                 category = tool_input.get("fact_category", "general")
                 fact = tool_input.get("fact_description", "")
+
+                if action == "add" and not is_stable_memory_fact(category, fact):
+                    return {
+                        "status": "success",
+                        "message": "Bu bilgi tek seferlik veya gorev-ozel gorundugu icin kalici hafizaya yazilmadi.",
+                        "action_executed": "skipped",
+                    }
                 
                 # Yeni JSONB persistence katmanını kullan
                 await preferences_service.learn_preference(

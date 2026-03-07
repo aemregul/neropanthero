@@ -10,14 +10,9 @@ Bu bilgiler uzun vadeli hafızada saklanır ve context olarak kullanılır.
 """
 import uuid
 from datetime import datetime
-from typing import Optional, List
-from sqlalchemy import select, desc, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
-from app.models.models import Base
-from sqlalchemy import String, Text, DateTime, func, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from app.services.memory_hygiene import is_stable_memory_fact, sanitize_memory_text
 
 
 # Not: Bu model henüz migration'a eklenmedi
@@ -92,6 +87,8 @@ class EpisodicMemoryService:
         "error": 7,           # Hatalar önemli (tekrarlanmasın)
         "interaction": 3      # Etkileşimler düşük
     }
+
+    PROMPT_SAFE_EVENT_TYPES = {"preference", "feedback", "error"}
     
     def __init__(self):
         self.memories: dict[str, List[EpisodicMemoryEntry]] = {}  # user_id -> memories
@@ -199,14 +196,21 @@ class EpisodicMemoryService:
         """
         System prompt'a eklenecek hafıza özeti oluştur.
         """
-        memories = await self.recall(user_id, limit=max_entries)
+        memories = await self.recall(user_id, limit=max_entries * 3)
         
         if not memories:
             return ""
         
-        prompt_parts = ["\n## 🧠 HAFIZA (Önceki Olaylar)"]
+        prompt_lines = []
         
         for m in memories:
+            if m.event_type not in self.PROMPT_SAFE_EVENT_TYPES:
+                continue
+
+            sanitized_content = sanitize_memory_text(m.content)
+            if not is_stable_memory_fact("general", sanitized_content):
+                continue
+
             icon = {
                 "preference": "⭐",
                 "feedback": "💬",
@@ -216,9 +220,14 @@ class EpisodicMemoryService:
                 "interaction": "💡"
             }.get(m.event_type, "📝")
             
-            prompt_parts.append(f"- {icon} {m.content}")
+            prompt_lines.append(f"- {icon} {sanitized_content}")
+            if len(prompt_lines) >= max_entries:
+                break
+
+        if not prompt_lines:
+            return ""
         
-        return "\n".join(prompt_parts)
+        return "\n".join(["\n## 🧠 HAFIZA (Önceki Olaylar)", *prompt_lines])
     
     async def forget(self, user_id: str, memory_id: str) -> bool:
         """Belirli bir hafızayı unut."""

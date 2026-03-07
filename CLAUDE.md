@@ -130,10 +130,30 @@ Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje b
   - Dosya: `backend/app/services/preferences_service.py`
   - Not: Bu değişiklik stabilite dışı ama kaybolmaması için kayıt altına alındı. `manage_core_memory` ile kaydedilen `learned_preferences` verileri artık prompt context'e açık şekilde ekleniyor.
 
+- **Hafıza hijyeni daraltıldı; anlık görev parametreleri artık kalıcı tercih gibi davranmıyor**
+  - Dosyalar:
+    - `backend/app/services/memory_hygiene.py`
+    - `backend/app/services/preferences_service.py`
+    - `backend/app/services/conversation_memory_service.py`
+    - `backend/app/services/episodic_memory_service.py`
+    - `backend/app/services/agent/orchestrator.py`
+    - `backend/app/services/agent/tools.py`
+  - Kök neden:
+    - Kullanıcıyı tanımak için eklenen hafıza katmanı; `5 saniye`, `1 görsel`, seçilen model, son referans gibi anlık görev parametrelerini de kalıcı bilgi gibi prompt'a geri taşıyabiliyordu.
+    - Özellikle `successful_prompts` benzerlik araması ve learned preferences, yeni istekte açıkça verilen süre/adet bilgisini kirletebiliyordu.
+  - Düzeltme:
+    - Kalıcı hafıza yazımı whitelist ile sınırlandı; sadece stabil `style / identity / brand / workflow / preferred_colors` türü bilgiler saklanıyor
+    - Süre, adet, model, URL, son asset, tek seferlik görev talimatları hafızaya yazılmıyor
+    - Cross-project memory ve episodic memory prompt'a eklenirken transient içerikler filtreleniyor
+    - `find_similar_prompts` artık mevcut istekle çelişen geçmiş prompt'ları eliyor ve prompt örneklerini sadece stil/ton ilhamı olarak veriyor
+    - Agent system prompt'una "mevcut mesaj hafızadan üstündür" guardrail'i eklendi
+
 ### Yapılan Doğrulamalar
 - `backend/venv/bin/python -m py_compile backend/app/services/agent/orchestrator.py`
 - `backend/venv/bin/python -m py_compile backend/app/services/preferences_service.py`
 - `backend/venv/bin/pytest backend/tests/test_preferences_service.py`
+- `backend/venv/bin/python -m py_compile backend/app/services/memory_hygiene.py backend/app/services/preferences_service.py backend/app/services/conversation_memory_service.py backend/app/services/episodic_memory_service.py backend/app/services/agent/orchestrator.py backend/app/services/agent/tools.py`
+- `backend/venv/bin/pytest backend/tests/test_preferences_service.py backend/tests/test_memory_hygiene.py backend/tests/test_stats_service.py`
 - `frontend`: `ChatPanel.tsx` için lint çalıştırıldı, yeni error yok; dosyada mevcut eski warning'ler devam ediyor.
 
 ### Halen Doğrulanması Gerekenler

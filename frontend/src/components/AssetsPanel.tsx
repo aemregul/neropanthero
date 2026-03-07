@@ -120,7 +120,7 @@ export function AssetsPanel({
                             )
                     );
 
-                    return [...mapped.reverse(), ...optimisticAssets];
+                    return [...optimisticAssets, ...mapped];
                 });
             }
         } catch (error) {
@@ -145,7 +145,6 @@ export function AssetsPanel({
             }
 
             return [
-                ...prev,
                 {
                     id: `pending-${Date.now()}`,
                     url: incomingAsset.url,
@@ -156,6 +155,7 @@ export function AssetsPanel({
                     thumbnailUrl: incomingAsset.type === "image" ? incomingAsset.url : undefined,
                     isPending: true,
                 },
+                ...prev,
             ];
         });
 
@@ -174,8 +174,7 @@ export function AssetsPanel({
             const q = searchQuery.toLowerCase();
             result = result.filter(a => a.label?.toLowerCase().includes(q));
         }
-        // En yeni medya en üstte
-        return [...result].reverse();
+        return result;
     }, [assets, activeFilter, searchQuery]);
 
     // Actions
