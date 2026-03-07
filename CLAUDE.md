@@ -75,6 +75,57 @@ Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje b
   - Sorun: Kısa video tool çağrısında model gelmezse varsayılan olarak `veo` kullanılıyordu; bu da sistemi gereksiz şekilde Google/Gemini hattına bağımlı yapıyordu.
   - Düzeltme: Varsayılan model `kling` yapıldı.
 
+- **Test branch'inde video maliyet optimizasyonu yapıldı**
+  - Dosyalar:
+    - `backend/app/services/agent/orchestrator.py`
+    - `backend/app/services/plugins/fal_plugin_v2.py`
+    - `backend/app/services/plugins/model_selector.py`
+    - `backend/app/services/long_video_service.py`
+  - Amaç: Testlerde kredi tüketimini düşürmek
+  - Karar: Mevcut entegrasyon içindeki varsayılan video modeli `MiniMax Hailuo 02 Standard` olarak ayarlandı
+  - Not:
+    - Bu değişiklik **test branch'i** içindir
+    - Yayına çıkarken kalite / ihtiyaç durumuna göre `Veo` veya başka ana modele geri dönülebilir
+    - Explicit olarak `veo`, `kling` vb. model isteyen çağrılar bozulmadı; sadece varsayılanlar ve auto seçim maliyet odaklı kaydırıldı
+
+- **Kısa video tamamlanınca chat'e düşmeyen kritik hata izole edildi**
+  - Dosyalar:
+    - `backend/app/services/stats_service.py`
+    - `backend/app/services/agent/orchestrator.py`
+    - `frontend/src/components/ChatPanel.tsx`
+  - Kök neden: `usage_stats` tablosu hem günlük aggregate hem model-bazlı satırlar için kullanılıyor. Video asset kaydedildikten sonra `StatsService` yanlış şekilde birden fazla satırla eşleşip `Multiple rows were found when one or none was required` hatası üretiyordu.
+  - Etki: Video aslında oluşuyor ve assets tarafına kaydoluyor, ama completion mesajı chat'e düşmeden akış hata mesajına dönüyordu; kullanıcı ekranda `%90` civarında takılmış gibi görüyordu.
+  - Düzeltme:
+    - `StatsService` artık sadece aggregate satırı (`model_name IS NULL`) hedefliyor
+    - Legacy duplicate durumda ilk uygun satırı kullanıp user flow'u bozmuyor
+    - Video istatistiği yazımı ayrıca non-critical hale getirildi; hata olsa bile completion akışı kesilmiyor
+    - Frontend progress state `complete/error` event'lerinde doğru statüye çekildi
+
+- **Media panelinden eklenen referans görsel yanlış asset'e düşebiliyordu**
+  - Dosyalar:
+    - `frontend/src/components/ChatPanel.tsx`
+    - `backend/app/services/agent/orchestrator.py`
+  - Kök neden 1: Media panelinden chat'e eklenen görsel gerçek binary olarak attach edilmiyordu; boş `File` placeholder gönderildiği için backend yeni referansı alamıyor, session cache'deki eski görsele düşebiliyordu.
+  - Kök neden 2: `with-files` (non-stream) akışında arka plan video görevi başlatıldıktan sonra sistem tekrar LLM final response üretiyordu; bu da saçma/hallucinated kapanış metinlerine neden olabiliyordu.
+  - Düzeltme:
+    - Asset panelinden eklenen image URL artık önce fetch edilip gerçek dosya olarak attach ediliyor
+    - Drag/drop ve asset-panel image attach davranışı aynı mantığa çekildi
+    - Non-stream background task akışında final LLM cevabı atlanıyor; tool'un deterministik mesajı doğrudan kullanılıyor
+
+- **Referanslı video akışında gereksiz çift upload kaldırıldı**
+  - Dosyalar:
+    - `backend/app/api/routes/chat.py`
+    - `backend/app/services/agent/orchestrator.py`
+  - Kök neden:
+    - `with-files` endpoint'i yüklenen referans görseli önce fal storage'a upload ediyordu
+    - ardından `agent.process_message` aynı görseli base64'ten tekrar fal storage'a upload ediyordu
+    - bu da özellikle referanslı video başlatma akışında gereksiz gecikme yaratıyordu
+  - Düzeltme:
+    - `with-files` akışında oluşan fal URL'leri artık `agent.process_message` içine doğrudan taşınıyor
+    - agent bu URL'leri yeniden kullanıyor, ikinci upload yapılmıyor
+    - GPT-4o vision için base64 içerik korunuyor; sadece storage upload duplicaton kaldırıldı
+    - Saf `videoya çevir / animate` isteklerinde GPT-4o'ya görsel piksellerini tekrar okutmak yerine doğrudan `image_url` odaklı hızlı yol kullanılıyor
+
 - **Agent prompt hafızasında DB öğrenilmiş tercihler görünür hale getirildi**
   - Dosya: `backend/app/services/preferences_service.py`
   - Not: Bu değişiklik stabilite dışı ama kaybolmaması için kayıt altına alındı. `manage_core_memory` ile kaydedilen `learned_preferences` verileri artık prompt context'e açık şekilde ekleniyor.

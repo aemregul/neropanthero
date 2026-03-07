@@ -7,7 +7,7 @@ from datetime import datetime, date
 from typing import Optional
 import uuid
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import UsageStats
@@ -31,7 +31,10 @@ class StatsService:
         # Bugünün kaydını ara
         query = select(UsageStats).where(
             UsageStats.date >= today_start,
-            UsageStats.date <= today_end
+            UsageStats.date <= today_end,
+            # Bu servis günlük aggregate satırıyla çalışır.
+            # Per-model satırlar usage_tracker tarafından ayrı tutulur.
+            UsageStats.model_name.is_(None),
         )
         
         if user_id:
@@ -39,8 +42,10 @@ class StatsService:
         else:
             query = query.where(UsageStats.user_id.is_(None))
         
-        result = await db.execute(query)
-        stats = result.scalar_one_or_none()
+        # Eski veride birden fazla aggregate satır oluşmuş olabilir.
+        # Kullanıcı akışını bozmak yerine en güncel satırı kullan.
+        result = await db.execute(query.order_by(desc(UsageStats.created_at)))
+        stats = result.scalars().first()
         
         # Yoksa yeni kayıt oluştur
         if not stats:

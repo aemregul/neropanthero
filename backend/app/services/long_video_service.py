@@ -26,7 +26,7 @@ class VideoSegment:
     status: str  # pending, generating, completed, failed
     video_url: Optional[str] = None
     reference_image_url: Optional[str] = None
-    model: Optional[str] = "kling"  # Varsayılan model Kling (daha güvenilir)
+    model: Optional[str] = "hailuo"  # Test branch'inde varsayılan model Hailuo (maliyet odaklı)
     error: Optional[str] = None
 
 
@@ -97,11 +97,11 @@ class LongVideoService:
                 if isinstance(desc, dict):
                     prompt_txt = desc.get("prompt", str(desc))
                     ref_img = desc.get("reference_image_url")
-                    model_val = "kling"  # Uzun videolarda tutarlılık için her zaman Kling
+                    model_val = "hailuo"  # Test branch'inde maliyet odaklı varsayılan
                 else:
                     prompt_txt = str(desc)
                     ref_img = None
-                    model_val = "kling"
+                    model_val = "hailuo"
                     
                 dur = min(segment_duration, remaining_duration)
                 # API sadece 5 veya 10 kabul ediyor — en yakına snap

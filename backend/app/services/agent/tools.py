@@ -793,4 +793,3 @@ AGENT_TOOLS_ANTHROPIC = [
 
 # OpenAI tools formatı
 AGENT_TOOLS = convert_to_openai_tools(AGENT_TOOLS_ANTHROPIC)
-

@@ -134,6 +134,19 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 - Değişiklik isterse ilgili tool'u çağır, sadece metin yazma.
 - Her yanıtın ANLAMLI ve SPESİFİK olmalı — ne yaptığını/ne ürettiğini açıkla.
 """
+
+    def _is_direct_image_to_video_request(self, user_message: str) -> bool:
+        """Basit referanslı i2v dönüşüm isteklerini tespit et."""
+        lower_msg = (user_message or "").lower()
+        video_keywords = ("video", "videoya", "animasyon", "animasyona", "hareketlendir", "hareketli", "clip", "klip")
+        transform_keywords = ("çevir", "dönüştür", "oluştur", "yap", "animate", "convert", "turn")
+        question_keywords = ("?", "neden", "niye", "nasıl", "ne oldu", "problem", "hata")
+
+        return (
+            any(keyword in lower_msg for keyword in video_keywords)
+            and any(keyword in lower_msg for keyword in transform_keywords)
+            and not any(keyword in lower_msg for keyword in question_keywords)
+        )
     
     async def process_message(
         self, 
@@ -143,6 +156,7 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         conversation_history: list = None,
         reference_image: str = None,
         reference_images: list = None,
+        uploaded_reference_urls: list = None,
         last_reference_urls: list = None,
 
     ) -> dict:
@@ -181,8 +195,17 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         
         # Çoklu görsel desteği: reference_images listesini işle
         all_images = reference_images or ([reference_image] if reference_image else [])
-        
-        if all_images:
+
+        if uploaded_reference_urls:
+            uploaded_image_urls = [url for url in uploaded_reference_urls if url]
+            if uploaded_image_urls:
+                uploaded_image_url = uploaded_image_urls[0]
+                self._session_reference_images[str(session_id)] = {
+                    "url": uploaded_image_url,
+                    "base64": all_images[0] if all_images else None
+                }
+                print(f"⚡ Önceden yüklenmiş {len(uploaded_image_urls)} referans görsel yeniden kullanılıyor")
+        elif all_images:
             for idx, img_b64 in enumerate(all_images):
                 if not img_b64:
                     continue
@@ -219,7 +242,21 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                 print(f"🔄 {len(uploaded_image_urls)} referans görsel DB history'den alındı.")
         
         # Mesajları hazırla
-        if all_images and uploaded_image_urls:
+        direct_i2v_request = bool(all_images and uploaded_image_urls and self._is_direct_image_to_video_request(user_message))
+
+        if direct_i2v_request:
+            url_info = ", ".join([f"Görsel{i+1}: {u}" for i, u in enumerate(uploaded_image_urls)])
+            messages = conversation_history + [
+                {
+                    "role": "user",
+                    "content": user_message + (
+                        f"\n\n[REFERANS GÖRSEL URL'LERİ: {url_info}\n"
+                        f"Bu istek doğrudan image-to-video dönüşümüdür. Görsel(ler)i ayrıca analiz etmene gerek yok. "
+                        f"`generate_video` çağrısında birinci görseli `image_url` olarak kullan.]"
+                    )
+                }
+            ]
+        elif all_images and uploaded_image_urls:
             # GPT-4o Vision format — her görsel için ayrı image_url part
             user_content = []
             
@@ -1136,6 +1173,14 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
             
             last_tool_failed = not tool_result.get("success", True)
             has_any_success = bool(result["images"] or result["videos"] or result.get("_pending_audio_url"))
+
+            # Arka plan işlerinde LLM'e tekrar söz verildiğinde saçma/hallucinated kapanışlar üretebiliyor.
+            # Bu akışta deterministik tool mesajını doğrudan nihai cevap yap.
+            if tool_result.get("is_background_task"):
+                print("🔄 BACKGROUND TASK DETECTED (non-stream): Skipping final LLM completion call.")
+                result["response"] += tool_result.get("message", "İşlem arka planda başlatıldı.")
+                result["is_background_task"] = True
+                return
             
             retry_tool_choice = "auto"
             if last_tool_failed and not has_any_success and retry_count < MAX_RETRIES:
@@ -2183,8 +2228,11 @@ Konuşma:
                         thumbnail_url=result.get("thumbnail_url")
                     )
                     
-                    # İstatistik
-                    await StatsService.track_video_generation(db, uuid.UUID(user_id), model_name)
+                    # İstatistik hatası kullanıcıya tamamlanan videoyu bozmasın.
+                    try:
+                        await StatsService.track_video_generation(db, uuid.UUID(user_id), model_name)
+                    except Exception as stats_err:
+                        print(f"⚠️ Video istatistiği yazılamadı: {stats_err}")
                     
                     # Mesaj oluştur ve Push at
                     from app.models.models import Message
@@ -2257,8 +2305,8 @@ Konuşma:
             image_url = params.get("image_url")
             duration = params.get("duration", "5")
             aspect_ratio = params.get("aspect_ratio", "16:9")
-            # Stabilite önceliği: model verilmezse daha güvenilir kısa video hattı olan Kling'i kullan.
-            model = params.get("model") or "kling"
+            # Test branch'inde kredi tasarrufu önceliği: model verilmezse daha ucuz varsayılanı kullan.
+            model = params.get("model") or "hailuo"
             
             # ⛔ 10s üstü videolar için plan zorunlu — generate_long_video'ya yönlendir
             if int(duration) > 10:

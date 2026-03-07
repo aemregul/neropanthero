@@ -14,6 +14,7 @@ interface Asset {
     isFavorite?: boolean;
     savedToImages?: boolean;
     thumbnailUrl?: string;
+    isPending?: boolean;
 }
 
 type FilterTab = "all" | "images" | "videos" | "audio" | "favorites" | "uploads";
@@ -23,14 +24,27 @@ interface AssetsPanelProps {
     onToggle?: () => void;
     sessionId?: string | null;
     refreshKey?: number;
+    incomingAsset?: { url: string; type: "image" | "video" | "audio" | "uploaded" } | null;
+    onIncomingAssetConsumed?: () => void;
     onSaveToImages?: () => void;
     onAssetDeleted?: () => void;
     onAttachAssetUrl?: (url: string, type: "image" | "video" | "audio" | "uploaded") => void;
 }
 
-export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey, onSaveToImages, onAssetDeleted, onAttachAssetUrl }: AssetsPanelProps) {
+export function AssetsPanel({
+    collapsed = false,
+    onToggle,
+    sessionId,
+    refreshKey,
+    incomingAsset,
+    onIncomingAssetConsumed,
+    onSaveToImages,
+    onAssetDeleted,
+    onAttachAssetUrl,
+}: AssetsPanelProps) {
     const [assets, setAssets] = useState<Asset[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
     const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
     const [searchQuery, setSearchQuery] = useState("");
@@ -79,7 +93,12 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
             setAssets([]);
             return;
         }
-        setIsLoading(true);
+        const showBlockingLoader = assets.length === 0;
+        if (showBlockingLoader) {
+            setIsLoading(true);
+        } else {
+            setIsRefreshing(true);
+        }
         try {
             const data = await getAssets(sessionId);
             if (data && Array.isArray(data)) {
@@ -92,16 +111,56 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                     savedToImages: false,
                     thumbnailUrl: a.thumbnail_url,
                 }));
-                setAssets(mapped.reverse());
+                setAssets((prev) => {
+                    const optimisticAssets = prev.filter(
+                        (asset) =>
+                            asset.isPending &&
+                            !mapped.some(
+                                (serverAsset) => serverAsset.url === asset.url && serverAsset.type === asset.type
+                            )
+                    );
+
+                    return [...mapped.reverse(), ...optimisticAssets];
+                });
             }
         } catch (error) {
             console.error("Assets fetch error:", error);
         } finally {
             setIsLoading(false);
+            setIsRefreshing(false);
         }
     };
 
     useEffect(() => { fetchAssets(); }, [sessionId, refreshKey]);
+
+    useEffect(() => {
+        if (!incomingAsset?.url) {
+            return;
+        }
+
+        setAssets((prev) => {
+            const exists = prev.some((asset) => asset.url === incomingAsset.url && asset.type === incomingAsset.type);
+            if (exists) {
+                return prev;
+            }
+
+            return [
+                ...prev,
+                {
+                    id: `pending-${Date.now()}`,
+                    url: incomingAsset.url,
+                    type: incomingAsset.type,
+                    label: "Hazırlanıyor...",
+                    isFavorite: false,
+                    savedToImages: false,
+                    thumbnailUrl: incomingAsset.type === "image" ? incomingAsset.url : undefined,
+                    isPending: true,
+                },
+            ];
+        });
+
+        onIncomingAssetConsumed?.();
+    }, [incomingAsset, onIncomingAssetConsumed]);
 
     // Filtered assets
     const filteredAssets = useMemo(() => {
@@ -238,7 +297,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                         className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 hover:bg-[var(--background-secondary)] transition-colors"
                         onClick={() => { handleAttachToChat(contextMenu.asset); setContextMenu(null); }}
                     >
-                        <MessageSquarePlus size={14} style={{ color: "var(--accent)" }} /> Chat'e Ekle
+                        <MessageSquarePlus size={14} style={{ color: "var(--accent)" }} /> Chat&apos;e Ekle
                     </button>
                     <button
                         className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 hover:bg-[var(--background-secondary)] transition-colors"
@@ -320,7 +379,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105"
                             style={{ background: "var(--accent)", color: "white" }}
                         >
-                            <Send size={16} /> Chat'e Gönder
+                            <Send size={16} /> Chat&apos;e Gönder
                         </button>
                         <button onClick={() => downloadAsset(selectedAsset)} className="p-2 rounded-full hover:bg-white/15 transition-colors" title="İndir">
                             <Download size={18} className="text-white" />
@@ -389,7 +448,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                                 className="p-2 rounded-lg hover:bg-[var(--card)] transition-colors"
                                 title="Yenile"
                             >
-                                <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} style={{ color: "var(--foreground-muted)" }} />
+                                <RefreshCw size={16} className={isLoading || isRefreshing ? "animate-spin" : ""} style={{ color: "var(--foreground-muted)" }} />
                             </button>
 
                             {/* Collapse */}
@@ -425,7 +484,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
 
                 {/* Assets Grid */}
                 <div className="flex-1 overflow-y-auto p-2">
-                    {isLoading ? (
+                    {isLoading && filteredAssets.length === 0 ? (
                         <div className="flex items-center justify-center h-40">
                             <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
                         </div>
@@ -459,7 +518,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                                         {asset.type === "video" ? (
                                             <div className="w-full h-full">
                                                 {asset.thumbnailUrl ? (
-                                                    <img src={asset.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                                    <img src={asset.thumbnailUrl} alt="" className="w-full h-full object-cover" loading={asset.isPending ? "eager" : "lazy"} />
                                                 ) : (
                                                     <video
                                                         src={`${asset.url}#t=0.1`}
@@ -476,7 +535,7 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                                                 <span className="text-[10px] text-white/60 px-2 text-center truncate w-full">{asset.label || "Ses"}</span>
                                             </div>
                                         ) : (
-                                            <img src={asset.url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                                            <img src={asset.url} alt="" className="w-full h-full object-cover" loading={asset.isPending ? "eager" : "lazy"} decoding="async" />
                                         )}
 
                                         {/* Rename overlay */}
@@ -511,6 +570,15 @@ export function AssetsPanel({ collapsed = false, onToggle, sessionId, refreshKey
                                         {asset.type === "video" && (
                                             <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-black/60 text-white flex items-center gap-1">
                                                 <Video size={10} /> VİDEO
+                                            </div>
+                                        )}
+
+                                        {asset.isPending && (
+                                            <div className="absolute inset-0 bg-black/35 flex items-center justify-center pointer-events-none">
+                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/55 text-white text-[10px] font-medium">
+                                                    <Loader2 size={10} className="animate-spin" />
+                                                    Yükleniyor
+                                                </div>
                                             </div>
                                         )}
 

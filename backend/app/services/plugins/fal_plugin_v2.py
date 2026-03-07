@@ -67,6 +67,8 @@ class FalPluginV2(PluginBase):
         "fal-ai/veo3.1/fast": "veo_fast",
         "fal-ai/veo3.1/image-to-video": "veo_quality",
         "fal-ai/veo3.1": "veo_quality",
+        "fal-ai/bytedance/seedance/v1/pro/fast/image-to-video": "seedance",
+        "fal-ai/bytedance/seedance/v1/pro/fast/text-to-video": "seedance",
         "fal-ai/bytedance/seedance/v1.5/pro/image-to-video": "seedance",
         "fal-ai/bytedance/seedance/v1.5/pro/fast/text-to-video": "seedance",
         "fal-ai/minimax/hailuo-02/standard/image-to-video": "hailuo",
@@ -315,11 +317,11 @@ class FalPluginV2(PluginBase):
     ]
     
     VIDEO_MODEL_CHAIN = [
+        {"i2v": "fal-ai/minimax/hailuo-02/standard/image-to-video", "t2v": "fal-ai/minimax/hailuo-02/standard/text-to-video"},
         {"i2v": "fal-ai/kling-video/v3/pro/image-to-video", "t2v": "fal-ai/kling-video/v3/pro/text-to-video"},
         {"i2v": "fal-ai/sora-2/image-to-video/pro", "t2v": "fal-ai/sora-2/text-to-video/pro"},
         {"i2v": "fal-ai/veo3.1/image-to-video", "t2v": "fal-ai/veo3.1/text-to-video"},
         {"i2v": "fal-ai/bytedance/seedance/v1.5/pro/image-to-video", "t2v": "fal-ai/bytedance/seedance/v1.5/pro/fast/text-to-video"},
-        {"i2v": "fal-ai/minimax/hailuo-02/standard/image-to-video", "t2v": "fal-ai/minimax/hailuo-02/standard/text-to-video"},
     ]
     
     EDIT_MODEL_CHAIN = [
@@ -510,7 +512,7 @@ class FalPluginV2(PluginBase):
             "sosyal medya", "social media", "reels", "tiktok",
             "instagram", "story", "stories",
         ]
-        
+
         if any(kw in prompt_lower for kw in short_keywords):
             endpoint = self.VIDEO_MODEL_MAP["hailuo"][mode]
             if await self.is_model_enabled(endpoint):
@@ -670,7 +672,7 @@ class FalPluginV2(PluginBase):
                     "duration": formatted_duration,
                     "aspect_ratio": params.get("aspect_ratio", "16:9"),
                 }
-            
+
             if has_image:
                 # Video API'leri (özellik Kling) için çözünürlük limitleri var. (örn: max 1280x720 civarı bir şeye sığmalı)
                 try:

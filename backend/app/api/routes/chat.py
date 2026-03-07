@@ -64,6 +64,7 @@ async def _process_chat(
     actual_session_id: Optional[str],
     actual_message: str,
     reference_images_base64: Optional[List[str]],
+    preuploaded_reference_urls: Optional[List[str]],
     db: AsyncSession,
     user_id,
     active_project_id: Optional[str] = None
@@ -91,11 +92,12 @@ async def _process_chat(
         await db.refresh(session)
     
     # Kullanıcı mesajını kaydet
+    reference_image_count = len(reference_images_base64) if reference_images_base64 else len(preuploaded_reference_urls or [])
     user_message = Message(
         session_id=session.id,
         role="user",
         content=actual_message,
-        metadata_={"has_reference_image": bool(reference_images_base64), "image_count": len(reference_images_base64) if reference_images_base64 else 0} if reference_images_base64 else {}
+        metadata_={"has_reference_image": bool(reference_image_count), "image_count": reference_image_count} if reference_image_count else {}
     )
     db.add(user_message)
     await db.flush()
@@ -182,6 +184,7 @@ async def _process_chat(
             conversation_history=conversation_history,
             reference_image=primary_image,
             reference_images=reference_images_base64,
+            uploaded_reference_urls=preuploaded_reference_urls,
             last_reference_urls=last_reference_urls_from_history,
         )
     except Exception as e:
@@ -322,6 +325,7 @@ async def chat(
         actual_session_id=str(request.session_id) if request.session_id else None,
         actual_message=request.message,
         reference_images_base64=None,
+        preuploaded_reference_urls=None,
         db=db,
         user_id=current_user.id,
         active_project_id=str(request.active_project_id) if request.active_project_id else None
@@ -346,6 +350,7 @@ async def chat_with_image(
         actual_session_id=session_id,
         actual_message=message,
         reference_images_base64=[reference_image_base64],
+        preuploaded_reference_urls=None,
         db=db,
         user_id=current_user.id,
         active_project_id=active_project_id
@@ -406,6 +411,7 @@ async def chat_with_files(
         actual_session_id=session_id,
         actual_message=message,
         reference_images_base64=images_base64,
+        preuploaded_reference_urls=[url for url, _ in uploaded_urls] if uploaded_urls else None,
         db=db,
         user_id=current_user.id,
         active_project_id=active_project_id

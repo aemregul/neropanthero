@@ -180,14 +180,14 @@ class SmartModelSelector:
         if analysis.requires_video:
             if has_image_reference:
                 # Image-to-video
-                primary = self._get_model_by_endpoint("fal-ai/kling-video/v3/pro/image-to-video")
+                primary = self._get_model_by_endpoint("fal-ai/minimax/hailuo-02/standard/image-to-video")
                 if primary:
-                    reasoning_parts.append("Görsel referanslı video için Kling 3.0 Pro seçildi")
+                    reasoning_parts.append("Görsel referanslı video için maliyet odaklı Hailuo 02 seçildi")
             else:
                 # Text-to-video
-                primary = self._get_model_by_endpoint("fal-ai/kling-video/v3/pro/text-to-video")
+                primary = self._get_model_by_endpoint("fal-ai/minimax/hailuo-02/standard/text-to-video")
                 if primary:
-                    reasoning_parts.append("Metinden video için Kling 3.0 Pro seçildi")
+                    reasoning_parts.append("Metinden video için maliyet odaklı Hailuo 02 seçildi")
         
         # Upscaling
         elif analysis.requires_upscale:

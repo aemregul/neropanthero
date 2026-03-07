@@ -265,6 +265,49 @@ function renderContent(content: string | undefined | null, onImageClick?: (url: 
     return elements.length > 0 ? elements : content;
 }
 
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function stripInlineMediaContent(
+    content: string,
+    media: { image_url?: string; video_url?: string; audio_url?: string }
+): string {
+    let cleaned = content || '';
+    const hasAttachedMedia = Boolean(media.image_url || media.video_url || media.audio_url);
+
+    const assetUrls = [media.image_url, media.video_url, media.audio_url].filter(Boolean) as string[];
+
+    cleaned = cleaned.replace(/\n?\n?\[(?:ÜRETİLEN (?:GÖRSELLER|VİDEOLAR)|Bu mesajda üretilen (?:görseller|videolar)):\s*[^\]]+\]/gi, '').trim();
+    cleaned = cleaned.replace(/<img[^>]*>/gi, '').trim();
+    cleaned = cleaned.replace(/<video[\s\S]*?<\/video>/gi, '').trim();
+    cleaned = cleaned.replace(/<audio[\s\S]*?<\/audio>/gi, '').trim();
+
+    for (const url of assetUrls) {
+        const escapedUrl = escapeRegExp(url);
+        cleaned = cleaned.replace(new RegExp(`!\\[[^\\]]*\\]\\(${escapedUrl}\\)`, 'gi'), '');
+        cleaned = cleaned.replace(new RegExp(`\\[[^\\]]*\\]\\(${escapedUrl}\\)`, 'gi'), '');
+        cleaned = cleaned.replace(new RegExp(escapedUrl, 'gi'), '');
+    }
+
+    if (hasAttachedMedia) {
+        cleaned = cleaned.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
+        cleaned = cleaned.replace(/\[[^\]]*\]\([^)]*\.(?:png|jpg|jpeg|webp|gif|bmp|svg|mp4|mov|webm|wav|mp3|ogg|aac|flac)(?:\?[^)]*)?\)/gi, '').trim();
+        cleaned = cleaned.replace(/https?:\/\/[^\s]+\.(?:png|jpg|jpeg|webp|gif|bmp|svg|mp4|mov|webm|wav|mp3|ogg|aac|flac)(?:\?[^\s]*)?/gi, '').trim();
+    }
+
+    if (media.video_url) {
+        cleaned = cleaned.replace(/\[[^\]]*\]\([^)]*\.(?:mp4|mov|webm)(?:\?[^)]*)?\)/gi, '').trim();
+    }
+
+    if (media.audio_url) {
+        cleaned = cleaned.replace(/\[[^\]]*\]\([^)]*\.(?:wav|mp3|ogg|aac|flac)(?:\?[^)]*)?\)/gi, '').trim();
+    }
+
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+    return cleaned;
+}
+
 export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityChange, pendingPrompt, onPromptConsumed, pendingInputText, onInputTextConsumed, installedPlugins = [], pendingAssetUrl, onAssetUrlConsumed }: ChatPanelProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -431,6 +474,35 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
         setIsDragOver(false);
     };
 
+    const attachImageFromUrl = useCallback(async (assetUrl: string) => {
+        if (attachedFiles.length >= MAX_FILES) {
+            toast.error(`Maksimum ${MAX_FILES} dosya ekleyebilirsiniz`);
+            return false;
+        }
+
+        try {
+            const response = await fetch(assetUrl);
+            if (!response.ok) {
+                throw new Error(`Asset fetch failed: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const fileType = blob.type || "image/png";
+            const extension = fileType.split("/")[1] || "png";
+            const file = new File([blob], `reference_image_${Date.now()}.${extension}`, { type: fileType });
+
+            setAttachedFiles((prev) => [...prev, file]);
+            const previewUrl = URL.createObjectURL(file);
+            setFilePreviews((prev) => [...prev, previewUrl]);
+            inputRef.current?.focus();
+            return true;
+        } catch (error) {
+            console.error("Error loading reference image:", error);
+            toast.error("Referans görsel yüklenemedi");
+            return false;
+        }
+    }, [attachedFiles.length, toast]);
+
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
@@ -470,24 +542,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             }
 
             // Image ise — dosyayı indirip attach et
-            try {
-                if (attachedFiles.length >= MAX_FILES) {
-                    toast.error(`Maksimum ${MAX_FILES} dosya ekleyebilirsiniz`);
-                    return;
-                }
-                const response = await fetch(assetUrl);
-                const blob = await response.blob();
-                const file = new File([blob], `reference_image_${Date.now()}.png`, { type: blob.type });
-
-                setAttachedFiles(prev => [...prev, file]);
-                const previewUrl = URL.createObjectURL(file);
-                setFilePreviews(prev => [...prev, previewUrl]);
-
-                inputRef.current?.focus();
-            } catch (error) {
-                console.error('Error loading dropped image:', error);
-                toast.error("Görsel yüklenemedi");
-            }
+            await attachImageFromUrl(assetUrl);
             return;
         }
     };
@@ -686,7 +741,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setLoadingStatus("");
                         setActiveGenerations([]);
                         setVideoProgress(0);
-                        setVideoGenStatus("generating");
+                        setVideoGenStatus("error");
                     } else if (data.type === 'complete') {
                         if (data.result?.message) {
                             const msgId = data.result.message_id || Date.now().toString();
@@ -714,7 +769,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setLoadingStatus("");
                         setActiveGenerations([]);
                         setVideoProgress(0);
-                        setVideoGenStatus("generating");
+                        setVideoGenStatus("complete");
                     }
                 } catch (err) {
                     console.error("[WS] Parse error", err);
@@ -792,7 +847,11 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
 
     // Asset URL ekleme (Medya Panelinden gelen)
     useEffect(() => {
-        if (pendingAssetUrl && sessionId) {
+        if (!pendingAssetUrl || !sessionId) {
+            return;
+        }
+
+        const applyPendingAsset = async () => {
             const { url, type } = pendingAssetUrl;
             if (type === "video") {
                 setAttachedVideoUrl(url);
@@ -800,19 +859,19 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                 setAttachedAudioUrl(url);
                 setAttachedAudioLabel("Medya Paneli");
             } else {
-                // Image — URL'den File oluştur ve preview ekle
-                setFilePreviews(prev => [...prev, url]);
-                // URL-based file placeholder
-                const urlFile = new File([], `asset_${Date.now()}.png`, { type: "image/png" });
-                // Asset URL'yi metadata olarak sakla
-                (urlFile as File & { assetUrl?: string }).assetUrl = url;
-                setAttachedFiles(prev => [...prev, urlFile]);
+                const attached = await attachImageFromUrl(url);
+                if (!attached) {
+                    onAssetUrlConsumed?.();
+                    return;
+                }
             }
             onAssetUrlConsumed?.();
             // Focus input
             setTimeout(() => inputRef.current?.focus(), 50);
-        }
-    }, [pendingAssetUrl, sessionId, onAssetUrlConsumed]);
+        };
+
+        void applyPendingAsset();
+    }, [attachImageFromUrl, pendingAssetUrl, sessionId, onAssetUrlConsumed]);
 
     // Stil dropdown dışına tıklayınca kapat
     useEffect(() => {
@@ -1113,10 +1172,10 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setLoadingStatus(status);
                     },
                     onGenerationStart: (generations) => {
-                        // Sadece video üretimleri için progress kartı göster
-                        const videoGens = generations.filter((g: { type: string }) => g.type === 'video' || g.type === 'long_video');
-                        if (videoGens.length > 0) {
-                            setActiveGenerations(videoGens);
+                        if (generations.length > 0) {
+                            setVideoProgress(0);
+                            setVideoGenStatus("generating");
+                            setActiveGenerations(generations);
                         }
                     },
                     onGenerationComplete: () => {
@@ -1432,17 +1491,11 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                     <div className="flex-1 flex flex-col gap-2">
                                         {/* Text bubble — strip inline images if image_url exists */}
                                         {(() => {
-                                            let displayContent = msg.content || '';
-                                            if (msg.image_url) {
-                                                // Markdown image'ları kaldır: ![alt](url)
-                                                displayContent = displayContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
-                                                // Markdown link formatındaki image URL'lerini de kaldır: [text](url.png/jpg/webp...)
-                                                displayContent = displayContent.replace(/\[[^\]]*\]\([^)]*\.(?:png|jpg|jpeg|webp|gif|bmp|svg)(?:\?[^)]*)?\)/gi, '').trim();
-                                                // Standalone image URL'lerini kaldır (satır başındaki fal.media veya diğer image host URL'leri)
-                                                displayContent = displayContent.replace(/https?:\/\/[^\s]+\.(?:png|jpg|jpeg|webp|gif)(?:\?[^\s]*)?\s*/gi, '').trim();
-                                                // [ÜRETİLEN GÖRSELLER: url] tag'lerini kaldır
-                                                displayContent = displayContent.replace(/\n?\n?\[(?:ÜRETİLEN (?:GÖRSELLER|VİDEOLAR)|Bu mesajda üretilen (?:görseller|videolar)):\s*[^\]]+\]/gi, '').trim();
-                                            }
+                                            const displayContent = stripInlineMediaContent(msg.content || '', {
+                                                image_url: msg.image_url,
+                                                video_url: msg.video_url,
+                                                audio_url: msg.audio_url,
+                                            });
                                             return displayContent ? (
                                                 <div className="message-bubble message-ai">
                                                     <div className="text-sm lg:text-[15px] leading-relaxed whitespace-pre-wrap">
