@@ -184,15 +184,23 @@ class ProgressService:
         }
 
         # WebSocket'lere gönder
+        conn_count = len(self._connections.get(session_id, []))
+        print(f"💬 [Reassurance] session={session_id[:8]}... | connections={conn_count} | msg={message[:60]}...")
+        
         if session_id in self._connections:
             dead_connections = []
             for ws in self._connections[session_id]:
                 try:
                     await ws.send_json(payload)
-                except Exception:
+                    print(f"✅ [Reassurance] WebSocket gönderildi: {session_id[:8]}...")
+                except Exception as ws_err:
+                    print(f"❌ [Reassurance] WebSocket gönderim hatası: {ws_err}")
                     dead_connections.append(ws)
             for ws in dead_connections:
                 self._connections[session_id].remove(ws)
+        else:
+            print(f"⚠️ [Reassurance] session_id={session_id[:8]}... için aktif WebSocket bağlantısı YOK!")
+            print(f"   Mevcut bağlantılar: {[k[:8] for k in self._connections.keys()]}")
 
     async def send_error(
         self,

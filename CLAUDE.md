@@ -56,45 +56,6 @@ Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje b
 
 ---
 
-## 🔧 feat/chat Branch Çalışması (11 Mart 2026)
-
-### Branch Stratejisi
-
-- `codex/test` → `main`'e merge edildi (stabil çalışan hal canlıya çıktı)
-- `codex/test` artık **yedek branch** olarak dokunulmadan duruyor
-- `feat/chat` branch'i `main`'den açıldı — tüm ufak tefek bug fix'ler ve iyileştirmeler burada yapılıyor
-- Her yeni özellik için ayrı branch açılacak (**sıralı zincirleme** strateji):
-  - Özellik-1 tamamlanınca → main'e merge
-  - Özellik-2, güncel main'den açılır (özellik-1 dahil)
-  - Böylece çakışma riski minimumda kalır
-
-### Yapılan Değişiklikler
-
-- **ChatPanel.tsx TypeScript Error Fix**
-  - Dosya: `frontend/src/components/ChatPanel.tsx`
-  - Sorun: `content: string | null` tip uyumsuzluğu Vercel production build'i bozuyordu
-  - Düzeltme: `?? ''` ile null koruması eklendi (2 yerde: `mapApiMessageToChatMessage` ve `streamErrorText`)
-  - Ek: 4 kullanılmayan import kaldırıldı (`Mic`, `Smile`, `Image`, `createSession`), 3 hook dep uyarısı `eslint-disable` ile susturuldu
-  - Commit: `b3134e3` — main'e merge edildi, Vercel build geçti
-
-- **Video Üretimi Akıllı Bilgilendirme (Reassurance Timer)**
-  - Dosya: `backend/app/services/agent/orchestrator.py`
-  - Amaç: Video üretimi 5+ dakika sürerse kullanıcıya "hâlâ üretiliyor, hata yok" bilgilendirme mesajı göndermek
-  - Uygulama: 3 arka plan fonksiyonuna `_reassurance_timer` async task eklendi:
-    - `_run_video_bg` → 5. ve 10. dakikada bilgilendirme
-    - `_run_edit_video_bg` → 5. ve 10. dakikada bilgilendirme
-    - `_run_long_video_bg` → 5. ve 10. dakikada bilgilendirme
-  - Mesajlar WebSocket progress kanalı üzerinden gönderiliyor — progress card'da görünür
-  - Video tamamlandığında veya hata aldığında timer otomatik iptal ediliyor
-  - Commit: `9cab725` — feat/chat branch'inde
-
-### Bekleyen Test / Doğrulama
-
-- [ ] feat/chat'teki reassurance timer'ın local canlı testi (5dk+ süren video üretimi ile)
-- [ ] feat/chat hazır olunca main'e merge
-
----
-
 ## 🔧 Son Stabilizasyon Çalışması (7 Mart 2026)
 
 ### Amaç
@@ -722,3 +683,23 @@ Bu maddeler çözülmeden yeni özelliğe geçilmez.
 - Yerel video edit retest'inde başarılı çıktı alındı:
   - Referanslı video üzerinden yeniden üretim akışında kullanıcı tarafından iyi kalite sonucu doğrulandı
   - Kapsamlı uçtan uca regresyon testi bir sonraki gün yeni proje üzerinde tekrar yapılacak
+- Bilinçli asistan bilgilendirme sistemi (Smart Reassurance v2):
+  - Video üretimi sırasında asistan artık robotik sabit zamanlayıcı yerine **olay bazlı bilinçli mesajlar** gönderiyor
+  - Uzun video: sahne tamamlandığında ("Sahne 2/4 bitti! Sıradaki başlıyor"), FFmpeg başladığında ("Sahneler birleştiriliyor!")
+  - Tüm video tipleri: 3+ dk sessizlik olursa geçen süre ve durum bilgisiyle bağlamsal mesaj ("14. dakikadayız, 3/4 sahne hazır")
+  - `progress_service.send_reassurance()` → DB'ye gerçek assistant mesajı + WebSocket `reassurance` tipi
+  - Frontend `ChatPanel.tsx` → `reassurance` mesajını gerçek chat baloncuğu olarak gösteriyor (duplicate korumalı)
+
+### 🚨 ACİL BUG: "Tekrar dene" komutunda yanlış referans görseli kullanımı
+- **Sorun:** Kullanıcı "tekrar dene" / "beğenmedim" dediğinde orchestrator eski session asset'lerinden yanlış referans görseli çekiyor
+- **Etki:** Tamamen alakasız bir eski üretimin (örn: küçük kız fotoğrafı) referans olarak yeni videoya eklenmesi — saçma çıktılar
+- **Kök Neden:** `uploaded_reference_url` / `cover_image_url` seçim mantığı — session'daki en son asset'i alıyor ama bu mevcut prompt ile ilgisiz olabiliyor
+- **Risk:** Büyük projelerde ciddi sorun yaratabilir — müşteri projesinde yanlış referans kullanımı
+- **Öncelik:** ⚠️ ACİL — feat/chat merge'den önce düzeltilmeli
+
+### 🔮 Gelecek Plan: Task İptal Mekanizması
+- 30+ dk süren üretimlerde asistan "Çok uzun sürdü, iptal edip yeniden başlayalım mı?" önerisi yapabilmeli
+- Backend'de `asyncio.Task` referansları session bazlı saklanmalı, `task.cancel()` ile durdurulabilmeli
+- Frontend'de iptal butonu + kullanıcı "iptal et" yazarsa chat handler'dan tetikleme
+- fal.ai request_id ile üretim iptali de desteklenmeli
+- Bu özellik henüz uygulanmadı — planlama ve tasarım gerektirir

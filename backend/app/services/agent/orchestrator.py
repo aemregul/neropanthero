@@ -2713,48 +2713,34 @@ Konuşma:
                     except Exception:
                         pass
 
-            async def _reassurance_timer():
-                """2/5/10 dk aralıklarla insan gibi bilgilendirme mesajı gönder."""
-                import random
+            import time as _time
+            import random as _random
+            _edit_start = _time.time()
+            _edit_last_reassurance = _time.time()
 
-                msgs_2m = [
-                    "Biliyorum bekliyorsun ama merak etme, video düzenleme devam ediyor! 🎬 Bu esnada başka bir konuda yardımcı olmamı ister misin?",
-                    "Video düzenleme işlemi sürüyor, hâlâ çalışıyorum! ✨ Beklerken sana başka bir konuda destek olabilirim.",
-                    "Düzenleme devam ediyor, her şey yolunda! 🎞️ Başka bir şeyde yardıma ihtiyacın varsa yazabilirsin.",
-                ]
-                msgs_5m = [
-                    "⏳ Video düzenleme hâlâ devam ediyor, herhangi bir hata yok — hazır olduğunda ekranına düşecek! Biraz daha sabır.",
-                    "⏳ Düzenleme işlemi sürüyor, model sırasında bekliyoruz. Hazır olunca sana haber vereceğim!",
-                    "⏳ Hâlâ üzerinde çalışıyorum! Model yoğunluğu nedeniyle biraz uzadı ama problem yok, sonucu göreceksin.",
-                ]
-                msgs_10m = [
-                    "⏳ Düzenleme normalden uzun sürüyor ama hâlâ devam ediyor. Yapay zeka modeli yoğun olabilir — lütfen biraz daha bekle, değecek!",
-                    "⏳ Uzun sürdüğünün farkındayım, ama süreç devam ediyor. Model yoğunluğundan kaynaklı — birazdan hazır olacak.",
-                ]
-
-                await asyncio.sleep(120)  # 2 dakika
-                if not progress_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "video", random.choice(msgs_2m))
-                    except Exception:
-                        pass
-
-                await asyncio.sleep(180)  # +3 dk = toplam 5 dk
-                if not progress_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "video", random.choice(msgs_5m))
-                    except Exception:
-                        pass
-
-                await asyncio.sleep(300)  # +5 dk = toplam 10 dk
-                if not progress_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "video", random.choice(msgs_10m))
-                    except Exception:
-                        pass
+            async def _silence_detector():
+                """Uzun sessizlik varsa bilinçli mesaj gönder."""
+                nonlocal _edit_last_reassurance
+                while not progress_done.is_set():
+                    await asyncio.sleep(60)
+                    if progress_done.is_set():
+                        break
+                    elapsed_since_last = _time.time() - _edit_last_reassurance
+                    if elapsed_since_last >= 180:  # 3 dk sessizlik
+                        elapsed_total = int((_time.time() - _edit_start) / 60)
+                        msgs = [
+                            f"⏳ Video düzenleme {elapsed_total} dakikadır sürüyor — model sırasında bekliyoruz. Bir sorun yok, devam ediyor!",
+                            f"⏳ {elapsed_total} dakika oldu, düzenleme hâlâ devam ediyor. Yapay zeka modeli yoğun olabilir — birazdan hazır olacak.",
+                            f"⏳ {elapsed_total}. dakikadayız. Düzenleme işlemi sürüyor, model kuyrukta bekliyoruz. Beklemene değecek!",
+                        ]
+                        try:
+                            await progress_service.send_reassurance(session_id, "video", _random.choice(msgs))
+                            _edit_last_reassurance = _time.time()
+                        except Exception:
+                            pass
 
             progress_task = asyncio.create_task(_smooth_progress())
-            reassurance_task = asyncio.create_task(_reassurance_timer())
+            reassurance_task = asyncio.create_task(_silence_detector())
             try:
                 plugin_result = await self.fal_plugin.execute("edit_video", edit_payload)
             finally:
@@ -2957,48 +2943,34 @@ Konuşma:
                     except Exception:
                         pass
 
-            async def _reassurance_timer():
-                """2/5/10 dk aralıklarla insan gibi bilgilendirme mesajı gönder."""
-                import random
+            import time as _time
+            import random as _random
+            _vid_start = _time.time()
+            _vid_last_reassurance = _time.time()
 
-                msgs_2m = [
-                    "Biliyorum bekliyorsun, video üretimi devam ediyor! 🎬 Şu an fal.ai sırasındayız ve yerimizi bekliyoruz. Bu esnada başka bir konuda yardımcı olabilirim!",
-                    "Video üretiliyor, merak etme! 🎥 Model üzerinde çalışma devam ediyor. Beklerken sana başka bir konuda destek olabilir miyim?",
-                    "Üretim sürüyor, her şey yolunda! ✨ AI modeli videoyu oluşturuyor. Bu arada bana başka bir şey sorabilirsin.",
-                ]
-                msgs_5m = [
-                    "⏳ Video hâlâ üretiliyor, herhangi bir hata yok — hazır olduğunda ekranına düşecek! Beklemene değecek.",
-                    "⏳ Üretim devam ediyor, model sırasında bekliyoruz. Biraz daha sabır — sonucu göreceksin!",
-                    "⏳ Hâlâ çalışıyorum! Video modeli yoğun olabilir ama süreç devam ediyor. Hazır olunca haber vereceğim.",
-                ]
-                msgs_10m = [
-                    "⏳ Normalden uzun sürdüğünün farkındayım ama hâlâ devam ediyor. Model yoğunluğundan kaynaklı — lütfen biraz daha bekle!",
-                    "⏳ Uzun sürdü biliyorum, ama video hâlâ işleniyor. Yapay zeka modeli yoğun dönemde — birazdan hazır olacak.",
-                ]
-
-                await asyncio.sleep(120)  # 2 dakika
-                if not progress_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "video", random.choice(msgs_2m))
-                    except Exception:
-                        pass
-
-                await asyncio.sleep(180)  # +3 dk = toplam 5 dk
-                if not progress_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "video", random.choice(msgs_5m))
-                    except Exception:
-                        pass
-
-                await asyncio.sleep(300)  # +5 dk = toplam 10 dk
-                if not progress_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "video", random.choice(msgs_10m))
-                    except Exception:
-                        pass
+            async def _silence_detector():
+                """Uzun sessizlik varsa bilinçli mesaj gönder."""
+                nonlocal _vid_last_reassurance
+                while not progress_done.is_set():
+                    await asyncio.sleep(60)
+                    if progress_done.is_set():
+                        break
+                    elapsed_since_last = _time.time() - _vid_last_reassurance
+                    if elapsed_since_last >= 180:  # 3 dk sessizlik
+                        elapsed_total = int((_time.time() - _vid_start) / 60)
+                        msgs = [
+                            f"⏳ Video üretimi {elapsed_total} dakikadır sürüyor — fal.ai model sırasında bekliyoruz. Bir sorun yok, devam ediyor!",
+                            f"⏳ {elapsed_total} dakika oldu, video hâlâ üretiliyor. Yapay zeka modeli yoğun olabilir — birazdan hazır olacak.",
+                            f"⏳ {elapsed_total}. dakikadayız. Model kuyrukta bekliyoruz, üretim devam ediyor. Beklemene değecek!",
+                        ]
+                        try:
+                            await progress_service.send_reassurance(session_id, "video", _random.choice(msgs))
+                            _vid_last_reassurance = _time.time()
+                        except Exception:
+                            pass
 
             progress_task = asyncio.create_task(_smooth_progress())
-            reassurance_task = asyncio.create_task(_reassurance_timer())
+            reassurance_task = asyncio.create_task(_silence_detector())
             
             try:
                 if model == "veo":
@@ -3217,56 +3189,90 @@ Konuşma:
                 except Exception:
                     translated_scenes = scene_descriptions
             
+            import asyncio
+            import time as _time
+            import random
+            import re as _re
+
+            long_video_done = asyncio.Event()
+            _start_time = _time.time()
+            _last_reassurance_time = _time.time()
+            _completed_scenes = 0
+            _total_scenes = len(scene_descriptions) if scene_descriptions else 4
+            _stitching_notified = False
+
             async def _on_progress(pct, msg):
+                nonlocal _last_reassurance_time, _completed_scenes, _total_scenes, _stitching_notified
                 try:
                     await progress_service.send_progress(session_id, "long_video", pct / 100.0, msg)
                 except Exception:
                     pass
 
-            import asyncio
-            long_video_done = asyncio.Event()
+                if not msg:
+                    return
 
-            async def _reassurance_timer():
-                """2/5/10 dk aralıklarla insan gibi bilgilendirme mesajı gönder."""
-                import random
+                msg_lower = msg.lower()
 
-                msgs_2m = [
-                    "Biliyorum bekliyorsun, uzun video üretimi devam ediyor! 🎬 Sahneler sırayla işleniyor. Bu esnada başka bir konuda yardımcı olabilirim!",
-                    "Video sahneleri oluşturuluyor, merak etme! 🎥 Her sahne ayrı ayrı üretilip birleştiriliyor. Beklerken bana başka şeyler sorabilirsin.",
-                    "Üretim sürüyor, her şey yolunda! ✨ Uzun videolar doğası gereği biraz zaman alır. Bu arada başka bir konuda destek olabilir miyim?",
-                ]
-                msgs_5m = [
-                    "⏳ Uzun video hâlâ üretiliyor, herhangi bir hata yok — sahneler sırayla işleniyor. Hazır olduğunda ekranına düşecek!",
-                    "⏳ Sahneler birleştiriliyor, model yoğun çalışıyor. Biraz daha sabır — sonucu göreceksin!",
-                    "⏳ Hâlâ çalışıyorum! Her sahneyi ayrı ayrı üretip FFmpeg ile birleştiriyorum. Neredeyse...",
-                ]
-                msgs_10m = [
-                    "⏳ Normalden uzun sürdüğünün farkındayım ama sahneler hâlâ işleniyor. Model yoğunluğundan kaynaklı — lütfen biraz daha bekle!",
-                    "⏳ Uzun sürdü biliyorum, ama video hâlâ birleştiriliyor. Yapay zeka modeli yoğun dönemde — birazdan hazır olacak.",
-                ]
+                # --- Olay: Sahne tamamlandı ---
+                if "tamamlandı" in msg_lower:
+                    # Sayıyı mesajdan parse et (ör: "Sahne 2/4 tamamlandı")
+                    match = _re.search(r'(\d+)/(\d+)', msg)
+                    if match:
+                        _completed_scenes = int(match.group(1))
+                        _total_scenes = int(match.group(2))
 
-                await asyncio.sleep(120)  # 2 dakika
-                if not long_video_done.is_set():
+                    remaining = _total_scenes - _completed_scenes
+                    elapsed = int((_time.time() - _start_time) / 60)
+
+                    if remaining > 0:
+                        msgs = [
+                            f"🎬 {_completed_scenes}. sahne hazır! Kalan {remaining} sahne daha var. Şu ana kadar {elapsed} dakika geçti, devam ediyorum!",
+                            f"✅ Sahne {_completed_scenes}/{_total_scenes} tamamlandı! Sıradaki sahneye geçiyorum. {elapsed}. dakikadayız.",
+                            f"🎬 {_completed_scenes}/{_total_scenes} bitti! {remaining} sahne kaldı. Model üzerinde çalışmaya devam ediyorum.",
+                        ]
+                        try:
+                            await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs))
+                            _last_reassurance_time = _time.time()
+                        except Exception:
+                            pass
+                    # remaining == 0 → birleştirme mesajını gönderme, stitching callback'i gönderecek
+
+                # --- Olay: Birleştirme başladı ---
+                elif ("birleştir" in msg_lower or "stitch" in msg_lower) and not _stitching_notified:
+                    _stitching_notified = True
+                    elapsed = int((_time.time() - _start_time) / 60)
                     try:
-                        await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs_2m))
+                        await progress_service.send_reassurance(
+                            session_id, "long_video",
+                            f"🔧 Tüm {_total_scenes} sahne hazır! FFmpeg ile birleştiriyorum — son adım, {elapsed} dakikada buraya geldik. Neredeyse bitti! 🎉"
+                        )
+                        _last_reassurance_time = _time.time()
                     except Exception:
                         pass
 
-                await asyncio.sleep(180)  # +3 dk = toplam 5 dk
-                if not long_video_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs_5m))
-                    except Exception:
-                        pass
+            async def _silence_detector():
+                """Uzun sessizlik varsa bilinçli mesaj gönder (3+ dk event yok)."""
+                nonlocal _last_reassurance_time
+                while not long_video_done.is_set():
+                    await asyncio.sleep(60)  # Her dakika kontrol et
+                    if long_video_done.is_set() or _stitching_notified:
+                        break  # Birleştirme başladıysa artık sessizlik mesajı gönderme
 
-                await asyncio.sleep(300)  # +5 dk = toplam 10 dk
-                if not long_video_done.is_set():
-                    try:
-                        await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs_10m))
-                    except Exception:
-                        pass
+                    elapsed_since_last = _time.time() - _last_reassurance_time
+                    if elapsed_since_last >= 180:  # 3 dakikadır sessizlik
+                        elapsed_total = int((_time.time() - _start_time) / 60)
+                        msgs = [
+                            f"⏳ {elapsed_total} dakika oldu, sahne {_completed_scenes + 1} üretiliyor — model sırasında bekliyoruz. Şu an {_completed_scenes}/{_total_scenes} sahne hazır. Bir sorun yok!",
+                            f"⏳ {elapsed_total}. dakikadayız, hâlâ çalışıyorum! Sahne {_completed_scenes + 1}/{_total_scenes} üretiliyor, yapay zeka modeli yoğun olabilir.",
+                            f"⏳ Şu an {_completed_scenes}/{_total_scenes} sahne tamamlandı. {elapsed_total} dakikadır üretim sürüyor — model kuyrukta bekliyoruz, devam edecek.",
+                        ]
+                        try:
+                            await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs))
+                            _last_reassurance_time = _time.time()
+                        except Exception:
+                            pass
 
-            reassurance_task = asyncio.create_task(_reassurance_timer())
+            reassurance_task = asyncio.create_task(_silence_detector())
 
             try:
                 result = await long_video_service.create_and_process(
