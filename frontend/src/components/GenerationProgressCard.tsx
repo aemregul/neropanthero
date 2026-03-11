@@ -16,6 +16,7 @@ interface GenerationProgressCardProps {
     productionLogs?: ProductionLog[];
     completedScenes?: number;
     totalScenes?: number;
+    onCancel?: () => void;
 }
 
 export function GenerationProgressCard({
@@ -25,6 +26,7 @@ export function GenerationProgressCard({
     productionLogs = [],
     completedScenes = 0,
     totalScenes = 0,
+    onCancel,
 }: GenerationProgressCardProps) {
     const icon = type === "image" ? "🖼️" : type === "audio" ? "🎵" : "🎬";
     const label = type === "image"
@@ -135,6 +137,34 @@ export function GenerationProgressCard({
                             >
                                 {elapsedMin}:{elapsedSec}
                             </span>
+                            {onCancel && (
+                                <button
+                                    onClick={onCancel}
+                                    className="ml-2 flex items-center justify-center rounded-full transition-all duration-200"
+                                    style={{
+                                        width: "24px",
+                                        height: "24px",
+                                        background: "rgba(239,68,68,0.15)",
+                                        border: "1px solid rgba(239,68,68,0.3)",
+                                        color: "rgba(239,68,68,0.7)",
+                                        fontSize: "12px",
+                                        cursor: "pointer",
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.background = "rgba(239,68,68,0.3)";
+                                        e.currentTarget.style.color = "#ef4444";
+                                        e.currentTarget.style.borderColor = "rgba(239,68,68,0.6)";
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = "rgba(239,68,68,0.15)";
+                                        e.currentTarget.style.color = "rgba(239,68,68,0.7)";
+                                        e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)";
+                                    }}
+                                    title="İptal Et"
+                                >
+                                    ✕
+                                </button>
+                            )}
                         </>
                     )}
                 </div>

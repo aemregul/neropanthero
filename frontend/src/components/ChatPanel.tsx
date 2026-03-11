@@ -1741,6 +1741,42 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                         productionLogs={productionLogs}
                                         completedScenes={completedScenes}
                                         totalScenes={totalScenes}
+                                        onCancel={async () => {
+                                            // 1. SSE stream kes (senkron üretimler)
+                                            abortControllerRef.current?.abort();
+                                            abortControllerRef.current = null;
+
+                                            // 2. Backend BG task iptal (arka plan üretimler)
+                                            if (sessionId) {
+                                                try {
+                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                                    const formData = new FormData();
+                                                    formData.append('session_id', sessionId);
+                                                    await fetch(`${apiUrl}/api/v1/chat/cancel-task`, {
+                                                        method: 'POST',
+                                                        body: formData,
+                                                        credentials: 'include',
+                                                    });
+                                                } catch (err) {
+                                                    console.warn('[Cancel] Backend cancel error:', err);
+                                                }
+                                            }
+
+                                            // 3. UI temizle
+                                            setActiveGenerations([]);
+                                            setVideoProgress(0);
+                                            setVideoGenStatus("generating");
+                                            setIsLoading(false);
+                                            setProductionLogs([]);
+
+                                            // 4. İptal mesajı ekle
+                                            setMessages(prev => [...prev, {
+                                                id: Date.now().toString(),
+                                                role: 'assistant' as const,
+                                                content: '🛑 İşlem iptal edildi.',
+                                                timestamp: new Date(),
+                                            }]);
+                                        }}
                                     />
                                 ))}
                             </div>

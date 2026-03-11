@@ -977,6 +977,22 @@ PROMPT_TEMPLATES = [
     }
 ]
 
+@router.post("/cancel-task")
+async def cancel_task(
+    session_id: str = Form(...),
+    current_user: User = Depends(get_current_user_required)
+):
+    """Aktif arka plan görevini (video/long_video üretimi) iptal et."""
+    try:
+        cancelled = await agent.cancel_session_task(session_id)
+        if cancelled:
+            return {"success": True, "message": "İşlem iptal edildi."}
+        else:
+            return {"success": False, "message": "İptal edilecek aktif görev bulunamadı."}
+    except Exception as e:
+        logger.error(f"Cancel task hatası: {e}")
+        return {"success": False, "message": f"İptal hatası: {str(e)}"}
+
 
 @router.get("/templates")
 async def get_prompt_templates(
