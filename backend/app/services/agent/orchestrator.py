@@ -1210,7 +1210,8 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
             "advanced_edit_video",
             "apply_style",
         }
-        video_already_called = False
+        # video_already_called result dict'te saklanır — recursive retry'larda da korunur
+        video_already_called = result.get("_video_already_called", False)
         deterministic_media_message = None
         last_tool_name = None
         
@@ -1262,6 +1263,7 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                     messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps({"success": True, "message": "Bu istek için zaten bir video üretimi başlatıldı, tekrar üretim gereksiz."})})
                     continue
                 video_already_called = True
+                result["_video_already_called"] = True
             
             print(f"🔧 STREAM TOOL: {tool_name} (retry={retry_count})")
             last_tool_name = tool_name
