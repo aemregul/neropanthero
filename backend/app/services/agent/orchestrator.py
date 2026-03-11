@@ -159,8 +159,24 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         )
 
     def _is_explicit_session_asset_request(self, user_message: str) -> bool:
-        """Kullanıcı mevcut oturumdaki bir asset'i açıkça hedefliyor mu?"""
+        """Kullanıcı mevcut oturumdaki bir asset'i açıkça hedefliyor mu?
+        
+        NOT: 'tekrar dene', 'beğenmedim' gibi retry mesajları AÇIK asset referansı DEĞİLDİR.
+        Bu fonksiyon sadece 'bu görseli videoya çevir', 'son görseli düzenle' gibi
+        mesajlarda True dönmelidir.
+        """
         lower_msg = (user_message or "").lower()
+        
+        # ÖNCE: Retry/olumsuz geri bildirim mesajlarını DİSKALİFİYE et
+        retry_disqualifiers = (
+            "tekrar dene", "yeniden dene", "bir daha dene",
+            "beğenmedim", "beğenmedi", "kötü", "berbat", "bozuk",
+            "hoşuma gitmedi", "olmamış", "istemiyorum",
+            "retry", "again",
+        )
+        if any(cue in lower_msg for cue in retry_disqualifiers):
+            return False
+        
         reference_cues = (
             "ilk oluşturdu",
             "ilk yapt",
@@ -545,6 +561,12 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         if conversation_history is None:
             conversation_history = []
 
+        # Vector 3 Fix: Stale referans cache temizliği (non-stream path)
+        has_new_reference = bool(reference_image or reference_images or uploaded_reference_urls)
+        if not has_new_reference and str(session_id) in self._session_reference_images:
+            print(f"🧹 Stale session reference cache temizlendi (non-stream): {str(session_id)[:8]}...")
+            del self._session_reference_images[str(session_id)]
+
         if reference_video_url:
             conversation_history = self._strip_asset_annotations_from_history(conversation_history)
         
@@ -756,6 +778,12 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         
         if conversation_history is None:
             conversation_history = []
+
+        # Vector 3 Fix: Stale referans cache temizliği
+        # Yeni referans görsel EKLENMEDİYSE önceki request'ten kalan cache'i temizle
+        if not reference_image and str(session_id) in self._session_reference_images:
+            print(f"🧹 Stale session reference cache temizlendi: {str(session_id)[:8]}...")
+            del self._session_reference_images[str(session_id)]
 
         if reference_video_url:
             conversation_history = self._strip_asset_annotations_from_history(conversation_history)
@@ -1429,7 +1457,8 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                 recent_assets = await asset_service.get_recent_assets(db, session_id, limit=5)
                 if recent_assets:
                     memory_ctx = "\n\n--- 🕒 SON ÜRETİLENLER (Working Memory) ---\n"
-                    memory_ctx += "Kullanıcı 'bunu düzenle', 'son görseli değiştir', 'videoyu farklı yap' derse BURADAKİ URL'leri kullan:\n"
+                    memory_ctx += "Kullanıcı 'bunu düzenle', 'son görseli değiştir' gibi AÇIKÇA bir asset'e atıf yapıyorsa BURADAKİ URL'leri kullan.\n"
+                    memory_ctx += "⚠️ UYARI: 'tekrar dene', 'beğenmedim', 'yeniden yap' gibi mesajlarda bu URL'leri image_url olarak VERME! Bu durumda sıfırdan üret (text-to-image/video).\n"
                     for idx, asset in enumerate(recent_assets, 1):
                         icon = "🎬" if asset.asset_type == "video" else "🖼️"
                         thumb = f" (Thumbnail: {asset.thumbnail_url})" if asset.thumbnail_url else ""

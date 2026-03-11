@@ -690,12 +690,13 @@ Bu maddeler çözülmeden yeni özelliğe geçilmez.
   - `progress_service.send_reassurance()` → DB'ye gerçek assistant mesajı + WebSocket `reassurance` tipi
   - Frontend `ChatPanel.tsx` → `reassurance` mesajını gerçek chat baloncuğu olarak gösteriyor (duplicate korumalı)
 
-### 🚨 ACİL BUG: "Tekrar dene" komutunda yanlış referans görseli kullanımı
-- **Sorun:** Kullanıcı "tekrar dene" / "beğenmedim" dediğinde orchestrator eski session asset'lerinden yanlış referans görseli çekiyor
-- **Etki:** Tamamen alakasız bir eski üretimin (örn: küçük kız fotoğrafı) referans olarak yeni videoya eklenmesi — saçma çıktılar
-- **Kök Neden:** `uploaded_reference_url` / `cover_image_url` seçim mantığı — session'daki en son asset'i alıyor ama bu mevcut prompt ile ilgisiz olabiliyor
-- **Risk:** Büyük projelerde ciddi sorun yaratabilir — müşteri projesinde yanlış referans kullanımı
-- **Öncelik:** ⚠️ ACİL — feat/chat merge'den önce düzeltilmeli
+### ✅ ÇÖZÜLDÜ: "Tekrar dene" komutunda yanlış referans görseli kullanımı
+- **Sorun:** Kullanıcı "tekrar dene" / "beğenmedim" dediğinde orchestrator eski session asset'lerinden yanlış referans görseli çekiyordu
+- **Çözüm (3 vektör):**
+  1. `_is_explicit_session_asset_request`: Retry mesajları artık diskalifiye — "tekrar dene" AÇIK asset referansı DEĞİL
+  2. Working Memory talimatı: LLM'ye "retry mesajlarında bu URL'leri image_url olarak VERME" uyarısı eklendi
+  3. `_session_reference_images` cache: Her request başında stale referanslar temizleniyor
+- **Durum:** ✅ Düzeltildi — `fix/reference-image-bug` branch
 
 ### 🔮 Gelecek Plan: Task İptal Mekanizması
 - 30+ dk süren üretimlerde asistan "Çok uzun sürdü, iptal edip yeniden başlayalım mı?" önerisi yapabilmeli
