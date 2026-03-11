@@ -141,6 +141,59 @@ class ProgressService:
         except Exception:
             pass
     
+    async def send_reassurance(
+        self,
+        session_id: str,
+        task_type: str,
+        message: str
+    ):
+        """
+        Akıllı bilgilendirme mesajı — gerçek chat mesajı olarak.
+        
+        Progress card'ı ETKİLEMEZ. Chat'e yeni bir asistan mesajı düşürür.
+        Mesaj aynı zamanda DB'ye kaydedilir (sayfa yenilenince kaybolmasın).
+        """
+        import uuid as _uuid
+
+        message_id = None
+        # DB'ye gerçek assistant mesajı kaydet
+        try:
+            from app.core.database import async_session_maker
+            from app.models.models import Message as DBMessage
+
+            async with async_session_maker() as db:
+                db_msg = DBMessage(
+                    session_id=_uuid.UUID(session_id),
+                    role="assistant",
+                    content=message,
+                )
+                db.add(db_msg)
+                await db.commit()
+                await db.refresh(db_msg)
+                message_id = str(db_msg.id)
+        except Exception as e:
+            print(f"⚠️ Reassurance DB kayıt hatası: {e}")
+            message_id = str(_uuid.uuid4())
+
+        payload = {
+            "type": "reassurance",
+            "task_type": task_type,
+            "message": message,
+            "message_id": message_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        # WebSocket'lere gönder
+        if session_id in self._connections:
+            dead_connections = []
+            for ws in self._connections[session_id]:
+                try:
+                    await ws.send_json(payload)
+                except Exception:
+                    dead_connections.append(ws)
+            for ws in dead_connections:
+                self._connections[session_id].remove(ws)
+
     async def send_error(
         self,
         session_id: str,

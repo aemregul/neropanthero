@@ -752,6 +752,19 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setActiveGenerations([]);
                         setVideoProgress(0);
                         setVideoGenStatus("error");
+                    } else if (data.type === 'reassurance') {
+                        // Asistandan gerçek chat mesajı — insan gibi bilgilendirme
+                        const msgId = data.message_id || Date.now().toString();
+                        setMessages(prev => {
+                            // Aynı message_id varsa duplicate ekleme
+                            if (prev.some(m => m.id === msgId)) return prev;
+                            return [...prev, {
+                                id: msgId,
+                                role: 'assistant' as const,
+                                content: data.message,
+                                timestamp: new Date()
+                            }];
+                        });
                     } else if (data.type === 'complete') {
                         if (data.result?.message) {
                             const msgId = data.result.message_id || Date.now().toString();
