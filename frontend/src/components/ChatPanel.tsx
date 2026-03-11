@@ -363,6 +363,9 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
     const [activeGenerations, setActiveGenerations] = useState<Array<{ type: string; prompt?: string; duration?: string | number }>>([]);
     const [videoProgress, setVideoProgress] = useState(0);
     const [videoGenStatus, setVideoGenStatus] = useState<"generating" | "complete" | "error">("generating");
+    const [productionLogs, setProductionLogs] = useState<Array<{ id: string; message: string; timestamp: Date }>>([]); 
+    const [completedScenes, setCompletedScenes] = useState(0);
+    const [totalScenes, setTotalScenes] = useState(0);
     const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
     const [isConnected, setIsConnected] = useState<boolean | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -753,18 +756,15 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setVideoProgress(0);
                         setVideoGenStatus("error");
                     } else if (data.type === 'reassurance') {
-                        // Asistandan gerçek chat mesajı — insan gibi bilgilendirme
+                        // Production card mini-log'a ekle (chat'e değil)
                         const msgId = data.message_id || Date.now().toString();
-                        setMessages(prev => {
-                            // Aynı message_id varsa duplicate ekleme
-                            if (prev.some(m => m.id === msgId)) return prev;
-                            return [...prev, {
-                                id: msgId,
-                                role: 'assistant' as const,
-                                content: data.message,
-                                timestamp: new Date()
-                            }];
+                        setProductionLogs(prev => {
+                            if (prev.some(l => l.id === msgId)) return prev;
+                            return [...prev, { id: msgId, message: data.message, timestamp: new Date() }];
                         });
+                        // Scene data güncelle
+                        if (typeof data.completed_scenes === 'number') setCompletedScenes(data.completed_scenes);
+                        if (typeof data.total_scenes === 'number' && data.total_scenes > 0) setTotalScenes(data.total_scenes);
                     } else if (data.type === 'complete') {
                         if (data.result?.message) {
                             const msgId = data.result.message_id || Date.now().toString();
@@ -793,6 +793,9 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setActiveGenerations([]);
                         setVideoProgress(0);
                         setVideoGenStatus("complete");
+                        setProductionLogs([]);
+                        setCompletedScenes(0);
+                        setTotalScenes(0);
                     }
                 } catch (err) {
                     console.error("[WS] Parse error", err);
@@ -1025,18 +1028,30 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                     { text: "🖌️ Görsel oluşturuluyor...", delay: 3000 },
                     { text: "✨ Son rötuşlar yapılıyor...", delay: 12000 },
                 ];
+                // Production card'ı erken aç
+                setActiveGenerations([{ type: "image" }]);
+                setVideoProgress(0);
+                setVideoGenStatus("generating");
             } else if (lowerMsg.match(/video|animasyon|klip|sinema|cinematic/)) {
                 statusPhases = [
                     { text: "🎬 Video senaryosu hazırlanıyor...", delay: 0 },
                     { text: "🎥 Video üretiliyor...", delay: 3000 },
                     { text: "🎞️ Video işleniyor...", delay: 15000 },
                 ];
+                // Production card'ı erken aç
+                setActiveGenerations([{ type: "video" }]);
+                setVideoProgress(0);
+                setVideoGenStatus("generating");
             } else if (lowerMsg.match(/düzenle|edit|değiştir|kaldır|ekle.*görsel|remove|change/)) {
                 statusPhases = [
                     { text: "🔍 Görsel analiz ediliyor...", delay: 0 },
                     { text: "✏️ Düzenleme yapılıyor...", delay: 3000 },
                     { text: "✨ Sonuç hazırlanıyor...", delay: 10000 },
                 ];
+                // Production card'ı erken aç (edit = image tipi)
+                setActiveGenerations([{ type: "image" }]);
+                setVideoProgress(0);
+                setVideoGenStatus("generating");
             } else if (hasImage) {
                 statusPhases = [
                     { text: "📷 Görsel inceleniyor...", delay: 0 },
@@ -1186,6 +1201,8 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         assets.forEach((asset) => {
                             onNewAsset?.({ url: asset.url, type: 'image' });
                         });
+                        // Görsel üretim bitti — image card'ını kaldır
+                        setActiveGenerations(prev => prev.filter(g => g.type === 'video' || g.type === 'long_video'));
                     },
                     onVideos: (videos) => {
                         videos.forEach((video) => {
@@ -1197,27 +1214,39 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                     },
                     onStatus: (status: string) => {
                         setLoadingStatus(status);
+                        // Status mesajı üretim başladığını gösteriyorsa, card'ı erken göster
+                        const lower = status.toLowerCase();
+                        const genPatterns = ['oluşturuluyor', 'üretiliyor', 'generating', 'render'];
+                        const isGenStatus = genPatterns.some(p => lower.includes(p));
+                        if (isGenStatus) {
+                            setActiveGenerations(prev => {
+                                if (prev.length > 0) return prev; // Zaten var
+                                // Hangi tip olduğunu tahmin et
+                                const type = lower.includes('görsel') || lower.includes('image') ? 'image'
+                                    : lower.includes('video') ? 'video' : 'image';
+                                return [{ type }];
+                            });
+                            setVideoGenStatus("generating");
+                        }
                     },
                     onGenerationStart: (generations) => {
-                        const videoGenerations = generations.filter(
-                            (generation) => generation.type === "video" || generation.type === "long_video"
-                        );
-
-                        if (videoGenerations.length > 0) {
+                        if (generations.length > 0) {
                             setVideoProgress(0);
                             setVideoGenStatus("generating");
-                            setActiveGenerations(videoGenerations);
+                            setActiveGenerations(generations);
                         }
                     },
                     onGenerationComplete: () => {
-                        // Dismiss image progress cards (synchronous tools)
-                        setActiveGenerations((prev) => prev.filter((g) => g.type !== "image"));
+                        // Senkron tool bitti — image/audio card'larını kaldır (video arka planda devam eder)
+                        setActiveGenerations((prev) => prev.filter((g) => g.type === "video" || g.type === "long_video"));
                     },
                     onDone: () => {
-                        // Stream tamamlandı — loading state'i temizle
+                        // Stream tamamlandı — tüm loading state temizle + stale card temizle
                         cleanupTimers();
                         setIsLoading(false);
                         setLoadingStatus("");
+                        // Senkron üretimler bittiyse card'ları temizle (video hariç — WS ile yönetilir)
+                        setActiveGenerations(prev => prev.filter(g => g.type === "video" || g.type === "long_video"));
                     },
                     onError: (error: string) => {
                         console.error('Stream error:', error);
@@ -1226,6 +1255,12 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setIsLoading(false);
                         setLoadingStatus("");
                         setError(streamErrorText);
+                        // Hata durumunda progress card'ı temizle
+                        setActiveGenerations([]);
+                        setVideoProgress(0);
+                        setProductionLogs([]);
+                        setCompletedScenes(0);
+                        setTotalScenes(0);
 
                         if (!messageCreated) {
                             messageCreated = true;
@@ -1313,6 +1348,8 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             setIsLoading(false);
             setLoadingStatus("Düşünüyor...");
             cleanupTimers();
+            // Safety net: senkron üretim card'larını temizle (video WS ile yönetilir)
+            setActiveGenerations(prev => prev.filter(g => g.type === 'video' || g.type === 'long_video'));
         }
     };
 
@@ -1697,10 +1734,13 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                 {activeGenerations.map((gen, i) => (
                                     <GenerationProgressCard
                                         key={`gen-${i}`}
-                                        type={gen.type as "video" | "long_video" | "image"}
+                                        type={gen.type}
                                         duration={gen.duration}
                                         progress={videoProgress}
                                         status={videoGenStatus}
+                                        productionLogs={productionLogs}
+                                        completedScenes={completedScenes}
+                                        totalScenes={totalScenes}
                                     />
                                 ))}
                             </div>

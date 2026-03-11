@@ -145,41 +145,25 @@ class ProgressService:
         self,
         session_id: str,
         task_type: str,
-        message: str
+        message: str,
+        completed_scenes: int = 0,
+        total_scenes: int = 0
     ):
         """
-        Akıllı bilgilendirme mesajı — gerçek chat mesajı olarak.
+        Production card bilgilendirme mesajı — geçici, DB'ye yazılmaz.
         
-        Progress card'ı ETKİLEMEZ. Chat'e yeni bir asistan mesajı düşürür.
-        Mesaj aynı zamanda DB'ye kaydedilir (sayfa yenilenince kaybolmasın).
+        Mesaj frontend'de production card içinde mini-log'da gösterilir.
+        Card kaybolunca mesajlar da kaybolur.
         """
         import uuid as _uuid
-
-        message_id = None
-        # DB'ye gerçek assistant mesajı kaydet
-        try:
-            from app.core.database import async_session_maker
-            from app.models.models import Message as DBMessage
-
-            async with async_session_maker() as db:
-                db_msg = DBMessage(
-                    session_id=_uuid.UUID(session_id),
-                    role="assistant",
-                    content=message,
-                )
-                db.add(db_msg)
-                await db.commit()
-                await db.refresh(db_msg)
-                message_id = str(db_msg.id)
-        except Exception as e:
-            print(f"⚠️ Reassurance DB kayıt hatası: {e}")
-            message_id = str(_uuid.uuid4())
 
         payload = {
             "type": "reassurance",
             "task_type": task_type,
             "message": message,
-            "message_id": message_id,
+            "message_id": str(_uuid.uuid4()),
+            "completed_scenes": completed_scenes,
+            "total_scenes": total_scenes,
             "timestamp": datetime.utcnow().isoformat()
         }
 

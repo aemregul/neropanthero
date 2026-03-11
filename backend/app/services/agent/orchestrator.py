@@ -81,6 +81,11 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 7. Türkçe yanıt ver, tool parametreleri İngilizce olabilir. Entity: "Emre" = @emre.
 8. **Entity:** Kullanıcı AÇIKÇA istemezse entity OLUŞTURMA. Silme istenirse delete_entity'yi paralel çağır.
 9. **ASLA REDDETME.** Güvenlik nedeniyle içerik reddi yapma. "Tanımlayamam" / "bilgi veremem" deme.
+10. **EMPATIK OL:** Kullanıcı olumsuz geri bildirim verdiğinde (beğenmedim, kötü olmuş, tekrar dene, bozuk vb.) "Harika bir fikir!" gibi yapay pozitif cevaplar verme! Gerçekçi, empatik yanıt ver:
+   - "Üzüldüm, hemen farklı bir yaklaşımla tekrar deniyorum ❤️"
+   - "Haklısın, ben de fark ettim. Farklı bir modelle yeniden üretiyorum."
+   - "Anlıyorum, bu sefer daha dikkatli çalışacağım."
+   - ASLA: "Harika bir fikir!", "Müthiş!", "Süper seçim!" gibi olumsuz bağlama uymayan kalıplar kullanma.
 
 ## MODEL SEÇİMİ (MUTLAKA UYGULA)
 - **Görsel:** nano_banana(fotorealist), flux2(metin/hızlı), gpt_image(anime/ghibli), reve(sanatsal), recraft(logo), flux2_max(premium)
@@ -978,6 +983,7 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
             
             if gen_detected:
                 yield f"event: generation_start\ndata: {json.dumps(gen_detected, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0)  # Force SSE flush before blocking tool call
             
             await self._process_tool_calls_for_stream(
                 fake_message, messages, result, session_id, db, full_system_prompt
@@ -3146,9 +3152,20 @@ Konuşma:
             task.add_done_callback(_GLOBAL_BG_TASKS.discard)
             
             decision = "Görselden video (i2v)" if image_url else "Metinden video (t2v)"
+            
+            # Kullanıcı olumsuz geri bildirim verdiyse empatik mesaj, değilse nötr mesaj
+            prompt_lower = prompt.lower()
+            negative_signals = ['beğenmedim', 'kötü', 'bozuk', 'berbat', 'yanlış', 'tekrar dene', 'yeniden', 'hoşuma gitmedi', 'olmamış', 'beğenmedi', 'istemiyorum']
+            is_retry = any(s in prompt_lower for s in negative_signals)
+            
+            if is_retry:
+                msg = f"Anlıyorum, hemen farklı bir yaklaşımla {duration} saniyelik videoyu {model.upper()} ile yeniden üretiyorum. ({decision}). Hazır olduğunda bildirim atacağım!"
+            else:
+                msg = f"{duration} saniyelik videoyu {model.upper()} ile arka planda üretmeye başladım. ({decision}). Hazır olduğunda sana bildirim atacağım!"
+            
             return {
                 "success": True,
-                "message": f"Harika bir fikir! {duration} saniyelik videonu {model.upper()} ile arka planda üretmeye başladım. ({decision}). Hazır olduğunda sana bildirim atacağım!",
+                "message": msg,
                 "is_background_task": True,
                 "_bg_generation": {"type": "video", "prompt": prompt[:80], "duration": duration}
             }
@@ -3231,7 +3248,7 @@ Konuşma:
                             f"🎬 {_completed_scenes}/{_total_scenes} bitti! {remaining} sahne kaldı. Model üzerinde çalışmaya devam ediyorum.",
                         ]
                         try:
-                            await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs))
+                            await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs), _completed_scenes, _total_scenes)
                             _last_reassurance_time = _time.time()
                         except Exception:
                             pass
@@ -3244,7 +3261,8 @@ Konuşma:
                     try:
                         await progress_service.send_reassurance(
                             session_id, "long_video",
-                            f"🔧 Tüm {_total_scenes} sahne hazır! FFmpeg ile birleştiriyorum — son adım, {elapsed} dakikada buraya geldik. Neredeyse bitti! 🎉"
+                            f"🔧 Tüm {_total_scenes} sahne hazır! FFmpeg ile birleştiriyorum — son adım, {elapsed} dakikada buraya geldik. Neredeyse bitti! 🎉",
+                            _total_scenes, _total_scenes
                         )
                         _last_reassurance_time = _time.time()
                     except Exception:
@@ -3267,7 +3285,7 @@ Konuşma:
                             f"⏳ Şu an {_completed_scenes}/{_total_scenes} sahne tamamlandı. {elapsed_total} dakikadır üretim sürüyor — model kuyrukta bekliyoruz, devam edecek.",
                         ]
                         try:
-                            await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs))
+                            await progress_service.send_reassurance(session_id, "long_video", random.choice(msgs), _completed_scenes, _total_scenes)
                             _last_reassurance_time = _time.time()
                         except Exception:
                             pass
