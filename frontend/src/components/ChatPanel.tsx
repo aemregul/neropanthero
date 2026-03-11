@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Send, Paperclip, Loader2, Mic, Smile, MoreHorizontal, ChevronDown, AlertCircle, Sparkles, X, Image, ZoomIn, Palette, Download, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Send, Paperclip, Loader2, MoreHorizontal, ChevronDown, AlertCircle, Sparkles, X, ZoomIn, Palette, Download, ThumbsUp, ThumbsDown } from "lucide-react";
 import { useToast } from "./ToastProvider";
-import { sendMessage, sendMessageStream, createSession, checkHealth, getSessionHistory, sendFeedback, type MessageResponse as ApiMessageResponse } from "@/lib/api";
+import { sendMessage, sendMessageStream, checkHealth, getSessionHistory, sendFeedback, type MessageResponse as ApiMessageResponse } from "@/lib/api";
 import { GenerationProgressCard } from "./GenerationProgressCard";
 
 interface Message {
@@ -72,7 +72,7 @@ function mapApiMessageToChatMessage(msg: ApiMessageResponse): Message {
     return {
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
-        content: msg.content?.replace(/\n\n\[(?:ÜRETİLEN (?:GÖRSELLER|VİDEOLAR)|Bu mesajda üretilen (?:görseller|videolar)):\s*[^\]]+\]/gi, '') || msg.content,
+        content: (msg.content?.replace(/\n\n\[(?:ÜRETİLEN (?:GÖRSELLER|VİDEOLAR)|Bu mesajda üretilen (?:görseller|videolar)):\s*[^\]]+\]/gi, '') || msg.content) ?? '',
         timestamp: new Date(msg.created_at),
         image_url: imageUrl,
         image_urls: imageUrls,
@@ -440,6 +440,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
         }
 
         prevSessionRef.current = initialSessionId || null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialSessionId]);
 
     // === AUTO-SAVE DRAFT TO LOCALSTORAGE ===
@@ -452,6 +453,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
         if (savedDraft && !input) {
             setInput(savedDraft);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialSessionId]);
 
     // Save draft to localStorage on input change (debounced)
@@ -496,7 +498,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
         if (savedQueue) {
             try {
                 setOfflineQueue(JSON.parse(savedQueue));
-            } catch (e) {
+            } catch (_e) {
                 console.error('Failed to parse offline queue');
             }
         }
@@ -505,6 +507,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Handle entity and asset drag & drop
@@ -1226,7 +1229,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         setMessages((prev) =>
                             prev.map((msg) =>
                                 msg.id === messageId && !msg.content.trim()
-                                    ? { ...msg, content: streamErrorText }
+                                    ? { ...msg, content: streamErrorText ?? '' }
                                     : msg
                             )
                         );
