@@ -2713,12 +2713,35 @@ Konuşma:
                     except Exception:
                         pass
 
+            async def _reassurance_timer():
+                """5 dakika sonra hâlâ üretiliyorsa kullanıcıyı bilgilendir."""
+                await asyncio.sleep(300)
+                if not progress_done.is_set():
+                    try:
+                        await progress_service.send_progress(
+                            session_id, "video", 0.70,
+                            "⏳ Video düzenleme hâlâ devam ediyor, herhangi bir hata yok — hazır olduğunda ekranına gelecek!"
+                        )
+                    except Exception:
+                        pass
+                await asyncio.sleep(300)
+                if not progress_done.is_set():
+                    try:
+                        await progress_service.send_progress(
+                            session_id, "video", 0.75,
+                            "⏳ Düzenleme devam ediyor, model yoğunluğu nedeniyle normalden uzun sürüyor. Lütfen biraz daha bekle."
+                        )
+                    except Exception:
+                        pass
+
             progress_task = asyncio.create_task(_smooth_progress())
+            reassurance_task = asyncio.create_task(_reassurance_timer())
             try:
                 plugin_result = await self.fal_plugin.execute("edit_video", edit_payload)
             finally:
                 progress_done.set()
                 progress_task.cancel()
+                reassurance_task.cancel()
 
             result_data = plugin_result.data or {}
 
@@ -2914,8 +2937,31 @@ Konuşma:
                         await progress_service.send_progress(session_id, "video", pct, msg)
                     except Exception:
                         pass
-            
+
+            async def _reassurance_timer():
+                """5 dakika sonra hâlâ üretiliyorsa kullanıcıyı bilgilendir."""
+                await asyncio.sleep(300)  # 5 dakika
+                if not progress_done.is_set():
+                    try:
+                        await progress_service.send_progress(
+                            session_id, "video", 0.70,
+                            "⏳ Video hâlâ üretiliyor, herhangi bir hata yok — hazır olduğunda ekranına gelecek. Beklemene değecek!"
+                        )
+                    except Exception:
+                        pass
+                # 10 dakikada hâlâ bitmemişse tekrar bilgilendir
+                await asyncio.sleep(300)
+                if not progress_done.is_set():
+                    try:
+                        await progress_service.send_progress(
+                            session_id, "video", 0.75,
+                            "⏳ Üretim devam ediyor, model yoğunluğu nedeniyle normalden uzun sürüyor. Lütfen biraz daha bekle."
+                        )
+                    except Exception:
+                        pass
+
             progress_task = asyncio.create_task(_smooth_progress())
+            reassurance_task = asyncio.create_task(_reassurance_timer())
             
             try:
                 if model == "veo":
@@ -2927,6 +2973,7 @@ Konuşma:
             finally:
                 progress_done.set()
                 progress_task.cancel()
+                reassurance_task.cancel()
             
             await progress_service.send_progress(session_id, "video", 0.70, "Video hazırlanıyor")
                 
@@ -3139,15 +3186,45 @@ Konuşma:
                 except Exception:
                     pass
 
-            result = await long_video_service.create_and_process(
-                user_id=user_id,
-                session_id=session_id,
-                prompt=english_prompt,
-                total_duration=total_duration,
-                aspect_ratio=aspect_ratio,
-                scene_descriptions=translated_scenes,
-                progress_callback=_on_progress
-            )
+            import asyncio
+            long_video_done = asyncio.Event()
+
+            async def _reassurance_timer():
+                """5 dakika sonra hâlâ üretiliyorsa kullanıcıyı bilgilendir."""
+                await asyncio.sleep(300)
+                if not long_video_done.is_set():
+                    try:
+                        await progress_service.send_progress(
+                            session_id, "long_video", 0.50,
+                            "⏳ Uzun video hâlâ üretiliyor, herhangi bir hata yok — sahneler sırayla işleniyor. Hazır olduğunda ekranına gelecek!"
+                        )
+                    except Exception:
+                        pass
+                await asyncio.sleep(300)
+                if not long_video_done.is_set():
+                    try:
+                        await progress_service.send_progress(
+                            session_id, "long_video", 0.60,
+                            "⏳ Üretim devam ediyor, uzun videolar doğası gereği biraz zaman alır. Lütfen biraz daha bekle."
+                        )
+                    except Exception:
+                        pass
+
+            reassurance_task = asyncio.create_task(_reassurance_timer())
+
+            try:
+                result = await long_video_service.create_and_process(
+                    user_id=user_id,
+                    session_id=session_id,
+                    prompt=english_prompt,
+                    total_duration=total_duration,
+                    aspect_ratio=aspect_ratio,
+                    scene_descriptions=translated_scenes,
+                    progress_callback=_on_progress
+                )
+            finally:
+                long_video_done.set()
+                reassurance_task.cancel()
             
             async with async_session_maker() as db:
                 if result.get("success") and result.get("video_url"):
