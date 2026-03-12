@@ -1437,6 +1437,11 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 onClose={() => setSavedImagesOpen(false)}
                 sessionId={sessionId}
                 onRefresh={() => { }}
+                onItemDeleted={(id, name, imageUrl, mediaType) => {
+                    moveToTrash(id, name, "wardrobe", { reference_image_url: imageUrl, type: mediaType }, imageUrl);
+                    // Sidebar entity listesinden de kaldır
+                    setSavedImages(prev => prev.filter(w => w.id !== id));
+                }}
             />
         </>
     );

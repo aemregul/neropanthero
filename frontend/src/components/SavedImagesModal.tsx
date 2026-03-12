@@ -10,6 +10,7 @@ interface SavedImagesModalProps {
     onClose: () => void;
     sessionId?: string | null;
     onRefresh?: () => void;  // Sidebar refresh için
+    onItemDeleted?: (id: string, name: string, imageUrl: string, mediaType: 'image' | 'video' | 'audio') => void;
 }
 
 interface SavedImage {
@@ -20,7 +21,7 @@ interface SavedImage {
     type: 'image' | 'video' | 'audio';
 }
 
-export function SavedImagesModal({ isOpen, onClose, sessionId, onRefresh }: SavedImagesModalProps) {
+export function SavedImagesModal({ isOpen, onClose, sessionId, onRefresh, onItemDeleted }: SavedImagesModalProps) {
     const [images, setImages] = useState<SavedImage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -72,12 +73,17 @@ export function SavedImagesModal({ isOpen, onClose, sessionId, onRefresh }: Save
 
     // Delete image
     const handleDelete = async (imageId: string) => {
+        const image = images.find(img => img.id === imageId);
         const success = await deleteEntity(imageId);
         if (success) {
             setImages(images.filter(img => img.id !== imageId));
             setSelectedImage(null);
             onRefresh?.();
-            toast.success('Görsel silindi');
+            // Trash state'ini anında güncelle
+            if (image) {
+                onItemDeleted?.(imageId, image.name, image.imageUrl, image.type);
+            }
+            toast.success('Görsel çöp kutusuna taşındı');
         } else {
             toast.error('Silme başarısız');
         }
