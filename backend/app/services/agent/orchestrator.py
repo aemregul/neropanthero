@@ -140,17 +140,11 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 - İç URL'leri (fal.media vb.) ASLA yanıtta gösterme.
 
 ## PRESET
-"Preset oluştur" mesajı geldiğinde → KESİNLİKLE manage_plugin tool'unu çağır!
-⚠️ KRİTİK: "preset oluştur" deyince ASLA metin yanıt verme — her zaman manage_plugin çağır!
-PRESET OLUŞTURMA TALİMATI:
-1. Sohbetteki bilgileri sessizce topla (karakter, lokasyon, stil)
-2. TÜRKÇE kısa isim oluştur ve manage_plugin çağır — YORUM YAPMA, AÇIKLAMA YAPMA
-3. Tool başarılıysa: ✅ '[İsim]' preset'i oluşturuldu! + içerik özeti
-4. Tool başarısızsa alacağın mesajı aynen kullanıcıya ilet
-İSİM KURALI:
-- SADECE TÜRKÇE: "Emre Sokak Portresi", "Yol Kenarı Fotoğrafçılık"
-- İNGİLİZCE YASAK: "Dynamic Visuals", "Visual Preset" KULLANMA
-- İsim seçim sürecini ASLA paylaşma
+"Preset oluştur" → manage_plugin tool'unu çağır. Metin yanıt verme, direkt tool çağır.
+- Sohbetteki karakter/lokasyon/stil bilgilerini config'e ekle
+- Kısa, anlamlı bir isim ver (sohbet içeriğine uygun)
+- Başarılıysa: ✅ '[İsim]' oluşturuldu + kısa içerik özeti
+- Başarısızsa: tool'dan gelen mesajı aynen ilet
 
 ## YANITLAR
 - Doğal, kısa ve bağlamsal konuş. Hangi model kullandığını belirt.
@@ -969,12 +963,20 @@ PRESET OLUŞTURMA TALİMATI:
             content = str(m.get('content', ''))[:120]
             print(f"   History[-{3-i}]: [{role}] {content}")
         print(f"{'='*60}")
+        # Preset oluştur mesajında tool zorunlu kıl
+        user_last_msg = ""
+        for m in reversed(messages):
+            if m.get("role") == "user" and isinstance(m.get("content"), str):
+                user_last_msg = m["content"].lower()
+                break
+        initial_tool_choice = "required" if "preset oluştur" in user_last_msg else "auto"
+        
         stream = await self.async_client.chat.completions.create(
             model=self.model,
             max_tokens=4096,
             messages=[{"role": "system", "content": full_system_prompt}] + messages,
             tools=AGENT_TOOLS,
-            tool_choice="auto",
+            tool_choice=initial_tool_choice,
             parallel_tool_calls=False,
             stream=True
         )
