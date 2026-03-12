@@ -1379,6 +1379,14 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                 result["_final_text"] = f"❌ {error_msg}"
                 messages.append({"role": "assistant", "content": f"❌ {error_msg}"})
                 return
+        
+        # manage_plugin başarılı + deterministik mesaj varsa, LLM'yi atla
+        if last_tool_name == "manage_plugin" and tool_result.get("_deterministic") and tool_result.get("success"):
+            print("✅ MANAGE_PLUGIN SUCCESS (stream): Deterministic response, skipping final LLM.")
+            result["_skip_final_llm"] = True
+            result["_final_text"] = tool_result["message"]
+            messages.append({"role": "assistant", "content": tool_result["message"]})
+            return
             messages.append({
                 "role": "user",
                 "content": "[SYSTEM: Önceki araç başarısız oldu. FARKLI bir araç dene. Örneğin: generate_image ile yeniden üret veya edit_image ile düzenle. HEMEN bir araç çağır!]"
@@ -1805,6 +1813,12 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                     error_msg = tool_result.get('message') or tool_result.get('error', 'Preset oluşturma başarısız oldu.')
                     result["response"] += f"❌ {error_msg}"
                     return
+            
+            # manage_plugin başarılı + deterministik mesaj varsa, LLM'yi atla
+            if tool_name == "manage_plugin" and tool_result.get("_deterministic") and tool_result.get("success"):
+                print("✅ MANAGE_PLUGIN SUCCESS (non-stream): Deterministic response, skipping final LLM.")
+                result["response"] += tool_result["message"]
+                return
                 messages.append({
                     "role": "user",
                     "content": "[SYSTEM: Önceki araç başarısız oldu. FARKLI bir araç dene. HEMEN bir araç çağır!]"
@@ -5574,6 +5588,22 @@ Konuşma:
                 if not name:
                     return {"success": False, "error": "Preset adı gerekli."}
                 
+                # İsmi config bilgilerinden otomatik iyileştir
+                name_parts = []
+                if config.get("character_tag"):
+                    # @karakter formatından temizle
+                    char_name = config["character_tag"].replace("@", "").replace("_", " ").title()
+                    name_parts.append(char_name)
+                if config.get("location_tag"):
+                    loc_name = config["location_tag"].replace("@", "").replace("_", " ").title()
+                    name_parts.append(loc_name)
+                if config.get("style"):
+                    name_parts.append(config["style"].title())
+                
+                # Config'ten isim oluşturabiliyorsan onu kullan, yoksa AI'ın ismini kullan
+                if name_parts:
+                    name = " ".join(name_parts)
+                
                 # Duplicate kontrolü — aynı session'da benzer plugin var mı?
                 existing_result = await db.execute(
                     select(CreativePlugin).where(
@@ -5629,22 +5659,23 @@ Konuşma:
                 await db.commit()
                 await db.refresh(plugin)
                 
-                # Hangi alanlar dolu, hangileri eksik
+                # Deterministik başarı mesajı
                 filled = []
                 missing = []
                 for field, label in [("character_tag", "Karakter"), ("location_tag", "Lokasyon"), ("style", "Stil"), ("timeOfDay", "Zaman"), ("cameraAngles", "Kamera Açıları")]:
                     if config.get(field):
-                        filled.append(label)
+                        filled.append(f"{label}: {config[field]}")
                     else:
                         missing.append(label)
                 
-                summary = f"✅ '{name}' preset'i başarıyla oluşturuldu!"
+                msg = f"✅ **'{name}'** preset'i başarıyla oluşturuldu!\n\n"
                 if filled:
-                    summary += f" İçerik: {', '.join(filled)}."
+                    msg += f"📋 **İçerik:** {', '.join(filled)}\n"
                 if missing:
-                    summary += f" Eksik: {', '.join(missing)} (sonradan eklenebilir)."
+                    msg += f"📝 **Eksik:** {', '.join(missing)} (sonradan eklenebilir)\n"
+                msg += f"\n💡 Topluluk sekmesinden preset'inizi yayınlayabilir veya düzenleyebilirsiniz."
                 
-                return {"success": True, "plugin_id": str(plugin.id), "message": summary}
+                return {"success": True, "plugin_id": str(plugin.id), "name": name, "message": msg, "_deterministic": True}
             
             elif action == "list":
                 result = await db.execute(
