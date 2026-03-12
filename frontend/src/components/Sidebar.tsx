@@ -1423,17 +1423,8 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 }}
                 onUse={(plugin) => {
                     const setTextFn = onSetInputText || onSendPrompt;
-                    if (setTextFn && plugin.config) {
-                        const parts: string[] = [];
-                        if (plugin.config.style) parts.push(`Stil: ${plugin.config.style}`);
-                        if (plugin.config.cameraAngles && plugin.config.cameraAngles.length > 0) {
-                            parts.push(`Açılar: ${plugin.config.cameraAngles.join(", ")}`);
-                        }
-                        if (plugin.config.timeOfDay) parts.push(`Zaman: ${plugin.config.timeOfDay}`);
-                        const prompt = plugin.config.promptTemplate
-                            ? `[${plugin.name}] ${plugin.config.promptTemplate}${parts.length > 0 ? ` (${parts.join(", ")})` : ""}`
-                            : `[${plugin.name}] ${parts.join(", ")} tarzında görsel üret`;
-                        setTextFn(prompt);
+                    if (setTextFn) {
+                        setTextFn(`Preset: ${plugin.name}`);
                     }
                     setPluginDetailOpen(false);
                 }}
