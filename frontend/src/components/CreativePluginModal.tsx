@@ -192,6 +192,8 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
     const [editTimeOfDay, setEditTimeOfDay] = useState("");
     const [editCameraAngles, setEditCameraAngles] = useState<string[]>([]);
     const [editPromptTemplate, setEditPromptTemplate] = useState("");
+    const [editCharacterTag, setEditCharacterTag] = useState("");
+    const [editLocationTag, setEditLocationTag] = useState("");
     const [newAngle, setNewAngle] = useState("");
     const [saving, setSaving] = useState(false);
 
@@ -204,6 +206,8 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
         setEditTimeOfDay(plugin.config?.timeOfDay || "");
         setEditCameraAngles([...(plugin.config?.cameraAngles || [])]);
         setEditPromptTemplate(plugin.config?.promptTemplate || "");
+        setEditCharacterTag((plugin.config?.character_tag as string) || "");
+        setEditLocationTag((plugin.config?.location_tag as string) || "");
         setIsEditing(true);
     };
 
@@ -236,6 +240,8 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                     timeOfDay: editTimeOfDay || undefined,
                     cameraAngles: editCameraAngles.length > 0 ? editCameraAngles : undefined,
                     promptTemplate: editPromptTemplate || undefined,
+                    character_tag: editCharacterTag || undefined,
+                    location_tag: editLocationTag || undefined,
                 }
             });
 
@@ -251,6 +257,8 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                         timeOfDay: editTimeOfDay || undefined,
                         cameraAngles: editCameraAngles.length > 0 ? editCameraAngles : undefined,
                         promptTemplate: editPromptTemplate || undefined,
+                        character_tag: editCharacterTag || undefined,
+                        location_tag: editLocationTag || undefined,
                     }
                 });
             }
@@ -490,6 +498,50 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                                         )}
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Karakter & Lokasyon Tag'leri */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <div className="flex items-center gap-2 text-xs font-medium mb-2" style={{ color: "var(--foreground-muted)" }}>
+                                    <Users size={12} /> Karakter Tag
+                                </div>
+                                <div className="p-3 rounded-xl" style={{ background: "var(--background)" }}>
+                                    {isEditing ? (
+                                        <input
+                                            value={editCharacterTag}
+                                            onChange={(e) => setEditCharacterTag(e.target.value.replace(/^@/, ''))}
+                                            className="w-full text-xs bg-transparent outline-none"
+                                            style={{ border: "1px solid var(--border)", padding: "6px 8px", borderRadius: "8px" }}
+                                            placeholder="emre, johny..."
+                                        />
+                                    ) : (
+                                        <span className="text-xs" style={{ color: (plugin.config?.character_tag as string) ? "var(--accent)" : "var(--foreground-muted)" }}>
+                                            {(plugin.config?.character_tag as string) ? `@${plugin.config.character_tag}` : "—"}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 text-xs font-medium mb-2" style={{ color: "var(--foreground-muted)" }}>
+                                    <MapPin size={12} /> Lokasyon Tag
+                                </div>
+                                <div className="p-3 rounded-xl" style={{ background: "var(--background)" }}>
+                                    {isEditing ? (
+                                        <input
+                                            value={editLocationTag}
+                                            onChange={(e) => setEditLocationTag(e.target.value.replace(/^@/, ''))}
+                                            className="w-full text-xs bg-transparent outline-none"
+                                            style={{ border: "1px solid var(--border)", padding: "6px 8px", borderRadius: "8px" }}
+                                            placeholder="sahil, orman..."
+                                        />
+                                    ) : (
+                                        <span className="text-xs" style={{ color: (plugin.config?.location_tag as string) ? "var(--accent)" : "var(--foreground-muted)" }}>
+                                            {(plugin.config?.location_tag as string) ? `@${plugin.config.location_tag}` : "—"}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

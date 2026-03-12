@@ -955,8 +955,6 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         }
         
         user_id = await get_user_id_from_session(db, session_id)
-        resolved = await entity_service.resolve_tags(db, user_id, user_message)
-        result["_resolved_entities"] = resolved
         result["_user_id"] = user_id
         
         # TEK streaming çağrı — tool call varsa biriktirir, yoksa direkt token yield eder
@@ -1015,8 +1013,44 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                     if config.get("timeOfDay"):
                         parts.append(f"time: {config['timeOfDay']}")
                     
-                    if config.get("character_tag"):
-                        parts.append(f"@{config['character_tag']}")
+                    # Entity varlık kontrolü + referans görsel çözümleme
+                    # Hem character_tag'den hem promptTemplate'teki @tag'lerden entity'leri topla
+                    all_tags = set()
+                    char_tag = config.get("character_tag", "")
+                    if char_tag:
+                        all_tags.add(char_tag)
+                    
+                    # promptTemplate'teki @tag'leri de parse et
+                    prompt_template = config.get("promptTemplate", "")
+                    if prompt_template:
+                        import re as re_mod
+                        found_tags = re_mod.findall(r'@(\w+)', prompt_template)
+                        all_tags.update(found_tags)
+                    
+                    if all_tags:
+                        user_id_for_entity = await get_user_id_from_session(db, session_id)
+                        from app.models.models import Entity
+                        for tag in all_tags:
+                            entity_check = await db.execute(
+                                select(Entity).where(
+                                    Entity.user_id == user_id_for_entity,
+                                    Entity.tag == tag
+                                )
+                            )
+                            found_entity = entity_check.scalar_one_or_none()
+                            
+                            if found_entity:
+                                # Entity var — @tag prompt'ta kalacak
+                                if found_entity.reference_image_url:
+                                    print(f"🎭 Preset entity '{tag}' referans görsel var: {found_entity.reference_image_url[:60]}...")
+                                else:
+                                    print(f"⚠️ Preset entity '{tag}' var ama referans görseli yok")
+                            else:
+                                # Entity silinmiş — ÜRETİM YAPMA, uyarı göster ve dur
+                                print(f"❌ Preset entity '{tag}' artık mevcut değil! Üretim engellendi.")
+                                warning_msg = f"⚠️ Bu preset'teki **@{tag}** karakteri silinmiş. Gereksiz kredi harcamamak için üretim durduruldu.\n\nLütfen:\n• Preset kartını düzenleyip karakter tag'ını güncelleyin\n• veya karakter tag'ını kaldırıp tekrar deneyin."
+                                yield warning_msg
+                                return
                     
                     enriched_prompt = ", ".join(parts) if parts else f"generate image with preset {preset_name}"
                     
@@ -1029,6 +1063,16 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
                     print(f"⚠️ Preset '{preset_name}' bulunamadı veya config boş")
             except Exception as e:
                 print(f"⚠️ Preset config çekme hatası: {e}")
+        
+        # Entity tag'lerini çözümle — preset injection'dan SONRA yapılmalı
+        # çünkü preset injection @tag'leri enriched prompt'a ekler
+        effective_message = user_message
+        if last_user_msg_idx >= 0:
+            effective_message = str(messages[last_user_msg_idx].get("content", user_message))
+        resolved = await entity_service.resolve_tags(db, user_id, effective_message)
+        result["_resolved_entities"] = resolved
+        if resolved:
+            print(f"🎭 Entity çözümlendi: {[getattr(e, 'tag', '?') for e in resolved]}")
         
         stream = await self.async_client.chat.completions.create(
             model=self.model,
