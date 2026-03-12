@@ -972,15 +972,62 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         print(f"{'='*60}")
         # Preset kullanımı veya oluşturma mesajında tool zorunlu kıl
         last_user_msg = ""
-        for m in reversed(messages):
-            if m.get("role") == "user":
-                last_user_msg = str(m.get("content", "")).strip()
+        last_user_msg_idx = -1
+        for idx in range(len(messages) - 1, -1, -1):
+            if messages[idx].get("role") == "user":
+                last_user_msg = str(messages[idx].get("content", "")).strip()
+                last_user_msg_idx = idx
                 break
         
         initial_tool_choice = "auto"
         if last_user_msg.lower().startswith("preset:"):
             initial_tool_choice = "required"
-            print(f"🔌 Preset kullanımı algılandı: {last_user_msg} → tool_choice=required")
+            preset_name = last_user_msg.split(":", 1)[1].strip()
+            print(f"🔌 Preset kullanımı algılandı: '{preset_name}' → tool_choice=required")
+            
+            # DB'den preset config'ini çek
+            try:
+                preset_result = await db.execute(
+                    select(Preset).where(
+                        Preset.session_id == session_id,
+                        Preset.name.ilike(preset_name)
+                    )
+                )
+                preset = preset_result.scalar_one_or_none()
+                
+                if preset and preset.config:
+                    config = preset.config
+                    # Zengin prompt oluştur
+                    parts = []
+                    
+                    if config.get("promptTemplate"):
+                        parts.append(config["promptTemplate"])
+                    
+                    if config.get("style"):
+                        parts.append(f"style: {config['style']}")
+                    
+                    if config.get("cameraAngles"):
+                        angles = config["cameraAngles"]
+                        if isinstance(angles, list) and angles:
+                            parts.append(f"camera angle: {angles[0]}")
+                    
+                    if config.get("timeOfDay"):
+                        parts.append(f"time: {config['timeOfDay']}")
+                    
+                    if config.get("character_tag"):
+                        parts.append(f"@{config['character_tag']}")
+                    
+                    enriched_prompt = ", ".join(parts) if parts else f"generate image with preset {preset_name}"
+                    
+                    # User mesajını doğrudan değiştir
+                    if last_user_msg_idx >= 0:
+                        messages[last_user_msg_idx]["content"] = enriched_prompt
+                    
+                    print(f"🔌 Preset prompt enjekte edildi: {enriched_prompt[:120]}...")
+                else:
+                    print(f"⚠️ Preset '{preset_name}' bulunamadı veya config boş")
+            except Exception as e:
+                print(f"⚠️ Preset config çekme hatası: {e}")
         
         stream = await self.async_client.chat.completions.create(
             model=self.model,
