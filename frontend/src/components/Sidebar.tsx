@@ -1413,7 +1413,14 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 isOpen={pluginDetailOpen}
                 onClose={() => setPluginDetailOpen(false)}
                 plugin={selectedPlugin}
-                onDelete={(id) => setPresetsList(presetsList.filter(p => p.id !== id))}
+                onDelete={(id) => {
+                    setPresetsList(presetsList.filter(p => p.id !== id));
+                    setPluginDetailOpen(false);
+                }}
+                onUpdate={(updated) => {
+                    setPresetsList(presetsList.map(p => p.id === updated.id ? updated : p));
+                    setSelectedPlugin(updated);
+                }}
                 onUse={(plugin) => {
                     const setTextFn = onSetInputText || onSendPrompt;
                     if (setTextFn && plugin.config) {

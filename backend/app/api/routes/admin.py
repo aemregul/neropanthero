@@ -7,8 +7,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case, literal
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.database import get_db
 from app.models.models import (
@@ -683,9 +685,10 @@ async def update_preset(plugin_id: UUID, data: PresetUpdate, db: AsyncSession = 
         plugin.description = data.description
     if data.config is not None:
         # Mevcut config'i merge et
-        existing = plugin.config or {}
+        existing = dict(plugin.config or {})
         existing.update(data.config)
         plugin.config = existing
+        flag_modified(plugin, "config")
     
     await db.commit()
     return {"success": True, "message": f"'{plugin.name}' güncellendi"}
