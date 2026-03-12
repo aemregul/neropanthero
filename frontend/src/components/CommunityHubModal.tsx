@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, Search, Star, Download, TrendingUp, Clock, Users, Loader2, Globe, Pin, Plus, Check, Eye, EyeOff, Sparkles } from "lucide-react";
-import { getMarketplacePlugins, getCreativePlugins, publishPlugin, installMarketplacePlugin, type MarketplacePlugin, type CreativePluginData } from "@/lib/api";
+import { getMarketplacePlugins, getPresets, publishPlugin, installMarketplacePlugin, type MarketplacePlugin, type PresetData } from "@/lib/api";
 import { useToast } from "./ToastProvider";
 
 interface Project {
@@ -27,7 +27,7 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState<SortMode>("downloads");
     const [communityPlugins, setCommunityPlugins] = useState<MarketplacePlugin[]>([]);
-    const [myPresets, setMyPresets] = useState<CreativePluginData[]>([]);
+    const [myPresets, setMyPresets] = useState<PresetData[]>([]);
     const [loading, setLoading] = useState(false);
     const [installing, setInstalling] = useState<string | null>(null);
     const [publishing, setPublishing] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
         if (!sessionId) return;
         setLoading(true);
         try {
-            const data = await getCreativePlugins(sessionId);
+            const data = await getPresets(sessionId);
             setMyPresets(data);
         } catch (err) {
             console.error("My presets fetch error:", err);

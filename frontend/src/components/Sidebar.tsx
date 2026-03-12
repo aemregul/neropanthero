@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
     getEntities, deleteEntity, Entity, createSession, getSessions, deleteSession, updateSession,
-    getCreativePlugins, createCreativePlugin, deleteCreativePlugin, CreativePluginData,
+    getPresets, createPreset, deletePreset, PresetData,
     getTrashItems, restoreTrashItem, permanentDeleteTrashItem, TrashItemData
 } from "@/lib/api";
 import {
@@ -77,7 +77,7 @@ const mockWardrobe = [
     { id: "w4", name: "@object_smartphone" },
 ];
 
-const mockCreativePlugins: CreativePlugin[] = [
+const mockPresets: CreativePlugin[] = [
     {
         id: "p1",
         name: "Mutfak Reklamı Seti",
@@ -430,7 +430,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
     const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
     const [savedImages, setSavedImages] = useState<{ id: string; name: string; imageUrl?: string }[]>([]);
     const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
-    const [creativePlugins, setCreativePlugins] = useState<CreativePlugin[]>([]);
+    const [presetsList, setPresetsList] = useState<CreativePlugin[]>([]);
 
     // Filtrelenmiş entity'ler (arama için)
     const filteredCharacters = characters.filter(c =>
@@ -474,13 +474,13 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         fetchProjects();
     }, [sessionId, refreshKey]);
 
-    // Backend'den creative plugins'i yükle
+    // Backend'den presets'i yükle
     useEffect(() => {
-        const fetchCreativePlugins = async () => {
+        const fetchPresets = async () => {
             if (!sessionId) return;
             try {
-                const plugins = await getCreativePlugins(sessionId);
-                const pluginList: CreativePlugin[] = plugins.map((p: CreativePluginData) => ({
+                const plugins = await getPresets(sessionId);
+                const pluginList: CreativePlugin[] = plugins.map((p: PresetData) => ({
                     id: p.id,
                     name: p.name,
                     description: p.description || '',
@@ -491,20 +491,20 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                     downloads: p.usage_count,
                     rating: 0
                 }));
-                setCreativePlugins(pluginList);
+                setPresetsList(pluginList);
             } catch (error) {
                 console.error('Creative plugins yükleme hatası:', error);
-                setCreativePlugins([]);
+                setPresetsList([]);
             }
         };
 
-        fetchCreativePlugins();
+        fetchPresets();
     }, [sessionId, refreshKey]);
 
     // Plugin listesi değiştiğinde parent'a bildir
     useEffect(() => {
         if (onPluginsLoaded) {
-            const simplified = creativePlugins.map(p => {
+            const simplified = presetsList.map(p => {
                 const parts: string[] = [];
                 if (p.config?.style) parts.push(`Stil: ${p.config.style}`);
                 if (p.config?.cameraAngles?.length) parts.push(`Açılar: ${p.config.cameraAngles.join(', ')}`);
@@ -516,7 +516,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
             });
             onPluginsLoaded(simplified);
         }
-    }, [creativePlugins, onPluginsLoaded]);
+    }, [presetsList, onPluginsLoaded]);
 
     // API'den entity'leri çek
     useEffect(() => {
@@ -1297,14 +1297,14 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: 'var(--foreground-muted)' }}>
                                             <Puzzle size={14} />
                                             <span>Yaratıcı Eklentiler</span>
-                                            {creativePlugins.length > 0 && (
-                                                <span style={{ opacity: 0.6 }}>({creativePlugins.length})</span>
+                                            {presetsList.length > 0 && (
+                                                <span style={{ opacity: 0.6 }}>({presetsList.length})</span>
                                             )}
                                         </div>
                                     </div>
-                                    {creativePlugins.length > 0 ? (
+                                    {presetsList.length > 0 ? (
                                         <div>
-                                            {creativePlugins.map((plugin) => (
+                                            {presetsList.map((plugin) => (
                                                 <div
                                                     key={plugin.id}
                                                     onClick={() => { setSelectedPlugin(plugin); setPluginDetailOpen(true); }}
@@ -1325,9 +1325,9 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            deleteCreativePlugin(plugin.id).then(success => {
+                                                            deletePreset(plugin.id).then(success => {
                                                                 if (success) {
-                                                                    setCreativePlugins(creativePlugins.filter(p => p.id !== plugin.id));
+                                                                    setPresetsList(presetsList.filter(p => p.id !== plugin.id));
                                                                     // Çöp kutusuna anında ekle
                                                                     moveToTrash(
                                                                         plugin.id,
@@ -1413,7 +1413,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 isOpen={pluginDetailOpen}
                 onClose={() => setPluginDetailOpen(false)}
                 plugin={selectedPlugin}
-                onDelete={(id) => setCreativePlugins(creativePlugins.filter(p => p.id !== id))}
+                onDelete={(id) => setPresetsList(presetsList.filter(p => p.id !== id))}
                 onUse={(plugin) => {
                     const setTextFn = onSetInputText || onSendPrompt;
                     if (setTextFn && plugin.config) {

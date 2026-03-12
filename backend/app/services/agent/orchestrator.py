@@ -23,7 +23,7 @@ from app.services.preferences_service import preferences_service
 from app.services.episodic_memory_service import episodic_memory
 from app.services.memory_hygiene import is_stable_memory_fact
 from app.services.user_error_formatter import format_user_error_message
-from app.models.models import Session as SessionModel, CreativePlugin
+from app.models.models import Session as SessionModel, Preset
 
 # Global referans tutucu (FastAPI arka plan görevlerinin Garbage Collector tarafından silinmesini önler)
 _GLOBAL_BG_TASKS = set()
@@ -1593,7 +1593,7 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
         # 8. Plugin listesi (aktif projedeki eklentiler)
         try:
             plugin_result = await db.execute(
-                select(CreativePlugin).where(CreativePlugin.session_id == session_id)
+                select(Preset).where(Preset.session_id == session_id)
             )
             plugins = list(plugin_result.scalars().all())
             if plugins:
@@ -5563,7 +5563,7 @@ Konuşma:
     async def _manage_plugin(self, db: AsyncSession, session_id: uuid.UUID, params: dict) -> dict:
         """Creative Plugin yönetimi — gerçek DB kaydı."""
         try:
-            from app.models.models import CreativePlugin
+            from app.models.models import Preset
             from sqlalchemy import select
             
             action = params.get("action")
@@ -5585,8 +5585,8 @@ Konuşma:
                 
                 # Duplicate kontrolü — aynı session'da benzer plugin var mı?
                 existing_result = await db.execute(
-                    select(CreativePlugin).where(
-                        CreativePlugin.session_id == session_id
+                    select(Preset).where(
+                        Preset.session_id == session_id
                     )
                 )
                 existing_plugins = existing_result.scalars().all()
@@ -5623,7 +5623,7 @@ Konuşma:
                 system_prompt = config.get("promptTemplate") or ", ".join(prompt_parts) or f"{name} tarzında görsel üret"
                 
                 # DB'ye kaydet
-                plugin = CreativePlugin(
+                plugin = Preset(
                     user_id=user_id,
                     session_id=session_id,
                     name=name,
@@ -5658,7 +5658,7 @@ Konuşma:
             
             elif action == "list":
                 result = await db.execute(
-                    select(CreativePlugin).where(CreativePlugin.session_id == session_id)
+                    select(Preset).where(Preset.session_id == session_id)
                 )
                 plugins = result.scalars().all()
                 plugin_list = [{"id": str(p.id), "name": p.name, "description": p.description} for p in plugins]
@@ -5669,7 +5669,7 @@ Konuşma:
                 if not plugin_id:
                     return {"success": False, "error": "Plugin ID gerekli."}
                 result = await db.execute(
-                    select(CreativePlugin).where(CreativePlugin.id == uuid.UUID(plugin_id))
+                    select(Preset).where(Preset.id == uuid.UUID(plugin_id))
                 )
                 plugin = result.scalar_one_or_none()
                 if plugin:

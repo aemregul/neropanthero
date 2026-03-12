@@ -297,11 +297,11 @@ class UsageStats(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-# ============== CREATIVE PLUGİNLER (Kullanıcı Tanımlı) ==============
+# ============== PRESETLER (Kullanıcı Tanımlı) ==============
 
-class CreativePlugin(Base):
-    """Kullanıcının oluşturduğu özel pluginler."""
-    __tablename__ = "creative_plugins"
+class Preset(Base):
+    """Kullanıcının oluşturduğu özel presetler."""
+    __tablename__ = "presets"
     
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)

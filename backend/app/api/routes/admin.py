@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.models import (
     AIModel, InstalledPlugin, UsageStats, UserSettings, 
-    CreativePlugin, TrashItem, Session, GeneratedAsset, Message
+    Preset, TrashItem, Session, GeneratedAsset, Message
 )
 
 
@@ -73,7 +73,7 @@ class UsageStatsResponse(BaseModel):
     images_generated: int
     videos_generated: int
 
-class CreativePluginCreate(BaseModel):
+class PresetCreate(BaseModel):
     name: str
     description: Optional[str]
     icon: str = "✨"
@@ -81,7 +81,7 @@ class CreativePluginCreate(BaseModel):
     system_prompt: Optional[str]
     is_public: bool = False
 
-class CreativePluginResponse(BaseModel):
+class PresetResponse(BaseModel):
     id: str
     name: str
     description: Optional[str]
@@ -605,21 +605,21 @@ async def get_model_distribution(db: AsyncSession = Depends(get_db)):
 
 # ============== CREATIVE PLUGINS ==============
 
-@router.get("/creative-plugins", response_model=list[CreativePluginResponse])
-async def list_creative_plugins(
+@router.get("/presets", response_model=list[PresetResponse])
+async def list_presets(
     session_id: Optional[UUID] = None,
     db: AsyncSession = Depends(get_db)
 ):
     """Kullanıcı tanımlı creative pluginleri listele."""
-    query = select(CreativePlugin)
+    query = select(Preset)
     if session_id:
-        query = query.where(CreativePlugin.session_id == session_id)
-    query = query.order_by(CreativePlugin.created_at.desc())
+        query = query.where(Preset.session_id == session_id)
+    query = query.order_by(Preset.created_at.desc())
     
     result = await db.execute(query)
     plugins = result.scalars().all()
     
-    return [CreativePluginResponse(
+    return [PresetResponse(
         id=str(p.id),
         name=p.name,
         description=p.description,
@@ -631,14 +631,14 @@ async def list_creative_plugins(
     ) for p in plugins]
 
 
-@router.post("/creative-plugins", response_model=CreativePluginResponse)
-async def create_creative_plugin(
-    data: CreativePluginCreate,
+@router.post("/presets", response_model=PresetResponse)
+async def create_preset(
+    data: PresetCreate,
     session_id: Optional[UUID] = None,
     db: AsyncSession = Depends(get_db)
 ):
     """Yeni creative plugin oluştur."""
-    plugin = CreativePlugin(
+    plugin = Preset(
         session_id=session_id,
         name=data.name,
         description=data.description,
@@ -651,7 +651,7 @@ async def create_creative_plugin(
     await db.commit()
     await db.refresh(plugin)
     
-    return CreativePluginResponse(
+    return PresetResponse(
         id=str(plugin.id),
         name=plugin.name,
         description=plugin.description,
@@ -663,10 +663,10 @@ async def create_creative_plugin(
     )
 
 
-@router.delete("/creative-plugins/{plugin_id}")
-async def delete_creative_plugin(plugin_id: UUID, db: AsyncSession = Depends(get_db)):
+@router.delete("/presets/{plugin_id}")
+async def delete_preset(plugin_id: UUID, db: AsyncSession = Depends(get_db)):
     """Creative plugin'i çöp kutusuna taşı."""
-    result = await db.execute(select(CreativePlugin).where(CreativePlugin.id == plugin_id))
+    result = await db.execute(select(Preset).where(Preset.id == plugin_id))
     plugin = result.scalar_one_or_none()
     
     if not plugin:
@@ -833,7 +833,7 @@ async def get_marketplace_plugins(
     # 2. Topluluk (kullanıcı oluşturmuş, public)
     if category in ("all", "community"):
         result = await db.execute(
-            select(CreativePlugin).where(CreativePlugin.is_public == True)
+            select(Preset).where(Preset.is_public == True)
         )
         user_plugins = result.scalars().all()
         for p in user_plugins:
@@ -876,10 +876,10 @@ async def get_marketplace_plugins(
     return all_plugins
 
 
-@router.patch("/creative-plugins/{plugin_id}/publish")
+@router.patch("/presets/{plugin_id}/publish")
 async def publish_plugin(plugin_id: UUID, db: AsyncSession = Depends(get_db)):
     """Kullanıcı pluginini marketplace'e yayınla."""
-    result = await db.execute(select(CreativePlugin).where(CreativePlugin.id == plugin_id))
+    result = await db.execute(select(Preset).where(Preset.id == plugin_id))
     plugin = result.scalar_one_or_none()
     
     if not plugin:
@@ -907,8 +907,8 @@ async def install_marketplace_plugin(
     try:
         target_uuid = UUID(target_session_id)
         existing_result = await db.execute(
-            select(CreativePlugin).where(
-                CreativePlugin.session_id == target_uuid
+            select(Preset).where(
+                Preset.session_id == target_uuid
             )
         )
         existing_plugins = existing_result.scalars().all()
@@ -922,7 +922,7 @@ async def install_marketplace_plugin(
     
     try:
         uid = UUID(plugin_id)
-        result = await db.execute(select(CreativePlugin).where(CreativePlugin.id == uid))
+        result = await db.execute(select(Preset).where(Preset.id == uid))
         source_plugin = result.scalar_one_or_none()
         if source_plugin:
             source_name = source_plugin.name
@@ -948,7 +948,7 @@ async def install_marketplace_plugin(
         source_plugin.usage_count += 1
     
     # Plugin'i hedef session'a kopyala
-    installed_plugin = CreativePlugin(
+    installed_plugin = Preset(
         session_id=target_uuid,
         user_id=source_plugin.user_id if source_plugin else None,
         name=source_name,
@@ -1055,7 +1055,7 @@ async def restore_trash_item(item_id: UUID, db: AsyncSession = Depends(get_db)):
         
         # Preset geri yükleme
         elif item_type == "preset":
-            new_plugin = CreativePlugin(
+            new_plugin = Preset(
                 user_id=item.user_id,
                 session_id=item.session_id,
                 name=item.item_name,
