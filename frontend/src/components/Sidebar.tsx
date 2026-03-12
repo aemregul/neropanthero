@@ -986,13 +986,13 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         className="rail-feature-btn"
                         onClick={() => setCommunityHubOpen(true)}
                         style={{
-                            background: 'rgba(74, 222, 128, 0.10)',
-                            border: '1px solid rgba(74, 222, 128, 0.25)',
-                            color: '#4ade80'
+                            background: 'rgba(167, 139, 250, 0.10)',
+                            border: '1px solid rgba(167, 139, 250, 0.25)',
+                            color: '#a78bfa'
                         }}
                     >
                         <Users size={20} />
-                        <span className="rail-label" style={{ color: '#4ade80' }}>Topluluk</span>
+                        <span className="rail-label" style={{ color: '#a78bfa' }}>Topluluk</span>
                     </button>
                     {/* Spacer */}
                     <div className="rail-spacer" />
