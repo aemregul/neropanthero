@@ -49,11 +49,11 @@ function getTypeLabel(type: TrashItem["type"]): string {
         character: "Karakter",
         lokasyon: "Lokasyon",
         location: "Lokasyon",
-        wardrobe: "Kıyafet",
+        wardrobe: "Kaydedilen Görsel",
         plugin: "Plugin",
         marka: "Marka",
         brand: "Marka",
-        asset: "Asset"
+        asset: "Medya"
     };
     return labels[type] || type;
 }
@@ -242,11 +242,11 @@ export function TrashModal({
                     >
                         {[
                             { key: "all" as const, label: "Tümü", color: "#6b7280" },
-                            { key: "asset" as const, label: "Görseller", color: "#f97316" },
+                            { key: "asset" as const, label: "Medya", color: "#f97316" },
                             { key: "proje" as const, label: "Projeler", color: "#22c55e" },
                             { key: "karakter" as const, label: "Karakterler", color: "#8b5cf6" },
                             { key: "lokasyon" as const, label: "Lokasyonlar", color: "#3b82f6" },
-                            { key: "wardrobe" as const, label: "Kıyafetler", color: "#f59e0b" },
+                            { key: "wardrobe" as const, label: "Kaydedilenler", color: "#f59e0b" },
                             { key: "plugin" as const, label: "Pluginler", color: "#ec4899" },
                             { key: "marka" as const, label: "Markalar", color: "#06b6d4" },
                         ].map(cat => {

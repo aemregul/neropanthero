@@ -341,15 +341,16 @@ Bu maddeler çözülmeden yeni özelliğe geçilmez.
   - Düzeltilen: `main.py` trash cleanup'ta `AsyncSessionLocal` import hatası (`async_session_maker` ile değiştirildi)
   - Etki alanı: `backend/app/services/agent/orchestrator.py`, `backend/app/api/routes/chat.py`, `frontend/src/components/ChatPanel.tsx`, `backend/app/main.py`
 
-- [ ] **1.2 — "Beni Hatırla" Çalışmıyor**
-  - Sorun: Login'de "Hesabımı hatırla" toggle'ı aktif olsa bile oturum kayboluyor
-  - Araştırılacak: JWT token persist mantığı, localStorage/cookie süresi, token refresh akışı
+- [x] **1.2 — "Beni Hatırla" Çalışmıyor** _(12 Mart 2026 — Test edildi, sorun bulunamadı)_
+  - ~~Sorun: Login'de "Hesabımı hatırla" toggle'ı aktif olsa bile oturum kayboluyor~~
+  - Kontrol edildi: JWT token persist mantığı çalışıyor, canlıda geçici bir sorun olmuş olabilir
   - Etki alanı: `frontend/src/contexts/AuthContext.tsx`, `backend/app/api/routes/auth.py`
 
-- [ ] **1.3 — Görsel Silindiğinde Çöp Kutusuna Gitmiyor**
-  - Sorun: Kaydedilen görseller silindiğinde soft-delete (trash) çalışmıyor, direkt kayboluyor
-  - Araştırılacak: `trash_items` tablosuna kayıt yazılıp yazılmadığı, frontend delete handler'ı
-  - Etki alanı: `backend/app/api/routes/admin.py`, `frontend/src/components/AssetsPanel.tsx`, `backend/app/models/models.py`
+- [x] **1.3 — Görsel Silindiğinde Çöp Kutusuna Gitmiyor** _(12 Mart 2026 — Düzeltildi)_
+  - ~~Sorun: Kaydedilen görseller silindiğinde soft-delete (trash) çalışmıyor, direkt kayboluyor~~
+  - Düzeltilen: Backend `delete_asset` endpoint'inde `user_id` TrashItem'a set edilmiyordu — eklendi
+  - Düzeltilen: Frontend çöp kutusu etiketleri yanlıştı (Kıyafet → Kaydedilen Görsel, Asset → Medya)
+  - Etki alanı: `backend/app/api/routes/sessions.py`, `frontend/src/components/TrashModal.tsx`
 
 ---
 

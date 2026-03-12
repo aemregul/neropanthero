@@ -242,6 +242,7 @@ async def delete_asset(
     # TrashItem oluştur
     from datetime import datetime
     trash_item = TrashItem(
+        user_id=current_user.id,
         item_type="asset",
         item_id=str(asset.id),
         item_name=asset.prompt[:50] if asset.prompt else "Generated Asset",
