@@ -142,7 +142,7 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 ## PRESET
 "Preset oluştur" → manage_plugin tool'unu çağır. Metin yanıt verme, direkt tool çağır.
 - Sohbetteki karakter/lokasyon/stil bilgilerini config'e ekle
-- Kısa, anlamlı bir isim ver (sohbet içeriğine uygun)
+- Preset adını İngilizce ver, kısa ve açıklayıcı olsun (örn: "Emre Street Portrait", "Night City Cinematic")
 - Başarılıysa: ✅ '[İsim]' oluşturuldu + kısa içerik özeti
 - Başarısızsa: tool'dan gelen mesajı aynen ilet
 
