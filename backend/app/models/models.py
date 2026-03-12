@@ -301,7 +301,7 @@ class UsageStats(Base):
 
 class Preset(Base):
     """Kullanıcının oluşturduğu özel presetler."""
-    __tablename__ = "presets"
+    __tablename__ = "creative_plugins"  # DB'de eski isim kalıyor, migration gerekmiyor
     
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
