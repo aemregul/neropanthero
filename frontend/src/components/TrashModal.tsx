@@ -6,7 +6,7 @@ import { X, Trash2, RotateCcw, Clock, AlertCircle, CheckSquare, Square, Trash, I
 export interface TrashItem {
     id: string;
     name: string;
-    type: "proje" | "karakter" | "lokasyon" | "wardrobe" | "plugin" | "marka" | "session" | "character" | "location" | "brand" | "asset";
+    type: "proje" | "karakter" | "lokasyon" | "wardrobe" | "preset" | "marka" | "session" | "character" | "location" | "brand" | "asset";
     deletedAt: Date;
     imageUrl?: string;
     assetType?: "image" | "video" | "audio"; // from original_data.type
@@ -71,7 +71,7 @@ function getTypeLabel(item: TrashItem): string {
         proje: "Proje", session: "Proje",
         karakter: "Karakter", character: "Karakter",
         lokasyon: "Lokasyon", location: "Lokasyon",
-        plugin: "Plugin",
+        preset: "Preset",
         marka: "Marka", brand: "Marka",
     };
     return labels[item.type] || item.type;
@@ -86,7 +86,7 @@ function getTypeColor(item: TrashItem): string {
         proje: "#22c55e", session: "#22c55e",
         karakter: "#8b5cf6", character: "#8b5cf6",
         lokasyon: "#3b82f6", location: "#3b82f6",
-        plugin: "#ec4899",
+        preset: "#ec4899",
         marka: "#06b6d4", brand: "#06b6d4",
     };
     return colors[item.type] || "#6b7280";
@@ -173,7 +173,7 @@ export function TrashModal({
         proje: items.filter(i => i.type === "proje" || i.type === "session").length,
         karakter: items.filter(i => i.type === "karakter" || i.type === "character").length,
         lokasyon: items.filter(i => i.type === "lokasyon" || i.type === "location").length,
-        plugin: items.filter(i => i.type === "plugin").length,
+        preset: items.filter(i => i.type === "preset").length,
         marka: items.filter(i => i.type === "marka" || i.type === "brand").length,
     };
 
@@ -269,7 +269,7 @@ export function TrashModal({
                             { key: "proje", label: "Projeler", color: "#22c55e" },
                             { key: "karakter", label: "Karakterler", color: "#8b5cf6" },
                             { key: "lokasyon", label: "Lokasyonlar", color: "#3b82f6" },
-                            { key: "plugin", label: "Pluginler", color: "#ec4899" },
+                            { key: "preset", label: "Presetler", color: "#ec4899" },
                             { key: "marka", label: "Markalar", color: "#06b6d4" },
                         ].map(cat => {
                             const count = categoryCounts[cat.key] || 0;
@@ -462,7 +462,7 @@ export function TrashModal({
                                                             item.type === 'karakter' || item.type === 'character' ? '👤' :
                                                                 item.type === 'lokasyon' || item.type === 'location' ? '📍' :
                                                                     item.type === 'marka' || item.type === 'brand' ? '🏷️' :
-                                                                        item.type === 'plugin' ? '🔌' : '📄'}
+                                                                        item.type === 'preset' ? '🧩' : '📄'}
                                                     </span>
                                                 </div>
                                             );

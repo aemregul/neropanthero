@@ -665,17 +665,37 @@ async def create_creative_plugin(
 
 @router.delete("/creative-plugins/{plugin_id}")
 async def delete_creative_plugin(plugin_id: UUID, db: AsyncSession = Depends(get_db)):
-    """Creative plugin sil."""
+    """Creative plugin'i çöp kutusuna taşı."""
     result = await db.execute(select(CreativePlugin).where(CreativePlugin.id == plugin_id))
     plugin = result.scalar_one_or_none()
     
     if not plugin:
-        raise HTTPException(status_code=404, detail="Plugin bulunamadı")
+        raise HTTPException(status_code=404, detail="Preset bulunamadı")
+    
+    # TrashItem oluştur
+    trash_item = TrashItem(
+        user_id=plugin.user_id,
+        session_id=plugin.session_id,
+        item_type="preset",
+        item_id=str(plugin.id),
+        item_name=plugin.name,
+        original_data={
+            "description": plugin.description,
+            "icon": plugin.icon,
+            "color": plugin.color,
+            "system_prompt": plugin.system_prompt,
+            "is_public": plugin.is_public,
+            "usage_count": plugin.usage_count,
+            "config": plugin.config,
+        },
+        expires_at=datetime.now() + timedelta(days=3)
+    )
+    db.add(trash_item)
     
     await db.delete(plugin)
     await db.commit()
     
-    return {"success": True, "message": "Creative plugin silindi"}
+    return {"success": True, "message": "Preset çöp kutusuna taşındı"}
 
 
 # ============== MARKETPLACE ==============
@@ -1032,6 +1052,24 @@ async def restore_trash_item(item_id: UUID, db: AsyncSession = Depends(get_db)):
             db.add(new_asset)
             await db.flush()
             restored_item = {"type": "asset", "id": str(new_asset.id), "url": new_asset.url}
+        
+        # Preset geri yükleme
+        elif item_type == "preset":
+            new_plugin = CreativePlugin(
+                user_id=item.user_id,
+                session_id=item.session_id,
+                name=item.item_name,
+                description=original_data.get("description"),
+                icon=original_data.get("icon", "🧩"),
+                color=original_data.get("color", "#22c55e"),
+                system_prompt=original_data.get("system_prompt"),
+                is_public=original_data.get("is_public", False),
+                usage_count=original_data.get("usage_count", 0),
+                config=original_data.get("config", {})
+            )
+            db.add(new_plugin)
+            await db.flush()
+            restored_item = {"type": "preset", "id": str(new_plugin.id), "name": new_plugin.name}
         
         else:
             # Bilinmeyen tip - sadece çöpten sil

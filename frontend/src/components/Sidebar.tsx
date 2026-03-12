@@ -499,7 +499,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         };
 
         fetchCreativePlugins();
-    }, [sessionId]);
+    }, [sessionId, refreshKey]);
 
     // Plugin listesi değiştiğinde parent'a bildir
     useEffect(() => {
@@ -792,8 +792,9 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         };
                         setProjects(prevProjects => [...prevProjects, newProject]);
                         break;
-                    case "plugin":
-                        console.log("Plugin restore - not implemented");
+                    case "preset":
+                        // Preset geri yüklendi — sidebar refresh olacak
+                        console.log("Preset restored");
                         break;
                     case "marka":
                     case "brand":  // Backend alias
@@ -1287,26 +1288,32 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                     onDelete={confirmDeleteBrand}
                                 />
 
-                                {/* Creative Plugins */}
-                                {creativePlugins.length > 0 && (
-                                    <div style={{ marginTop: 8 }}>
-                                        <div style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: '8px 16px'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: 'var(--foreground-muted)' }}>
-                                                <Puzzle size={14} />
-                                                <span>Yaratıcı Eklentiler</span>
+                                {/* Creative Plugins — başlık her zaman görünür */}
+                                <div style={{ marginTop: 8 }}>
+                                    <div style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '8px 16px'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: 'var(--foreground-muted)' }}>
+                                            <Puzzle size={14} />
+                                            <span>Yaratıcı Eklentiler</span>
+                                            {creativePlugins.length > 0 && (
                                                 <span style={{ opacity: 0.6 }}>({creativePlugins.length})</span>
-                                            </div>
+                                            )}
                                         </div>
+                                    </div>
+                                    {creativePlugins.length > 0 ? (
                                         <div>
                                             {creativePlugins.map((plugin) => (
                                                 <div
                                                     key={plugin.id}
                                                     onClick={() => { setSelectedPlugin(plugin); setPluginDetailOpen(true); }}
-                                                    className="entity-item group"
-                                                    style={{ paddingLeft: 16 }}
+                                                    className="group"
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                        padding: '6px 16px 6px 28px', cursor: 'pointer', fontSize: 13,
+                                                        color: 'var(--foreground-muted)', transition: 'background 0.15s'
+                                                    }}
                                                 >
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
                                                         <span style={{
@@ -1318,9 +1325,17 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            deleteEntity(plugin.id).then(success => {
+                                                            deleteCreativePlugin(plugin.id).then(success => {
                                                                 if (success) {
                                                                     setCreativePlugins(creativePlugins.filter(p => p.id !== plugin.id));
+                                                                    // Çöp kutusuna anında ekle
+                                                                    moveToTrash(
+                                                                        plugin.id,
+                                                                        plugin.name,
+                                                                        "preset",
+                                                                        { description: plugin.description },
+                                                                        undefined
+                                                                    );
                                                                 }
                                                             });
                                                         }}
@@ -1333,8 +1348,12 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div style={{ padding: '4px 16px 8px 28px', fontSize: 12, color: 'var(--foreground-muted)', opacity: 0.5 }}>
+                                            Henüz preset eklenmemiş
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}
