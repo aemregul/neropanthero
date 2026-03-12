@@ -885,10 +885,13 @@ async def publish_plugin(plugin_id: UUID, db: AsyncSession = Depends(get_db)):
     if not plugin:
         raise HTTPException(status_code=404, detail="Plugin bulunamadı")
     
-    plugin.is_public = True
+    plugin.is_public = not plugin.is_public
     await db.commit()
     
-    return {"success": True, "message": f"'{plugin.name}' marketplace'e yayınlandı!"}
+    if plugin.is_public:
+        return {"success": True, "message": f"'{plugin.name}' toplulukta yayınlandı!"}
+    else:
+        return {"success": True, "message": f"'{plugin.name}' yayından kaldırıldı."}
 
 
 class InstallPluginRequest(BaseModel):
