@@ -1305,6 +1305,10 @@ Preset başarıyla oluşturulduğunda kullanıcıya DETAYLI bilgi ver:
             if tool_result.get("success") and tool_result.get("entity"):
                 result["entities_created"].append(tool_result["entity"])
             
+            # Preset oluşturulduğunda sidebar refresh tetikle
+            if tool_result.get("success") and tool_name == "manage_plugin" and tool_args.get("action") == "create":
+                result["entities_created"].append({"type": "preset", "name": tool_result.get("name", "Preset")})
+            
             # Track background generation tasks for progress card
             if tool_result.get("_bg_generation"):
                 result["_bg_generations"].append(tool_result["_bg_generation"])
@@ -1739,6 +1743,10 @@ Preset başarıyla oluşturulduğunda kullanıcıya DETAYLI bilgi ver:
                 # Entity oluşturulduysa ekle
                 if tool_result.get("success") and tool_result.get("entity"):
                     result["entities_created"].append(tool_result["entity"])
+                
+                # Preset oluşturulduğunda sidebar refresh tetikle
+                if tool_result.get("success") and tool_name == "manage_plugin" and tool_args.get("action") == "create":
+                    result["entities_created"].append({"type": "preset", "name": tool_result.get("name", "Preset")})
 
                 media_message = self._get_deterministic_media_message(tool_result)
                 if media_message:
