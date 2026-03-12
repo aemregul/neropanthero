@@ -41,38 +41,55 @@ function getTimeRemaining(deletedAt: Date): string {
     return `${hours} saat`;
 }
 
-function getTypeLabel(type: TrashItem["type"]): string {
-    const labels: Record<TrashItem["type"], string> = {
-        proje: "Proje",
-        session: "Proje",
-        karakter: "Karakter",
-        character: "Karakter",
-        lokasyon: "Lokasyon",
-        location: "Lokasyon",
-        wardrobe: "Kaydedilen Görsel",
-        plugin: "Plugin",
-        marka: "Marka",
-        brand: "Marka",
-        asset: "Medya"
-    };
-    return labels[type] || type;
+// Gerçek medya tipini belirle (asset/wardrobe için URL veya original_data'dan)
+function getMediaCategory(item: TrashItem): "image" | "video" | "audio" | null {
+    // assetType zaten varsa direkt kullan
+    if (item.assetType) return item.assetType;
+    // original_data.type kontrolü
+    const odType = item.originalData?.type as string | undefined;
+    if (odType === "image" || odType === "video" || odType === "audio") return odType;
+    // URL uzantısından tahmin
+    const url = (item.imageUrl || item.originalData?.url || "") as string;
+    if (url.match(/\.(mp4|mov|webm)(\?.*)?$/i)) return "video";
+    if (url.match(/\.(wav|mp3|ogg|flac)(\?.*)?$/i)) return "audio";
+    if (url.match(/\.(png|jpg|jpeg|webp|gif)(\?.*)?$/i)) return "image";
+    // asset veya wardrobe ise varsayılan image
+    if (item.type === "asset" || item.type === "wardrobe") return "image";
+    return null;
 }
 
-function getTypeColor(type: TrashItem["type"]): string {
-    const colors: Record<TrashItem["type"], string> = {
-        proje: "#22c55e",
-        session: "#22c55e",
-        karakter: "#8b5cf6",
-        character: "#8b5cf6",
-        lokasyon: "#3b82f6",
-        location: "#3b82f6",
-        wardrobe: "#f59e0b",
-        plugin: "#ec4899",
-        marka: "#06b6d4",
-        brand: "#06b6d4",
-        asset: "#f97316"
+function getTypeLabel(item: TrashItem): string {
+    // Medya tipi olan item'lar için medya etiketi göster
+    const media = getMediaCategory(item);
+    if (media) {
+        if (media === "video") return "Video";
+        if (media === "audio") return "Ses";
+        return "Görsel";
+    }
+    // Entity/proje tipleri
+    const labels: Partial<Record<TrashItem["type"], string>> = {
+        proje: "Proje", session: "Proje",
+        karakter: "Karakter", character: "Karakter",
+        lokasyon: "Lokasyon", location: "Lokasyon",
+        plugin: "Plugin",
+        marka: "Marka", brand: "Marka",
     };
-    return colors[type] || "#6b7280";
+    return labels[item.type] || item.type;
+}
+
+function getTypeColor(item: TrashItem): string {
+    const media = getMediaCategory(item);
+    if (media === "video") return "#3b82f6";
+    if (media === "audio") return "#a855f7";
+    if (media === "image") return "#f97316";
+    const colors: Partial<Record<TrashItem["type"], string>> = {
+        proje: "#22c55e", session: "#22c55e",
+        karakter: "#8b5cf6", character: "#8b5cf6",
+        lokasyon: "#3b82f6", location: "#3b82f6",
+        plugin: "#ec4899",
+        marka: "#06b6d4", brand: "#06b6d4",
+    };
+    return colors[item.type] || "#6b7280";
 }
 
 // Lazy video thumbnail — only loads when scrolled into view
@@ -126,32 +143,36 @@ export function TrashModal({
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
     const [confirmDeleteSelected, setConfirmDeleteSelected] = useState(false);
-    const [activeFilter, setActiveFilter] = useState<TrashItem["type"] | "all">("all");
+    const [activeFilter, setActiveFilter] = useState<string>("all");
 
     if (!isOpen) return null;
 
-    // Filtreleme — alias türleri de dahil et
-    const typeAliases: Record<string, string[]> = {
-        proje: ["proje", "session"],
-        karakter: ["karakter", "character"],
-        lokasyon: ["lokasyon", "location"],
-        marka: ["marka", "brand"],
-    };
+    // Filtreleme — medya tipine göre
     const filteredItems = activeFilter === "all"
         ? items
         : items.filter(item => {
+            if (activeFilter === "image" || activeFilter === "video" || activeFilter === "audio") {
+                return getMediaCategory(item) === activeFilter;
+            }
+            const typeAliases: Record<string, string[]> = {
+                proje: ["proje", "session"],
+                karakter: ["karakter", "character"],
+                lokasyon: ["lokasyon", "location"],
+                marka: ["marka", "brand"],
+            };
             const aliases = typeAliases[activeFilter] || [activeFilter];
             return aliases.includes(item.type);
         });
 
-    // Kategori sayıları
-    const categoryCounts = {
+    // Kategori sayıları — medya tipine göre
+    const categoryCounts: Record<string, number> = {
         all: items.length,
+        image: items.filter(i => getMediaCategory(i) === "image").length,
+        video: items.filter(i => getMediaCategory(i) === "video").length,
+        audio: items.filter(i => getMediaCategory(i) === "audio").length,
         proje: items.filter(i => i.type === "proje" || i.type === "session").length,
         karakter: items.filter(i => i.type === "karakter" || i.type === "character").length,
         lokasyon: items.filter(i => i.type === "lokasyon" || i.type === "location").length,
-        wardrobe: items.filter(i => i.type === "wardrobe").length,
-        asset: items.filter(i => i.type === "asset").length,
         plugin: items.filter(i => i.type === "plugin").length,
         marka: items.filter(i => i.type === "marka" || i.type === "brand").length,
     };
@@ -241,16 +262,17 @@ export function TrashModal({
                         style={{ borderColor: "var(--border)", background: "var(--background)" }}
                     >
                         {[
-                            { key: "all" as const, label: "Tümü", color: "#6b7280" },
-                            { key: "asset" as const, label: "Medya", color: "#f97316" },
-                            { key: "proje" as const, label: "Projeler", color: "#22c55e" },
-                            { key: "karakter" as const, label: "Karakterler", color: "#8b5cf6" },
-                            { key: "lokasyon" as const, label: "Lokasyonlar", color: "#3b82f6" },
-                            { key: "wardrobe" as const, label: "Kaydedilenler", color: "#f59e0b" },
-                            { key: "plugin" as const, label: "Pluginler", color: "#ec4899" },
-                            { key: "marka" as const, label: "Markalar", color: "#06b6d4" },
+                            { key: "all", label: "Tümü", color: "#6b7280" },
+                            { key: "image", label: "Görseller", color: "#f97316" },
+                            { key: "video", label: "Videolar", color: "#3b82f6" },
+                            { key: "audio", label: "Sesler", color: "#a855f7" },
+                            { key: "proje", label: "Projeler", color: "#22c55e" },
+                            { key: "karakter", label: "Karakterler", color: "#8b5cf6" },
+                            { key: "lokasyon", label: "Lokasyonlar", color: "#3b82f6" },
+                            { key: "plugin", label: "Pluginler", color: "#ec4899" },
+                            { key: "marka", label: "Markalar", color: "#06b6d4" },
                         ].map(cat => {
-                            const count = categoryCounts[cat.key];
+                            const count = categoryCounts[cat.key] || 0;
                             if (cat.key !== "all" && count === 0) return null;
                             return (
                                 <button
@@ -396,49 +418,55 @@ export function TrashModal({
                                     </button>
 
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        {/* Thumbnail — assetType based */}
-                                        {item.assetType === 'video' ? (
-                                            <div className="w-14 h-14 rounded-lg shrink-0 border border-[var(--border)] bg-gradient-to-br from-purple-900/50 to-indigo-900/50 flex items-center justify-center overflow-hidden">
-                                                {item.imageUrl ? (
-                                                    <LazyVideoThumb src={item.imageUrl} />
-                                                ) : (
-                                                    <span className="text-2xl">🎬</span>
-                                                )}
-                                            </div>
-                                        ) : item.assetType === 'audio' ? (
-                                            <div className="w-14 h-14 rounded-lg shrink-0 border border-[var(--border)] bg-gradient-to-br from-emerald-900/50 to-teal-900/50 flex items-center justify-center">
-                                                <span className="text-2xl">🎵</span>
-                                            </div>
-                                        ) : item.assetType === 'image' ? (
-                                            <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-[var(--border)] bg-gradient-to-br from-sky-900/50 to-blue-900/50 flex items-center justify-center">
-                                                {item.imageUrl ? (
-                                                    <img
-                                                        src={item.imageUrl}
-                                                        alt={item.name}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            (e.currentTarget as HTMLImageElement).style.display = 'none';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <span className="text-2xl">🖼️</span>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div
-                                                className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center"
-                                                style={{ background: `${getTypeColor(item.type)}20` }}
-                                            >
-                                                <span className="text-lg">
-                                                    {item.type === 'proje' || item.type === 'session' ? '📁' :
-                                                        item.type === 'karakter' || item.type === 'character' ? '👤' :
-                                                            item.type === 'lokasyon' || item.type === 'location' ? '📍' :
-                                                                item.type === 'wardrobe' ? '👗' :
+                                        {/* Thumbnail — medya tipine göre */}
+                                        {(() => {
+                                            const media = getMediaCategory(item);
+                                            if (media === 'video') return (
+                                                <div className="w-14 h-14 rounded-lg shrink-0 border border-[var(--border)] bg-gradient-to-br from-purple-900/50 to-indigo-900/50 flex items-center justify-center overflow-hidden">
+                                                    {item.imageUrl ? (
+                                                        <LazyVideoThumb src={item.imageUrl} />
+                                                    ) : (
+                                                        <span className="text-2xl">🎬</span>
+                                                    )}
+                                                </div>
+                                            );
+                                            if (media === 'audio') return (
+                                                <div className="w-14 h-14 rounded-lg shrink-0 border border-[var(--border)] bg-gradient-to-br from-emerald-900/50 to-teal-900/50 flex items-center justify-center">
+                                                    <span className="text-2xl">🎵</span>
+                                                </div>
+                                            );
+                                            if (media === 'image') return (
+                                                <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-[var(--border)] bg-gradient-to-br from-sky-900/50 to-blue-900/50 flex items-center justify-center">
+                                                    {item.imageUrl ? (
+                                                        <img
+                                                            src={item.imageUrl}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span className="text-2xl">🖼️</span>
+                                                    )}
+                                                </div>
+                                            );
+                                            // Non-media items (proje, karakter, vb.)
+                                            return (
+                                                <div
+                                                    className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center"
+                                                    style={{ background: `${getTypeColor(item)}20` }}
+                                                >
+                                                    <span className="text-lg">
+                                                        {item.type === 'proje' || item.type === 'session' ? '📁' :
+                                                            item.type === 'karakter' || item.type === 'character' ? '👤' :
+                                                                item.type === 'lokasyon' || item.type === 'location' ? '📍' :
                                                                     item.type === 'marka' || item.type === 'brand' ? '🏷️' :
                                                                         item.type === 'plugin' ? '🔌' : '📄'}
-                                                </span>
-                                            </div>
-                                        )}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                         <div className="flex-1 min-w-0">
                                             <div className="font-medium truncate text-sm">
                                                 {item.imageUrl ? (item.name.length > 40 ? item.name.slice(0, 40) + '…' : item.name) : item.name}
@@ -448,7 +476,7 @@ export function TrashModal({
                                                     className="px-1.5 py-0.5 rounded"
                                                     style={{ background: "var(--card)" }}
                                                 >
-                                                    {getTypeLabel(item.type)}
+                                                    {getTypeLabel(item)}
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <Clock size={10} />
