@@ -580,7 +580,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                     name: i.item_name,
                     type: i.item_type as TrashItem["type"],
                     deletedAt: new Date(i.deleted_at),
-                    imageUrl: i.original_data?.url || undefined,
+                    imageUrl: (i.original_data?.url || i.original_data?.reference_image_url || undefined) as string | undefined,
                     assetType: i.original_data?.type as TrashItem["assetType"] || undefined,
                     originalData: i.original_data || {}
                 }));
@@ -614,12 +614,14 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
     };
 
     // Move to trash instead of deleting
-    const moveToTrash = (id: string, name: string, type: TrashItem["type"], originalData: Record<string, unknown>) => {
-        setTrashItems([...trashItems, {
+    const moveToTrash = (id: string, name: string, type: TrashItem["type"], originalData: Record<string, unknown>, imageUrl?: string) => {
+        setTrashItems(prev => [...prev, {
             id,
             name,
             type,
             deletedAt: new Date(),
+            imageUrl,
+            assetType: (originalData?.type as TrashItem["assetType"]) || undefined,
             originalData
         }]);
     };
@@ -679,7 +681,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
             onConfirm: async () => {
                 const success = await deleteEntity(id);
                 if (success) {
-                    moveToTrash(id, item.name, "wardrobe", item);
+                    moveToTrash(id, item.name, "wardrobe", item, item.imageUrl as string | undefined);
                     setSavedImages(savedImages.filter((w: { id: string; name: string; imageUrl?: string }) => w.id !== id));
                     toast.success(`"${item.name}" çöp kutusuna taşındı`);
                 } else {
