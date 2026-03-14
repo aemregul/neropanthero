@@ -320,6 +320,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
     // Drag-and-drop reorder state
     const [dragProjectId, setDragProjectId] = useState<string | null>(null);
     const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
+    const [dragOverPosition, setDragOverPosition] = useState<'above' | 'below' | null>(null);
 
     const applyProjectOrder = (list: typeof projects) => {
         try {
@@ -341,12 +342,21 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
     const handleProjectDragStart = (e: React.DragEvent, projectId: string) => {
         setDragProjectId(projectId);
         e.dataTransfer.effectAllowed = 'move';
+        // Daha iyi ghost efekti
+        const el = e.currentTarget as HTMLElement;
+        el.style.opacity = '0.5';
     };
 
     const handleProjectDragOver = (e: React.DragEvent, projectId: string) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        if (projectId !== dragProjectId) setDragOverProjectId(projectId);
+        if (projectId === dragProjectId) return;
+        // Üst/alt yarı tespiti — hangi tarafa bırakılacağını belirle
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const pos = e.clientY < midY ? 'above' : 'below';
+        setDragOverProjectId(projectId);
+        setDragOverPosition(pos as 'above' | 'below');
     };
 
     const handleProjectDrop = (e: React.DragEvent, targetId: string) => {
@@ -357,16 +367,23 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         if (fromIdx === -1 || toIdx === -1) return;
         const reordered = [...projects];
         const [moved] = reordered.splice(fromIdx, 1);
-        reordered.splice(toIdx, 0, moved);
+        // Pozisyona göre ekleme noktasını ayarla
+        const adjustedIdx = dragOverPosition === 'below'
+            ? (toIdx > fromIdx ? toIdx : toIdx + 1)
+            : (toIdx > fromIdx ? toIdx - 1 : toIdx);
+        reordered.splice(Math.max(0, adjustedIdx), 0, moved);
         setProjects(reordered);
         localStorage.setItem('projectOrder', JSON.stringify(reordered.map(p => p.id)));
         setDragProjectId(null);
         setDragOverProjectId(null);
+        setDragOverPosition(null);
     };
 
-    const handleProjectDragEnd = () => {
+    const handleProjectDragEnd = (e: React.DragEvent) => {
+        (e.currentTarget as HTMLElement).style.opacity = '1';
         setDragProjectId(null);
         setDragOverProjectId(null);
+        setDragOverPosition(null);
     };
 
     // Keyboard shortcuts
@@ -1117,85 +1134,124 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                         const isEditing = editingProjectId === project.id;
                                         const colors = categoryColor(project.category);
                                         return (
-                                            <div
-                                                key={project.id}
-                                                draggable={!isEditing}
-                                                onDragStart={(e) => handleProjectDragStart(e, project.id)}
-                                                onDragOver={(e) => handleProjectDragOver(e, project.id)}
-                                                onDrop={(e) => handleProjectDrop(e, project.id)}
-                                                onDragEnd={handleProjectDragEnd}
-                                                className={`project-card-v2 group ${project.active ? 'active' : ''} ${dragProjectId === project.id ? 'opacity-40' : ''} ${dragOverProjectId === project.id ? 'ring-2 ring-[var(--accent)]' : ''}`}
-                                                style={{ cursor: isEditing ? 'text' : 'grab' }}
-                                                onClick={() => !isEditing && handleProjectClick(project.id)}
-                                                onDoubleClick={(e) => {
-                                                    e.stopPropagation();
-                                                    startEditingProject(project.id, project.name);
-                                                }}
-                                            >
-                                                {/* Drag handle + Thumbnail */}
-                                                <div className="project-thumb" style={{ position: 'relative' }}>
-                                                    {categoryEmoji(project.category)}
-                                                </div>
+                                            <div key={project.id} style={{ position: 'relative' }}>
+                                                {/* Drop indicator — above */}
+                                                {dragOverProjectId === project.id && dragOverPosition === 'above' && dragProjectId !== project.id && (
+                                                    <div style={{
+                                                        position: 'absolute', top: -1, left: 8, right: 8, height: 2,
+                                                        background: 'var(--accent)', borderRadius: 2, zIndex: 10,
+                                                        boxShadow: '0 0 6px var(--accent)'
+                                                    }} />
+                                                )}
 
-                                                {/* Info */}
-                                                <div className="project-info">
-                                                    {isEditing ? (
-                                                        <input
-                                                            ref={editInputRef}
-                                                            type="text"
-                                                            value={editingProjectName}
-                                                            onChange={(e) => setEditingProjectName(e.target.value)}
-                                                            onBlur={() => saveProjectName(project.id)}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') saveProjectName(project.id);
-                                                                if (e.key === 'Escape') cancelEditingProject();
-                                                            }}
-                                                            onClick={(e) => e.stopPropagation()}
+                                                <div
+                                                    draggable={!isEditing}
+                                                    onDragStart={(e) => handleProjectDragStart(e, project.id)}
+                                                    onDragOver={(e) => handleProjectDragOver(e, project.id)}
+                                                    onDrop={(e) => handleProjectDrop(e, project.id)}
+                                                    onDragEnd={handleProjectDragEnd}
+                                                    className={`project-card-v2 group ${project.active ? 'active' : ''}`}
+                                                    style={{
+                                                        cursor: isEditing ? 'text' : 'pointer',
+                                                        opacity: dragProjectId === project.id ? 0.35 : 1,
+                                                        transform: dragProjectId === project.id ? 'scale(0.97)' : 'scale(1)',
+                                                        transition: 'opacity 0.2s ease, transform 0.2s ease'
+                                                    }}
+                                                    onClick={() => !isEditing && handleProjectClick(project.id)}
+                                                    onDoubleClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startEditingProject(project.id, project.name);
+                                                    }}
+                                                >
+                                                    {/* Drag handle — only visible on hover */}
+                                                    {!isEditing && (
+                                                        <div
                                                             style={{
-                                                                width: '100%', background: 'transparent',
-                                                                border: 'none', borderBottom: '1px solid var(--accent)',
-                                                                outline: 'none', fontSize: 13, color: 'var(--foreground)',
-                                                                padding: '2px 0'
+                                                                display: 'flex', alignItems: 'center',
+                                                                cursor: 'grab', opacity: 0, transition: 'opacity 0.15s',
+                                                                padding: '0 2px', marginLeft: -4
                                                             }}
-                                                            autoFocus
-                                                        />
-                                                    ) : (
-                                                        <>
-                                                            <div className="project-name">{project.name}</div>
-                                                            <div className="project-meta">
-                                                                {project.category && (
-                                                                    <span
-                                                                        className="category-badge"
-                                                                        style={{ background: colors.bg, color: colors.text }}
-                                                                    >
-                                                                        {categoryLabel(project.category)}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </>
+                                                            className="group-hover:opacity-100!"
+                                                            onMouseDown={(e) => e.stopPropagation()}
+                                                        >
+                                                            <GripVertical size={14} style={{ color: 'var(--foreground-muted)' }} />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Thumbnail */}
+                                                    <div className="project-thumb" style={{ position: 'relative' }}>
+                                                        {categoryEmoji(project.category)}
+                                                    </div>
+
+                                                    {/* Info */}
+                                                    <div className="project-info">
+                                                        {isEditing ? (
+                                                            <input
+                                                                ref={editInputRef}
+                                                                type="text"
+                                                                value={editingProjectName}
+                                                                onChange={(e) => setEditingProjectName(e.target.value)}
+                                                                onBlur={() => saveProjectName(project.id)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') saveProjectName(project.id);
+                                                                    if (e.key === 'Escape') cancelEditingProject();
+                                                                }}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                style={{
+                                                                    width: '100%', background: 'transparent',
+                                                                    border: 'none', borderBottom: '1px solid var(--accent)',
+                                                                    outline: 'none', fontSize: 13, color: 'var(--foreground)',
+                                                                    padding: '2px 0'
+                                                                }}
+                                                                autoFocus
+                                                            />
+                                                        ) : (
+                                                            <>
+                                                                <div className="project-name">{project.name}</div>
+                                                                <div className="project-meta">
+                                                                    {project.category && (
+                                                                        <span
+                                                                            className="category-badge"
+                                                                            style={{ background: colors.bg, color: colors.text }}
+                                                                        >
+                                                                            {categoryLabel(project.category)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    {!isEditing && (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, opacity: 0, transition: 'opacity 0.15s' }}
+                                                            className="group-hover:opacity-100!"
+                                                        >
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); startEditingProject(project.id, project.name); }}
+                                                                className="p-1 rounded hover:bg-[var(--card-hover)]"
+                                                                title="Yeniden Adlandır"
+                                                            >
+                                                                <Pencil size={12} style={{ color: 'var(--foreground-muted)' }} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); confirmDeleteProject(project.id); }}
+                                                                className="p-1 rounded hover:bg-red-500/20"
+                                                                title="Sil"
+                                                            >
+                                                                <Trash2 size={12} style={{ color: '#ef4444' }} />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
 
-                                                {/* Actions */}
-                                                {!isEditing && (
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, opacity: 0, transition: 'opacity 0.15s' }}
-                                                        className="group-hover:!opacity-100"
-                                                    >
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); startEditingProject(project.id, project.name); }}
-                                                            className="p-1 rounded hover:bg-[var(--card-hover)]"
-                                                            title="Yeniden Adlandır"
-                                                        >
-                                                            <Pencil size={12} style={{ color: 'var(--foreground-muted)' }} />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); confirmDeleteProject(project.id); }}
-                                                            className="p-1 rounded hover:bg-red-500/20"
-                                                            title="Sil"
-                                                        >
-                                                            <Trash2 size={12} style={{ color: '#ef4444' }} />
-                                                        </button>
-                                                    </div>
+                                                {/* Drop indicator — below */}
+                                                {dragOverProjectId === project.id && dragOverPosition === 'below' && dragProjectId !== project.id && (
+                                                    <div style={{
+                                                        position: 'absolute', bottom: -1, left: 8, right: 8, height: 2,
+                                                        background: 'var(--accent)', borderRadius: 2, zIndex: 10,
+                                                        boxShadow: '0 0 6px var(--accent)'
+                                                    }} />
                                                 )}
                                             </div>
                                         );
