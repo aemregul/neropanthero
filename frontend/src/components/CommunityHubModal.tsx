@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Search, Download, TrendingUp, Clock, Users, Loader2, Globe, Pin, Plus, Check, Eye, EyeOff, Sparkles } from "lucide-react";
-import { getMarketplacePlugins, getPresets, publishPlugin, installMarketplacePlugin, type MarketplacePlugin, type PresetData } from "@/lib/api";
+import { X, Search, Download, TrendingUp, Clock, Users, Loader2, Globe, Pin, Plus, Check, Eye, EyeOff, Sparkles, Trash2 } from "lucide-react";
+import { getMarketplacePlugins, getPresets, publishPlugin, installMarketplacePlugin, deletePreset, type MarketplacePlugin, type PresetData } from "@/lib/api";
 import { useToast } from "./ToastProvider";
 
 interface Project {
@@ -118,9 +118,28 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('tr-TR', {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('tr-TR', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
+    };
+
+    // Delete preset
+    const handleDeletePreset = async (presetId: string) => {
+        if (!confirm('Bu preset silinecek. Emin misiniz?')) return;
+        try {
+            const ok = await deletePreset(presetId);
+            if (ok) {
+                setMyPresets(prev => prev.filter(p => p.id !== presetId));
+                toast.success('Preset silindi');
+            } else {
+                toast.error('Silme başarısız');
+            }
+        } catch {
+            toast.error('Silme başarısız');
+        }
     };
 
     if (!isOpen) return null;
@@ -406,28 +425,37 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                                         </div>
 
                                         {/* Publish / Unpublish Button */}
-                                        <button
-                                            onClick={() => handlePublish(preset.id)}
-                                            disabled={publishing === preset.id}
-                                            className="px-4 py-2 text-xs font-medium rounded-lg transition-all flex items-center gap-2 shrink-0 hover:opacity-90 disabled:opacity-50"
-                                            style={{
-                                                background: preset.is_public
-                                                    ? "rgba(239, 68, 68, 0.1)"
-                                                    : "rgba(167, 139, 250, 0.15)",
-                                                border: preset.is_public
-                                                    ? "1px solid rgba(239, 68, 68, 0.3)"
-                                                    : "1px solid rgba(167, 139, 250, 0.3)",
-                                                color: preset.is_public ? "#ef4444" : "#a78bfa"
-                                            }}
-                                        >
-                                            {publishing === preset.id ? (
-                                                <Loader2 size={14} className="animate-spin" />
-                                            ) : preset.is_public ? (
-                                                <><EyeOff size={14} /> Yayından Kaldır</>
-                                            ) : (
-                                                <><Eye size={14} /> Toplulukta Yayınla</>
-                                            )}
-                                        </button>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                onClick={() => handlePublish(preset.id)}
+                                                disabled={publishing === preset.id}
+                                                className="px-4 py-2 text-xs font-medium rounded-lg transition-all flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+                                                style={{
+                                                    background: preset.is_public
+                                                        ? "rgba(239, 68, 68, 0.1)"
+                                                        : "rgba(167, 139, 250, 0.15)",
+                                                    border: preset.is_public
+                                                        ? "1px solid rgba(239, 68, 68, 0.3)"
+                                                        : "1px solid rgba(167, 139, 250, 0.3)",
+                                                    color: preset.is_public ? "#ef4444" : "#a78bfa"
+                                                }}
+                                            >
+                                                {publishing === preset.id ? (
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                ) : preset.is_public ? (
+                                                    <><EyeOff size={14} /> Yayından Kaldır</>
+                                                ) : (
+                                                    <><Eye size={14} /> Toplulukta Yayınla</>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeletePreset(preset.id)}
+                                                className="p-2 rounded-lg transition-all hover:bg-red-500/20"
+                                                title="Preset'i sil"
+                                            >
+                                                <Trash2 size={14} className="text-red-400" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
