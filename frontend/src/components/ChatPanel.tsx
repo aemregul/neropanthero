@@ -132,7 +132,7 @@ function MarkdownContent({ content, onImageClick }: { content: string; onImageCl
             if (!href) return <span {...props}>{children}</span>;
             // @mention link (from pre-processing)
             if (href === '#mention') {
-                return <span className="mention">@{children}</span>;
+                return <span className="mention">{children}</span>;
             }
             // Video link
             if (href.match(/\.(mp4|mov|webm)(\?.*)?$/i)) {
