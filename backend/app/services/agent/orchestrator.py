@@ -5905,10 +5905,10 @@ Konuşma:
                 
                 msg = f"✅ **'{name}'** preset'i başarıyla oluşturuldu!\n\n"
                 if filled:
-                    msg += f"📋 **İçerik:** {', '.join(filled)}\n"
+                    msg += f"📋 **İçerik:** {', '.join(filled)}\n\n"
                 if missing:
-                    msg += f"📝 **Eksik:** {', '.join(missing)} (sonradan eklenebilir)\n"
-                msg += f"\n💡 Topluluk sekmesinden preset'inizi yayınlayabilir veya düzenleyebilirsiniz."
+                    msg += f"📝 **Eksik:** {', '.join(missing)} (sonradan eklenebilir)\n\n"
+                msg += f"💡 Topluluk sekmesinden preset'inizi yayınlayabilir veya düzenleyebilirsiniz."
                 
                 return {"success": True, "plugin_id": str(plugin.id), "name": name, "message": msg, "_deterministic": True}
             

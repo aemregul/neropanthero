@@ -130,6 +130,10 @@ function MarkdownContent({ content, onImageClick }: { content: string; onImageCl
         // Links
         a: ({ href, children, ...props }: React.ComponentPropsWithRef<'a'>) => {
             if (!href) return <span {...props}>{children}</span>;
+            // @mention link (from pre-processing)
+            if (href === '#mention') {
+                return <span className="mention">@{children}</span>;
+            }
             // Video link
             if (href.match(/\.(mp4|mov|webm)(\?.*)?$/i)) {
                 return (
@@ -185,10 +189,11 @@ function MarkdownContent({ content, onImageClick }: { content: string; onImageCl
         ),
     }), [onImageClick]);
 
-    // Pre-process content: convert @mentions to styled spans (react-markdown won't handle custom @tag syntax)
+    // Pre-process content: convert @mentions to markdown links for green mention styling
     const processedContent = useMemo(() => {
         if (!content) return '';
-        return content;
+        // Convert @tag_name to [@tag_name](#mention) — the 'a' component renders #mention links with .mention class
+        return content.replace(/@([\w_]+)/g, '[@$1](#mention)');
     }, [content]);
 
     return (
