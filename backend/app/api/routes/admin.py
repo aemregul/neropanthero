@@ -920,10 +920,13 @@ async def install_marketplace_plugin(
 @router.get("/trash", response_model=list[TrashItemResponse])
 async def list_trash_items(db: AsyncSession = Depends(get_db)):
     """Çöp kutusundaki öğeleri listele."""
+    # Ensure fresh data from DB (prevent stale reads from session cache)
+    db.expire_all()
     result = await db.execute(
         select(TrashItem)
         .where(TrashItem.expires_at > datetime.now())
         .order_by(TrashItem.deleted_at.desc())
+        .execution_options(populate_existing=True)
     )
     items = result.scalars().all()
     
@@ -1041,8 +1044,16 @@ async def restore_trash_item(item_id: UUID, db: AsyncSession = Depends(get_db)):
 @router.delete("/trash/{item_id}")
 async def permanent_delete_trash_item(item_id: UUID, db: AsyncSession = Depends(get_db)):
     """Öğeyi kalıcı olarak sil."""
+    # Önce TrashItem.id ile ara
     result = await db.execute(select(TrashItem).where(TrashItem.id == item_id))
     item = result.scalar_one_or_none()
+    
+    # Bulunamadıysa, item_id alanında ara (frontend eski item ID'sini gönderebilir)
+    if not item:
+        result2 = await db.execute(
+            select(TrashItem).where(TrashItem.item_id == str(item_id))
+        )
+        item = result2.scalar_one_or_none()
     
     if not item:
         raise HTTPException(status_code=404, detail="Öğe bulunamadı")

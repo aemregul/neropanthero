@@ -738,8 +738,12 @@ export interface TrashItemData {
 }
 
 export async function getTrashItems(): Promise<TrashItemData[]> {
-    const response = await fetch(`${API_BASE_URL}${API_PREFIX}/admin/trash`, {
-        headers: getAuthHeaders(),
+    const response = await fetch(`${API_BASE_URL}${API_PREFIX}/admin/trash?_t=${Date.now()}`, {
+        headers: {
+            ...getAuthHeaders(),
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+        },
         cache: 'no-store',
     });
     if (!response.ok) throw new Error('Failed to fetch trash items');
