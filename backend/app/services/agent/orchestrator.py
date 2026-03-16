@@ -2694,13 +2694,13 @@ Konuşma:
                     # görseli hemen dönmeden önce arka planda analiz et. 
                     # Hata varsa 1 kez tekrar üret.
                     # ==========================================
-                    prompt_lower = prompt.lower()
-                    needs_text = any(kw in prompt_lower for kw in ["yaz", "text", "saying", "written", "letters", "kelime", "harf"])
+                    # Self-Reflection: SADECE kullanıcının orijinal promptunda yazı/text istenmişse tetikle
+                    original_lower = original_prompt.lower()
+                    needs_text = any(kw in original_lower for kw in ["yaz", "text", "saying", "written", "letters", "kelime", "harf"])
                     
                     if needs_text and result.get("attempts", []) == []:
                         print("🤖 🔍 SELF-REFLECTION TETIKLENDI: Görselde yazı istendi, kalite kontrol yapılıyor...")
                         try:
-                            # analyze_image arcını gizlice çağır
                             analysis_result = await self._analyze_image({
                                 "image_url": image_url,
                                 "question": "Bu görseldeki yazıları BİREBİR OKU. Eğer prompttaki istenen yazıyla eşleşmiyorsa, harf hatası (typo) varsa veya anlamsız bozuk şekiller varsa SADECE 'HATA: [hatanın detayı]' yaz. Her şey kusursuzsa SADECE 'KUSURSUZ' yaz."
@@ -2711,21 +2711,20 @@ Konuşma:
                             
                             if analysis_result.get("success") and "HATA" in analysis_text.upper() and "KUSURSUZ" not in analysis_text.upper():
                                 print("   ❌ Kalite kontrol başarısız! Otonom düzeltme (Retry 1) başlatılıyor...")
-                                # Otonom Retry - Hata bilgisini prompta ekleyerek DÜZELT
                                 correction_prompt = f"{prompt}. CRITICAL FIX: The previous generation failed because: {analysis_text}. You MUST render the text flawlessly this time. Use high contrast, clear typography, and double check spelling."
                                 
                                 retry_result = await self.fal_plugin.execute("generate_image", {
                                     "prompt": correction_prompt,
                                     "aspect_ratio": aspect_ratio,
-                                    "resolution": resolution
+                                    "resolution": resolution,
+                                    "model": preferred_model
                                 })
                                 
                                 if retry_result.success and retry_result.data.get("image_url"):
                                     print("   ✅ Otonom düzeltme başarılı! Yeni görsel kullanılıyor.")
-                                    # Eski (hatalı) görsel URL'sini ez
                                     image_url = retry_result.data.get("image_url")
-                                    method = "nano-banana-pro (Auto-Corrected)"
-                                    model_display = "Nano Banana Pro (Auto-Corrected)"
+                                    method = f"{model_display} (Auto-Corrected)"
+                                    model_display = f"{model_display} (Auto-Corrected)"
                                     quality_notes += " | 🤖 Otonom Self-Reflection çalıştı ve tespit edilen yazım hatası düzeltildi."
                         except Exception as ref_err:
                             print(f"⚠️ Self-Reflection hatası (Gözardı ediliyor): {ref_err}")
@@ -2792,8 +2791,9 @@ Konuşma:
                     # ==========================================
                     # 🔍 2. SELF-REFLECTION (AUTO-CORRECTION) BAŞLANGICI
                     # ==========================================
-                    prompt_lower = prompt.lower()
-                    needs_text = any(kw in prompt_lower for kw in ["yaz", "text", "saying", "written", "letters", "kelime", "harf"])
+                    # Self-Reflection: SADECE kullanıcının orijinal promptunda yazı/text istenmişse tetikle
+                    original_lower = original_prompt.lower()
+                    needs_text = any(kw in original_lower for kw in ["yaz", "text", "saying", "written", "letters", "kelime", "harf"])
                     
                     if needs_text:
                         print("🤖 🔍 SELF-REFLECTION TETIKLENDI (NON-REF): Görselde yazı istendi, kalite kontrol yapılıyor...")
@@ -2813,14 +2813,15 @@ Konuşma:
                                 retry_result = await self.fal_plugin.execute("generate_image", {
                                     "prompt": correction_prompt,
                                     "aspect_ratio": aspect_ratio,
-                                    "resolution": resolution
+                                    "resolution": resolution,
+                                    "model": preferred_model
                                 })
                                 
                                 if retry_result.success and retry_result.data.get("image_url"):
                                     print("   ✅ Otonom düzeltme başarılı! Yeni görsel kullanılıyor.")
                                     image_url = retry_result.data.get("image_url")
-                                    method = "nano-banana-pro (Auto-Corrected)"
-                                    model_display = "Nano Banana Pro (Auto-Corrected)"
+                                    method = f"{model_display} (Auto-Corrected)"
+                                    model_display = f"{model_display} (Auto-Corrected)"
                                     quality_notes += " | 🤖 Otonom Self-Reflection çalıştı ve tespit edilen yazım hatası düzeltildi."
                         except Exception as ref_err:
                             print(f"⚠️ Self-Reflection hatası (Gözardı ediliyor): {ref_err}")
