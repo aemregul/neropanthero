@@ -165,6 +165,34 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 - Preset'teki stil, sahne detayları ve karakter/lokasyon bilgilerini prompt'a dahil et
 - Kısaca "Preset uygulanıyor..." gibi kısa bir mesaj yaz, uzun açıklama YAPMA
 
+## 📐 SOSYAL MEDYA FORMAT KURALLARI
+Kullanıcı sosyal medya formatı belirttiğinde DOĞRU aspect_ratio kullan:
+| Format | aspect_ratio | Kullanım |
+|---|---|---|
+| Instagram Story / Reel | 9:16 | "hikaye", "story", "reel", "dikey" |
+| Instagram Post (Kare) | 1:1 | "post", "paylaşım", "kare" |
+| Instagram Post (Dikey) | 4:5 | "instagram dikey", "portre post" |
+| Facebook/YouTube Kapak | 16:9 | "kapak", "cover", "banner", "thumbnail" |
+| Twitter/X Header | 21:9 | "twitter header", "x banner" |
+| LinkedIn Banner | 21:9 | "linkedin banner" |
+| TikTok | 9:16 | "tiktok" |
+⚠️ Format belirtilmezse varsayılan 1:1 kullan.
+
+## 🎨 REKLAM & KUTLAMA GÖRSELİ REHBERİ
+Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
+1. **Metin tespit:** Görselde yazı/mesaj/slogan olacaksa TEXT-CAPABLE model seç: `flux2`, `grok_imagine`, `nano_banana_2`. DİĞER modeller metin render edemez!
+2. **Prompt zenginleştir:** Profesyonel grafik tasarım kalitesinde prompt yaz:
+   - Tipografi vurgusu (elegant font, bold typography, centered text layout)
+   - Mevsimsel/kültürel elementler (bayram için hilal/cami/koyun, yılbaşı için kar/çam/ışıklar)
+   - Renk uyumu (gold+green İslami bayramlar, red+green Noel, pastel tonlar bahar)
+   - Layout (üstte metin alanı, altta görsel, veya overlay text on background)
+3. **Bayram/Kutlama anahtar kelimeleri:** kurban, ramazan, bayram, kandil, yılbaşı, noel, christmas, easter, nevruz, 23 nisan, 29 ekim, anneler günü, babalar günü, sevgililer günü, doğum günü
+4. **Marka entity aktifse:** Marka renklerini, tonunu ve logosunu görsele entegre et.
+5. **Metin dili:** Görselde yazacak metni KULLANICININ DİLİNDE bırak! Türkçe istek → Türkçe metin. ASLA çevirme!
+   - ✅ DOĞRU: text saying "Kurban Bayramınız Kutlu Olsun"
+   - ❌ YANLIŞ: text saying "Eid al-Adha Mubarak" (kullanıcı Türkçe istedi!)
+6. **Örnek prompt yapısı:** "Professional holiday greeting card design with elegant gold typography saying 'Kurban Bayramınız Kutlu Olsun' centered on a warm toned background featuring subtle Islamic geometric patterns, crescent moon, and mosque silhouette. Premium graphic design quality, clean layout with balanced composition."
+
 ## YANITLAR
 - Doğal, kısa ve bağlamsal konuş. Hangi model kullandığını belirt.
 - Başarısızlıkta otomatik alternatif dene.
@@ -5065,9 +5093,32 @@ Konuşma:
     # GÖRSEL MUHAKEME METODLARI
     # ===============================
     
+    # Sosyal medya / reklam / kutlama tespit kelimeleri
+    _SOCIAL_MEDIA_KEYWORDS = {
+        "instagram", "story", "hikaye", "reel", "post", "paylaşım", "tiktok",
+        "facebook", "kapak", "cover", "banner", "thumbnail", "afiş", "poster",
+        "reklam", "kampanya", "sosyal medya", "social media",
+    }
+    _HOLIDAY_KEYWORDS = {
+        "bayram", "kurban", "ramazan", "kandil", "yılbaşı", "noel", "christmas",
+        "easter", "nevruz", "23 nisan", "29 ekim", "19 mayıs", "30 ağustos",
+        "anneler günü", "babalar günü", "sevgililer günü", "doğum günü",
+        "kutlama", "tebrik", "mesaj", "greeting", "holiday", "celebration",
+    }
+
+    def _is_social_media_or_ad_prompt(self, prompt: str) -> bool:
+        """Prompt'un sosyal medya / reklam / kutlama görseli olup olmadığını tespit et."""
+        lower = prompt.lower()
+        return (
+            any(kw in lower for kw in self._SOCIAL_MEDIA_KEYWORDS)
+            or any(kw in lower for kw in self._HOLIDAY_KEYWORDS)
+        )
+
     async def _enrich_prompt(self, prompt: str, media_type: str = "image") -> str:
         """
-        Kısa/belirsiz promptları sinematik detaylı hale getir.
+        Kısa/belirsiz promptları detaylı hale getir.
+        Sosyal medya / reklam / kutlama promptları → grafik tasarım enrichment.
+        Diğer promptlar → sinematik enrichment.
         Sadece 100 karakterden kısa promptlarda tetiklenir.
         """
         if not prompt or len(prompt) > 100:
@@ -5076,16 +5127,34 @@ Konuşma:
         try:
             type_context = "görsel" if media_type == "image" else "video"
             
+            # Sosyal medya / reklam / kutlama bağlamı
+            if self._is_social_media_or_ad_prompt(prompt):
+                system_msg = (
+                    "Sen bir profesyonel grafik tasarımcısın. Verilen kısa prompt'u "
+                    "sosyal medya / reklam / kutlama görseli için zenginleştir. "
+                    "Ekle: profesyonel tipografi (elegant font, bold text, centered layout), "
+                    "renk uyumu, mevsimsel/kültürel dekoratif elementler, "
+                    "clean composition, premium grafik tasarım kalitesi. "
+                    "KRİTİK KURAL: Görselde yazılması gereken metin varsa 'text saying \"...\"' formatında belirt "
+                    "ve metni KULLANICININ ORİJİNAL DİLİNDE bırak! Türkçe istek → Türkçe metin. ASLA İngilizceye çevirme! "
+                    "Örnek: 'Kurban Bayramı' → text saying \"Kurban Bayramınız Kutlu Olsun\" (İngilizce DEĞİL). "
+                    "Sahne açıklamasını İngilizce yaz ama görseldeki metin orijinal dilde kalsın. Max 3 cümle."
+                )
+            else:
+                system_msg = (
+                    f"Sen bir sinematik prompt mühendisisin. Verilen kısa {type_context} "
+                    "promptunu zenginleştir: ışık, atmosfer, kamera açısı, renk paleti, "
+                    "detaylar ekle. Orijinal anlamı koru, sadece detay ekle. "
+                    "Cevabın SADECE zenginleştirilmiş İngilizce prompt olsun, başka açıklama yazma. Max 2 cümle."
+                )
+            
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {
-                        "role": "system",
-                        "content": f"Sen bir sinematik prompt mühendisisin. Verilen kısa {type_context} promptunu zenginleştir: ışık, atmosfer, kamera açısı, renk paleti, detaylar ekle. Orijinal anlamı koru, sadece detay ekle. Cevabın SADECE zenginleştirilmiş İngilizce prompt olsun, başka açıklama yazma. Max 2 cümle."
-                    },
+                    {"role": "system", "content": system_msg},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=150
+                max_tokens=200
             )
             
             enriched = response.choices[0].message.content.strip()
