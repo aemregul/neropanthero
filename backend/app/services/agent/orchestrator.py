@@ -1494,16 +1494,17 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
             label = entity_type_labels.get(entity_type, entity_type.capitalize())
             name = entity.get("name", "")
             tag = entity.get("tag", "")
+            tag_display = tag if tag.startswith("@") else f"@{tag}"
             has_ref = tool_result.get("has_reference_image", False)
             
             confirmation = f"✅ **{label} oluşturuldu!**\n\n"
-            confirmation += f"📌 **Ad:** {name}\n"
-            confirmation += f"🏷️ **Tag:** @{tag}\n"
+            confirmation += f"📌 **Ad:** {name}\n\n"
+            confirmation += f"🏷️ **Tag:** {tag_display}\n\n"
             if entity.get("description"):
-                confirmation += f"📝 **Açıklama:** {entity['description']}\n"
+                confirmation += f"📝 **Açıklama:** {entity['description']}\n\n"
             if has_ref:
-                confirmation += f"📸 Referans görseli kaydedildi.\n"
-            confirmation += f"\nArtık mesajlarında **@{tag}** kullanarak bu {label.lower()}a referans verebilirsin."
+                confirmation += f"📸 Referans görseli kaydedildi.\n\n"
+            confirmation += f"Artık mesajlarında **{tag_display}** kullanarak bu {label.lower()}a referans verebilirsin."
             
             print(f"✅ ENTITY CREATED (stream): {name} ({entity_type}), skipping final LLM.")
             result["_skip_final_llm"] = True
