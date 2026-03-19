@@ -130,6 +130,18 @@ PepperStoryReel, birden fazla referans görselden geçişli montaj video üreten
 3. Tek görsel + video → Normal generate_video kullan, PepperStoryReel ÖNERMEsin
 4. Kullanıcı direkt "PepperStoryReel" derse → OTOMATIK tetikle, seçenek sorma
 
+**🎯 SAHNE PROMPT KALİTESİ (ÇOK ÖNEMLİ):**
+- ÖNCE referans görselleri analiz et: Kim var? Ne giyiyor? Ortam nedir? Işık nasıl? Poz nasıl?
+- Her sahne promptu GÖRSELE ÖZEL olmalı — genel/rastgele sahne yazma!
+  ❌ YANLIŞ: "A person walking through a forest, nature scenery" (görselle alakasız!)
+  ❌ YANLIŞ: "Mountain landscape with dramatic clouds" (rastgele geçiş!)
+  ✅ DOĞRU: "Cinematic slow-motion of the man in dark suit turning towards camera, dramatic studio lighting, slight wind in hair"
+  ✅ DOĞRU: "Close-up portrait shot slowly pulling back to reveal full body, moody dark background, film grain"
+- Sahneler arası BAĞLAM UYUMU koru: Aynı kişi/ortam/konseptte kal, sadece kamera açısı/hareket değiştir
+- Sinematik teknikler kullan: slow-motion, dolly zoom, rack focus, pan, tilt, cinematic lighting shift
+- Eğer görseller aynı kişinin farklı açılarıysa → "portre çekimi" akışı yap (medium shot → close-up → full body gibi)
+- Geçiş sahneleri EKLEMEsin sen, sadece referans görsellerin her birini canlandır. Araya rastgele sahne koyma!
+
 **Reklam/Tanıtım:**
 - Normal (tek görselli) video üretim mesajından SONRA, kısa ek cümle:
   "💡 Biliyor musun? Birden fazla görsel göndererek 🎬 **PepperStoryReel** ile geçişli montaj video oluşturabilirsin!"
