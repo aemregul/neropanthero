@@ -1,12 +1,12 @@
 # Pepper Root AI Agency — Proje Dokümantasyonu
 
-> **Son Güncelleme:** 16 Mart 2026
+> **Son Güncelleme:** 19 Mart 2026
 > **Repo:** [github.com/aemregul/PepperRootAiAgency](https://github.com/aemregul/PepperRootAiAgency)
 
 Bu dosya projenin tüm özelliklerini, mimarisini ve nasıl çalıştığını açıklar. Yeni bir AI oturumu veya ekip üyesi bu dosyayı okuyarak projeyi tamamen anlayabilir.
 
-cd /Users/emre/PepperRootAiAgency/backend && uvicorn app.main:app --reload --port 8000
-cd /Users/emre/PepperRootAiAgency/frontend && npm run dev
+cd backend && uvicorn app.main:app --reload --port 8000
+cd frontend && npm run dev
 
 ---
 
@@ -59,7 +59,27 @@ Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje b
 
 ---
 
-## 🚀 Aktif Özellikler (16 Mart 2026)
+## 🚀 Aktif Özellikler (19 Mart 2026)
+
+### Entity İsim Değiştirme (update_entity) _(19 Mart 2026)_
+
+- Kullanıcı chat'ten entity ismini değiştirebilir
+- Deterministic yanıt — markdown bold (**) kaldırıldı
+- Dosya: `backend/app/services/agent/orchestrator.py`
+
+### Model Seçimi Fix & LLM Override _(18 Mart 2026)_
+
+- Kullanıcı mesajından model tespiti, LLM override koruması
+- Model seçimi normalizasyonu, referans pipeline sırası düzeltildi
+- Self-Reflection yanlış tetiklenme sorunu çözüldü
+- Nano Banana 2 API parametreleri düzeltildi + fallback zinciri
+- Dosya: `backend/app/services/agent/orchestrator.py`, `backend/app/services/plugins/fal_plugin_v2.py`
+
+### Sosyal Medya Görseli Üretim Zekası _(18 Mart 2026)_
+
+- Agent, marka entity'si + format bilgisi kullanarak sosyal medya görselleri üretir
+- Instagram hikaye (1080x1920), post (1080x1080), Facebook kapak vb. formatlar
+- Dosya: `backend/app/services/agent/orchestrator.py`, `backend/app/services/agent/tools.py`
 
 ### Markdown Mesaj Render (react-markdown) _(16 Mart 2026)_
 
@@ -351,6 +371,8 @@ npm run dev
 | 34    | 5 Mart     | Production Deploy (Railway + Vercel)                    |
 | 35    | 14 Mart    | Trash Cache Fix, Entity Response Fix                    |
 | 36    | 16 Mart    | Markdown Render, Emoji Format, Celebrity Photo Bypass   |
+| 37    | 18 Mart    | Sosyal Medya Görseli, Model Seçimi Fix, Entity Rename   |
+| 38    | 19 Mart    | Workflow, GitHub Actions CI/CD, Proje Config            |
 
 ---
 
@@ -360,7 +382,7 @@ npm run dev
 | -------------- | ------- |
 | Agent Araç     | 36      |
 | AI Model       | 33      |
-| Toplam Faz     | 36      |
+| Toplam Faz     | 38      |
 | Canlı Backend  | Railway |
 | Canlı Frontend | Vercel  |
 
@@ -377,31 +399,17 @@ npm run dev
 
 Bu maddeler çözülmeden yeni özelliğe geçilmez.
 
-- [x] **1.1 — Chat Yavaşlık & Yanıtsızlık Sorunu** _(10 Mart 2026 — Düzeltildi)_
-  - ~~Sorun: Chat çok yavaş, bazen hiç geri dönüş yapmıyor~~
-  - Düzeltilen: SSE stream `onDone` callback eksikliği, `charQueue` flush sonsuz bekleme (10sn timeout eklendi)
-  - Düzeltilen: `_generate_long_video` fonksiyonunda `resolved_entities` NameError
-  - Düzeltilen: `with-files` endpoint'inde `fal_client.upload` senkron çağrısı greenlet çakışması (`asyncio.to_thread` ile çözüldü)
-  - Düzeltilen: `main.py` trash cleanup'ta `AsyncSessionLocal` import hatası (`async_session_maker` ile değiştirildi)
-  - Etki alanı: `backend/app/services/agent/orchestrator.py`, `backend/app/api/routes/chat.py`, `frontend/src/components/ChatPanel.tsx`, `backend/app/main.py`
+- [x] **1.1 — Chat Yavaşlık & Yanıtsızlık Sorunu** _(Düzeltildi)_
+  - SSE stream timeout, long video NameError, fal upload greenlet, trash cleanup import — tümü düzeltildi
 
-- [x] **1.2 — "Beni Hatırla" Çalışmıyor** _(12 Mart 2026 — Test edildi, sorun bulunamadı)_
-  - ~~Sorun: Login'de "Hesabımı hatırla" toggle'ı aktif olsa bile oturum kayboluyor~~
-  - Kontrol edildi: JWT token persist mantığı çalışıyor, canlıda geçici bir sorun olmuş olabilir
-  - Etki alanı: `frontend/src/contexts/AuthContext.tsx`, `backend/app/api/routes/auth.py`
+- [x] **1.2 — "Beni Hatırla" Çalışmıyor** _(Test edildi, sorun bulunamadı)_
 
-- [x] **1.3 — Görsel Silindiğinde Çöp Kutusuna Gitmiyor** _(12 Mart 2026 — Düzeltildi)_
-  - ~~Sorun: Kaydedilen görseller silindiğinde soft-delete (trash) çalışmıyor, direkt kayboluyor~~
-  - Düzeltilen: Backend `delete_asset` endpoint'inde `user_id` TrashItem'a set edilmiyordu — eklendi
-  - Düzeltilen: Frontend çöp kutusu etiketleri yanlıştı (Kıyafet → Kaydedilen Görsel, Asset → Medya)
-  - Etki alanı: `backend/app/api/routes/sessions.py`, `frontend/src/components/TrashModal.tsx`
+- [x] **1.3 — Görsel Silindiğinde Çöp Kutusuna Gitmiyor** _(Düzeltildi)_
+  - `user_id` TrashItem'a set + frontend etiket düzeltmeleri
 
-- [ ] **1.4 — Videodan Entity Kaydederken Referans Görsel Sorunu** _(12 Mart 2026 — Tespit edildi)_
-  - Sorun: Kullanıcı bir videodan lokasyon/karakter kaydettiğinde `reference_image_url` olarak video URL'i (.mp4) kaydediliyor
-  - Etki: Görsel üretim modelleri (Nano Banana, GPT Image, FLUX) video dosyasını referans görsel olarak yükleyemiyor → 400 INVALID_ARGUMENT hatası
-  - Sadece Gemini video'dan kare çıkarabildiği için fallback'te çalışıyor, diğer modeller başarısız
-  - Çözüm önerisi: Entity kaydederken video URL tespit edilmeli → FFmpeg/backend ile ilk kareden thumbnail çıkartılıp `reference_image_url` olarak kullanılmalı
-  - Video tarama: Kullanıcı "bu sahnedeki arka planı kaydet" dediğinde AI videonun ilgili sahnesini gerçekten analiz edip kare çıkarmalı
+- [ ] **1.4 — Videodan Entity Kaydederken Referans Görsel Sorunu**
+  - Sorun: Video URL (.mp4) `reference_image_url` olarak kaydediliyor → görsel modelleri çalışmıyor
+  - Çözüm: Video URL tespit → FFmpeg ile thumbnail çıkart → `reference_image_url` olarak kullan
   - Etki alanı: `backend/app/services/entity_service.py`, `backend/app/services/agent/orchestrator.py`
 
 ---
@@ -443,13 +451,10 @@ Bu maddeler çözülmeden yeni özelliğe geçilmez.
   - Avantaj: Token tasarrufu, tutarlı marka çıktısı, ölçeklenebilir bilgi tabanı
   - Etki alanı: Yeni servis (`backend/app/services/skill_service.py`), `orchestrator.py`, yeni frontend UI
 
-- [ ] **3.3 — Marka Bazlı Reklam Afişi & Sosyal Medya Görseli Üretimi**
-  - Agent, kayıtlı marka entity'sinin kimliğini (logo, renkler, font, ton of voice) kullanarak markaya özel kreatif üretecek
-  - Desteklenecek formatlar: Instagram hikaye (1080x1920), Instagram post (1080x1080), Facebook kapak, banner vb.
-  - Örnek akış: "Sahibinden markamız adına Kurban Bayramı kutlama görseli oluştur, Instagram hikaye formatında" → Agent marka bilgilerini çeker → uygun format ve marka renkleriyle görsel üretir
-  - Mevsimsel/etkinlik bazlı şablonlar: Bayramlar, yılbaşı, kampanya dönemleri
-  - Bağımlılık: 3.1 (Marka Objeleştirme) ve 3.2 (Skill Sistemi) tamamlanmış olmalı
-  - Etki alanı: `backend/app/services/agent/orchestrator.py`, `backend/app/services/agent/tools.py`, entity context enjeksiyonu
+- [x] **3.3 — Marka Bazlı Reklam Afişi & Sosyal Medya Görseli Üretimi** _(18 Mart 2026 — Tamamlandı)_
+  - Agent marka entity'si + format bilgisini kullanarak sosyal medya görselleri üretir
+  - Desteklenen formatlar: Instagram hikaye/post, Facebook kapak, banner
+  - Etki alanı: `backend/app/services/agent/orchestrator.py`, `backend/app/services/agent/tools.py`
 
 - [ ] **3.4 — Paralel Çoklu Görsel Üretimi (Batch Generation)**
   - Kullanıcı "4 görsel oluştur" dediğinde agent tam olarak 4 görseli **eşzamanlı (parallel)** üretecek
