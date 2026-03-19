@@ -3031,6 +3031,22 @@ Konuşma:
             # Session'dan user_id al
             user_id = await get_user_id_from_session(db, session_id)
             
+            # 🎬 Video URL kontrolü — .mp4/.webm/.mov ise FFmpeg ile thumbnail çıkart
+            if reference_image_url:
+                video_extensions = ('.mp4', '.webm', '.mov', '.avi', '.mkv')
+                url_path = reference_image_url.split('?')[0].lower()  # Query params temizle
+                if any(url_path.endswith(ext) for ext in video_extensions) or '/video/' in reference_image_url.lower():
+                    print(f"🎬 Video URL tespit edildi, thumbnail çıkarılıyor: {reference_image_url[:60]}...")
+                    try:
+                        extract_result = await self.fal_plugin._extract_frame(reference_image_url)
+                        if extract_result.get("success"):
+                            reference_image_url = extract_result["image_url"]
+                            print(f"✅ Video thumbnail çıkarıldı: {reference_image_url[:60]}...")
+                        else:
+                            print(f"⚠️ Thumbnail çıkarılamadı: {extract_result.get('error')}")
+                    except Exception as thumb_error:
+                        print(f"⚠️ Thumbnail çıkarma hatası: {thumb_error}")
+            
             entity = await entity_service.create_entity(
                 db=db,
                 user_id=user_id,

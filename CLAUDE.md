@@ -5,7 +5,7 @@
 
 Bu dosya projenin tüm özelliklerini, mimarisini ve nasıl çalıştığını açıklar. Yeni bir AI oturumu veya ekip üyesi bu dosyayı okuyarak projeyi tamamen anlayabilir.
 
-cd backend && uvicorn app.main:app --reload --port 8000
+cd /Users/emre/.codex/worktrees/2795/PepperRootAiAgency/backend && source venv/bin/activate && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 cd frontend && npm run dev
 
 ---
@@ -61,10 +61,10 @@ Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje b
 
 ## 🚀 Aktif Özellikler (19 Mart 2026)
 
-### Entity İsim Değiştirme (update_entity) _(19 Mart 2026)_
+### Entity İsim Değiştirme (update*entity) *(19 Mart 2026)\_
 
 - Kullanıcı chat'ten entity ismini değiştirebilir
-- Deterministic yanıt — markdown bold (**) kaldırıldı
+- Deterministic yanıt — markdown bold (\*\*) kaldırıldı
 - Dosya: `backend/app/services/agent/orchestrator.py`
 
 ### Model Seçimi Fix & LLM Override _(18 Mart 2026)_
@@ -83,7 +83,7 @@ Bu kurallar her şeyden önce gelir. Bu kurallara uyulmadığı takdirde proje b
 
 ### Markdown Mesaj Render (react-markdown) _(16 Mart 2026)_
 
-- Asistan mesajları `react-markdown` ile render ediliyor — **bold**, *italic*, başlıklar, listeler, kod blokları düzgün görünüyor
+- Asistan mesajları `react-markdown` ile render ediliyor — **bold**, _italic_, başlıklar, listeler, kod blokları düzgün görünüyor
 - `MarkdownContent` component'ı: özel styled heading, paragraph, list, code, blockquote, link, image, video, audio component'ları
 - @mention desteği: `@tag` → `[@tag](#mention)` pre-processing + yeşil `.mention` CSS class ile render
 - Kullanıcı mesajları hâlâ basit `renderContent` fonksiyonu ile render ediliyor
@@ -409,10 +409,10 @@ Bu maddeler çözülmeden yeni özelliğe geçilmez.
 - [x] **1.3 — Görsel Silindiğinde Çöp Kutusuna Gitmiyor** _(Düzeltildi)_
   - `user_id` TrashItem'a set + frontend etiket düzeltmeleri
 
-- [ ] **1.4 — Videodan Entity Kaydederken Referans Görsel Sorunu**
+- [x] **1.4 — Videodan Entity Kaydederken Referans Görsel Sorunu** ✅ (Faz 40)
   - Sorun: Video URL (.mp4) `reference_image_url` olarak kaydediliyor → görsel modelleri çalışmıyor
-  - Çözüm: Video URL tespit → FFmpeg ile thumbnail çıkart → `reference_image_url` olarak kullan
-  - Etki alanı: `backend/app/services/entity_service.py`, `backend/app/services/agent/orchestrator.py`
+  - Çözüm: `_create_entity` fonksiyonunda video URL tespit → FFmpeg (`_extract_frame`) ile thumbnail çıkart → `reference_image_url` olarak kullan
+  - Etki alanı: `backend/app/services/agent/orchestrator.py`
 
 ---
 
