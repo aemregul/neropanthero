@@ -373,6 +373,7 @@ npm run dev
 | 36    | 16 Mart    | Markdown Render, Emoji Format, Celebrity Photo Bypass   |
 | 37    | 18 Mart    | Sosyal Medya Görseli, Model Seçimi Fix, Entity Rename   |
 | 38    | 19 Mart    | Workflow, GitHub Actions CI/CD, Proje Config            |
+| 39    | 19 Mart    | Grid→Chat Referans Görsel, Extraction Hız Fix           |
 
 ---
 
@@ -382,7 +383,7 @@ npm run dev
 | -------------- | ------- |
 | Agent Araç     | 36      |
 | AI Model       | 33      |
-| Toplam Faz     | 38      |
+| Toplam Faz     | 39      |
 | Canlı Backend  | Railway |
 | Canlı Frontend | Vercel  |
 
@@ -466,11 +467,11 @@ Bu maddeler çözülmeden yeni özelliğe geçilmez.
   - **Fark yaratan özellik:** Diğer AI araçları tek tek üretir, PepperRoot paralel batch ile saniyeler içinde set üretir
   - Etki alanı: `backend/app/services/agent/orchestrator.py`, `backend/app/services/agent/tools.py`, `backend/app/services/plugins/fal_plugin_v2.py`
 
-- [ ] **3.5 — Grid Generator'dan Chat'e Referans Görsel Gönderme**
-  - Grid Generator UI içinde panel upscale edildikten sonra "Chat'e Ekle" butonu
-  - Tıklanınca görsel chat'e referans görsel olarak düşecek (paperclip attach gibi)
-  - Kullanıcı bu referansla: "bunu düzenle", "bunu videoya çevir" gibi devam komutları verebilecek
-  - Etki alanı: `frontend/src/components/GridGenerator.tsx`, `frontend/src/components/ChatPanel.tsx`
+- [x] **3.5 — Grid Generator'dan Chat'e Referans Görsel Gönderme** ✅ (Faz 39)
+  - Grid Generator'da çıkarılan panellere "Chat'e Gönder" butonu (MessageSquarePlus ikonu) eklendi
+  - pendingAssetUrl mekanizması üzerinden ChatPanel'e referans görsel gönderilir
+  - Extraction CORS sorunu düzeltildi + hız optimizasyonu yapıldı
+  - Etki alanı: `GridGeneratorModal.tsx`, `Sidebar.tsx`, `page.tsx`
 
 - [ ] **3.6 — Asistan İçi Grid Üretimi & Panel İşlemleri (Grid Generator'dan Bağımsız)**
   - Grid Generator UI'sından bağımsız, **tamamen chat üzerinden** çalışan grid üretim yeteneği
