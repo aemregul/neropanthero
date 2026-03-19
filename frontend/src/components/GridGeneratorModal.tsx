@@ -189,6 +189,17 @@ Cinematic storyboard quality, consistent character.`;
 
             if (data.success && data.gridImage) {
                 if (progressInterval) clearInterval(progressInterval);
+                setLoadingProgress(90);
+                setLoadingStatus("GÖRSEL YÜKLENİYOR...");
+
+                // Görseli tarayıcıda preload et — yüklenene kadar loading devam eder
+                await new Promise<void>((resolve) => {
+                    const img = new window.Image();
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve(); // Hata olsa da devam et
+                    img.src = data.gridImage!;
+                });
+
                 setLoadingProgress(100);
                 setLoadingStatus("TAMAMLANDI!");
                 setGridImage(data.gridImage);
