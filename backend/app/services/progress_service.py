@@ -96,16 +96,53 @@ class ProgressService:
                 self._connections[session_id].remove(ws)
 
     async def get_cached_progress(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Son bilinen ilerleme bilgisini cache'den al."""
+        """Son bilinen ilerleme bilgisini cache'den al.
+        
+        Stale guard: 10 dakikadan eski progress payload'ları yok sayılır.
+        Sadece 'progress' tipi payload'lar döndürülür (complete/error değil).
+        """
+        from datetime import timezone
+        
+        def _is_stale(payload: dict, max_age_seconds: int = 600) -> bool:
+            """Payload 10 dakikadan eski mi?"""
+            ts = payload.get("timestamp")
+            if not ts:
+                return True  # timestamp yoksa stale kabul et
+            try:
+                payload_time = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                if payload_time.tzinfo is None:
+                    payload_time = payload_time.replace(tzinfo=timezone.utc)
+                now = datetime.now(timezone.utc)
+                return (now - payload_time).total_seconds() > max_age_seconds
+            except Exception:
+                return True  # parse edilemezse stale kabul et
+        
+        def _is_valid_progress(payload: dict) -> bool:
+            """Sadece aktif progress payload'larını kabul et."""
+            return (
+                isinstance(payload, dict)
+                and payload.get("type") == "progress"
+                and not _is_stale(payload)
+            )
+        
         in_memory = self._latest_payloads.get(session_id)
-        if isinstance(in_memory, dict):
+        if _is_valid_progress(in_memory):
             return in_memory
+        elif isinstance(in_memory, dict) and _is_stale(in_memory):
+            # Stale in-memory payload'ı temizle
+            self._latest_payloads.pop(session_id, None)
+        
         try:
             from app.core.cache import cache
             if not cache.is_connected:
                 return None
             payload = await cache.get_json(f"progress:{session_id}")
-            return payload if isinstance(payload, dict) else None
+            if _is_valid_progress(payload):
+                return payload
+            elif isinstance(payload, dict) and _is_stale(payload):
+                # Stale Redis cache'i temizle
+                await cache.delete(f"progress:{session_id}")
+            return None
         except Exception:
             return None
     
@@ -201,6 +238,14 @@ class ProgressService:
             "timestamp": datetime.utcnow().isoformat()
         }
         self._latest_payloads.pop(session_id, None)
+        
+        # Redis cache'i de temizle — stale progress card'ları önle
+        try:
+            from app.core.cache import cache
+            if cache.is_connected:
+                await cache.delete(f"progress:{session_id}")
+        except Exception:
+            pass
         
         if session_id in self._connections:
             for ws in self._connections[session_id]:

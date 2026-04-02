@@ -836,6 +836,17 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                     console.log('[WS] Received:', data.type, data);
 
                     if (data.type === 'progress') {
+                        // 🛡️ Stale guard: eski progress event'lerini yoksay (sayfa yenileme sonrası zombie card önleme)
+                        if (data.timestamp) {
+                            const eventTime = new Date(data.timestamp).getTime();
+                            const now = Date.now();
+                            const MAX_AGE_MS = 5 * 60 * 1000; // 5 dakika
+                            if (now - eventTime > MAX_AGE_MS) {
+                                console.warn('[WS] Stale progress event ignored (age:', Math.round((now - eventTime) / 1000), 's)');
+                                return;
+                            }
+                        }
+                        
                         setLoadingStatus(data.message);
                         // Real progress from backend (0.0-1.0 → 0-100)
                         if (typeof data.progress === 'number') {
