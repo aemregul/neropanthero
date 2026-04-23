@@ -12,6 +12,8 @@ V3 Upgrade (17 Şubat 2026):
 - Outpainting: Görseli genişletme
 - Style Transfer: Sanatsal stil uygulama
 """
+from __future__ import annotations
+
 import os
 import time
 import asyncio

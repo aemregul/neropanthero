@@ -13,7 +13,7 @@ const CATEGORIES = [
     { value: "reklam", label: "📢 Reklam Kampanyası", color: "#ef4444" },
     { value: "sosyal_medya", label: "📱 Sosyal Medya", color: "#3b82f6" },
     { value: "film", label: "🎬 Film / Video", color: "#a855f7" },
-    { value: "kisisel", label: "🎨 Kişisel Proje", color: "#22c55e" },
+    { value: "kisisel", label: "🎨 Kişisel Proje", color: "#C9A84C" },
     { value: "marka", label: "🏷️ Marka / Branding", color: "#f59e0b" },
     { value: "diger", label: "📂 Diğer", color: "#6b7280" },
 ];

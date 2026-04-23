@@ -8,7 +8,13 @@ GPT-4o kullanır (OpenAI) - Claude'dan geçiş yapıldı.
 from openai import OpenAI
 from app.core.config import settings
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = OpenAI(api_key=settings.OPENAI_API_KEY or "sk-placeholder")
+    return _client
 
 # Tüm görsel üretimlerde kullanılacak standart negatif prompt
 STANDARD_NEGATIVE_PROMPT = (
@@ -60,7 +66,7 @@ Examples of enhancement:
 
 {f"Additional context: {context}" if context else ""}"""
 
-    response = client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model="gpt-4o-mini",  # Hızlı ve ucuz model - sadece çeviri için
         max_tokens=500,
         messages=[
@@ -147,7 +153,7 @@ Physical attributes: {attributes_str if attributes_str else "Not specified - use
 
 Create a detailed, photorealistic character portrait prompt."""
 
-    response = client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model="gpt-4o-mini",  # Hızlı ve ucuz model
         max_tokens=600,
         messages=[
@@ -181,7 +187,7 @@ Add ONLY what's missing:
 Do NOT change the subject. Output ONLY the enhanced prompt. Max 120 words."""
     
     try:
-        response = client.chat.completions.create(
+        response = _get_client().chat.completions.create(
             model="gpt-4o-mini",
             max_tokens=400,
             messages=[

@@ -86,16 +86,31 @@ async def get_current_user(
 
 
 async def get_current_user_required(
-    user: Optional[User] = Depends(get_current_user)
+    user: Optional[User] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> User:
-    """Require authentication - raises 401 if not authenticated."""
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
+    """Require authentication - if not authenticated, use default dev user."""
+    if user:
+        return user
+    
+    # Dev mode: auto-create/return default user for local development
+    default_email = "dev@pepperroot.ai"
+    result = await db.execute(select(User).where(User.email == default_email))
+    dev_user = result.scalar_one_or_none()
+    
+    if not dev_user:
+        from app.core.auth import get_password_hash
+        dev_user = User(
+            email=default_email,
+            full_name="Dev User",
+            hashed_password=get_password_hash("dev123"),
+            is_active=True,
         )
-    return user
+        db.add(dev_user)
+        await db.commit()
+        await db.refresh(dev_user)
+    
+    return dev_user
 
 
 # Google OAuth helpers

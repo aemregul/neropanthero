@@ -529,7 +529,7 @@ export function AssetsPanel({
                                                 )}
                                             </div>
                                         ) : asset.type === "audio" ? (
-                                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 to-purple-900/40">
+                                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-900/40 to-stone-900/40">
                                                 <span className="text-3xl mb-1">🎵</span>
                                                 <span className="text-[10px] text-white/60 px-2 text-center truncate w-full">{asset.label || "Ses"}</span>
                                             </div>

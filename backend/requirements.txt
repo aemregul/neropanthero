@@ -46,4 +46,4 @@ pytest-asyncio
 # Development
 black
 isort
-Pillow>=12.0.0
+Pillow>=10.0.0

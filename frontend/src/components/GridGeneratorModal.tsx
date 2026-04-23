@@ -464,8 +464,8 @@ Cinematic storyboard quality, consistent character.`;
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex flex-col items-center gap-0">
                             <h1 className="text-3xl font-bold tracking-wide">
-                                <span className="text-white">Pepper Root</span>
-                                <span className="text-emerald-400">.</span>
+                                <span className="text-white" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Luxora</span>
+                                <span className="text-[#C9A84C]">.</span>
                             </h1>
                             <span className="text-sm font-light tracking-[0.2em] text-gray-500">Grids</span>
                         </div>
@@ -483,7 +483,7 @@ Cinematic storyboard quality, consistent character.`;
                                         key={item.key}
                                         onClick={() => setTopMode(item.key as ModeTop)}
                                         className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium tracking-wider transition-all ${active
-                                            ? "bg-emerald-500 text-black"
+                                            ? "bg-[#C9A84C] text-black"
                                             : "text-gray-500 hover:text-white hover:bg-white/5"
                                             }`}
                                     >
@@ -497,10 +497,10 @@ Cinematic storyboard quality, consistent character.`;
 
                     {/* ==================== SECTION 1: UPLOAD ==================== */}
                     <div
-                        className={`relative w-full max-w-2xl rounded-xl overflow-hidden transition-all cursor-pointer ${isDragging ? "scale-[1.02] border-emerald-500" : ""}`}
+                        className={`relative w-full max-w-2xl rounded-xl overflow-hidden transition-all cursor-pointer ${isDragging ? "scale-[1.02] border-[#C9A84C]" : ""}`}
                         style={{
                             aspectRatio: "16/9",
-                            border: isDragging ? "2px dashed #10b981" : "2px dashed #333",
+                            border: isDragging ? "2px dashed #C9A84C" : "2px dashed #333",
                             background: "#0a0a0a"
                         }}
                         onClick={() => !loading && fileInputRef.current?.click()}
@@ -533,7 +533,7 @@ Cinematic storyboard quality, consistent character.`;
                                                 <circle cx="40" cy="40" r="35" stroke="#333" strokeWidth="5" fill="none" />
                                                 <circle
                                                     cx="40" cy="40" r="35"
-                                                    stroke="#10b981"
+                                                    stroke="#C9A84C"
                                                     strokeWidth="5"
                                                     fill="none"
                                                     strokeLinecap="round"
@@ -599,7 +599,7 @@ Cinematic storyboard quality, consistent character.`;
                                         <button
                                             onClick={() => setPromptMode("auto")}
                                             className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-medium tracking-wider transition-all duration-200 ${promptMode === "auto"
-                                                ? "bg-emerald-500 text-black"
+                                                ? "bg-[#C9A84C] text-black"
                                                 : "text-gray-500 hover:text-white hover:bg-white/5"
                                                 }`}
                                         >
@@ -609,7 +609,7 @@ Cinematic storyboard quality, consistent character.`;
                                         <button
                                             onClick={() => setPromptMode("custom")}
                                             className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-medium tracking-wider transition-all duration-200 ${promptMode === "custom"
-                                                ? "bg-emerald-500 text-black"
+                                                ? "bg-[#C9A84C] text-black"
                                                 : "text-gray-500 hover:text-white hover:bg-white/5"
                                                 }`}
                                         >
@@ -628,7 +628,7 @@ Cinematic storyboard quality, consistent character.`;
                                             value={customPrompt}
                                             onChange={(e) => setCustomPrompt(e.target.value.slice(0, 500))}
                                             placeholder="Stilinizi açıklayın... sıcak tonlar, sinematik ışık, gün batımı..."
-                                            className="w-full h-28 resize-none bg-[#111] text-white/90 text-sm px-4 py-3 rounded-xl border border-[#222] focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-gray-700"
+                                            className="w-full h-28 resize-none bg-[#111] text-white/90 text-sm px-4 py-3 rounded-xl border border-[#222] focus:border-[#C9A84C]/50 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/20 transition-all placeholder:text-gray-700"
                                         />
                                         <div className="absolute bottom-3 right-3 text-[10px] text-gray-700">
                                             {customPrompt.length} / 500
@@ -641,7 +641,7 @@ Cinematic storyboard quality, consistent character.`;
                             <button
                                 onClick={generateGrid}
                                 disabled={loading}
-                                className="group relative bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50 px-12 py-4 rounded-xl text-black font-bold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/25"
+                                className="group relative bg-[#C9A84C] hover:bg-[#D4B85C] disabled:bg-[#C9A84C]/50 px-12 py-4 rounded-xl text-black font-bold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#C9A84C]/25"
                             >
                                 <span className="flex items-center gap-3">
                                     <Zap size={20} />
@@ -665,7 +665,7 @@ Cinematic storyboard quality, consistent character.`;
                                     onClick={selectAll}
                                     className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
                                 >
-                                    <div className={`w-4 h-4 rounded border ${selected.length === 9 ? "bg-emerald-500 border-emerald-500" : "border-gray-600"} flex items-center justify-center`}>
+                                    <div className={`w-4 h-4 rounded border ${selected.length === 9 ? "bg-[#C9A84C] border-[#C9A84C]" : "border-gray-600"} flex items-center justify-center`}>
                                         {selected.length === 9 && <Check size={10} className="text-black" />}
                                     </div>
                                     TÜMÜNÜ SEÇ
@@ -714,7 +714,7 @@ Cinematic storyboard quality, consistent character.`;
                                             {!isExtracted && !isExtracting && (
                                                 <div
                                                     className={`absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-xs font-medium transition-all duration-200 ${isSelected
-                                                        ? "bg-emerald-500 text-black opacity-100"
+                                                        ? "bg-[#C9A84C] text-black opacity-100"
                                                         : "bg-black/70 text-gray-300 opacity-0 group-hover:opacity-100"
                                                         }`}
                                                 >
@@ -724,14 +724,14 @@ Cinematic storyboard quality, consistent character.`;
 
                                             <div
                                                 className={`absolute inset-0 transition-all duration-200 pointer-events-none ${isSelected || isExtracted || isExtracting
-                                                    ? "border-4 border-emerald-400/70"
+                                                    ? "border-4 border-[#C9A84C]/70"
                                                     : "border-transparent"
                                                     }`}
                                             />
 
                                             <div
                                                 className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${isSelected || isExtracted
-                                                    ? "bg-emerald-400 scale-100"
+                                                    ? "bg-[#C9A84C] scale-100"
                                                     : "bg-white/20 scale-0 group-hover:scale-100"
                                                     }`}
                                             >
@@ -762,7 +762,7 @@ Cinematic storyboard quality, consistent character.`;
                                                 >
                                                     {s}X
                                                     {s === 4 && (
-                                                        <span className="absolute -top-1 -right-1 text-[8px] bg-emerald-500 text-black px-1.5 py-0.5 rounded-full font-bold">
+                                                        <span className="absolute -top-1 -right-1 text-[8px] bg-[#C9A84C] text-black px-1.5 py-0.5 rounded-full font-bold">
                                                             4K
                                                         </span>
                                                     )}
@@ -774,7 +774,7 @@ Cinematic storyboard quality, consistent character.`;
                                     <button
                                         onClick={handleExtract}
                                         disabled={extracting}
-                                        className="group relative bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 px-14 py-4 rounded-xl text-black font-bold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/30"
+                                        className="group relative bg-gradient-to-r from-[#8B6D28] to-[#C9A84C] hover:from-[#C9A84C] hover:to-[#D4B85C] px-14 py-4 rounded-xl text-black font-bold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#C9A84C]/30"
                                     >
                                         <span className="flex items-center gap-3">
                                             <Download size={20} />
@@ -788,7 +788,7 @@ Cinematic storyboard quality, consistent character.`;
                             {/* GO AGAIN Button */}
                             <button
                                 onClick={resetAll}
-                                className="bg-emerald-500 hover:bg-emerald-400 px-16 py-4 rounded-xl text-black font-bold text-lg tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/25"
+                                className="bg-[#C9A84C] hover:bg-[#D4B85C] px-16 py-4 rounded-xl text-black font-bold text-lg tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#C9A84C]/25"
                             >
                                 TEKRAR BAŞLA
                             </button>
@@ -806,7 +806,7 @@ Cinematic storyboard quality, consistent character.`;
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <h2 className="text-2xl font-bold tracking-wider text-emerald-400">ÇIKARILAN GÖRSELLER</h2>
+                                <h2 className="text-2xl font-bold tracking-wider text-[#C9A84C]">ÇIKARILAN GÖRSELLER</h2>
                                 <span className="text-gray-500 text-2xl">({extractedImages.filter(img => img.status === "ready").length})</span>
                             </div>
 
@@ -819,7 +819,7 @@ Cinematic storyboard quality, consistent character.`;
                                 ) : (
                                     <button
                                         onClick={downloadAllExtracted}
-                                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+                                        className="flex items-center gap-2 bg-[#C9A84C] hover:bg-[#D4B85C] px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
                                     >
                                         <Download size={16} className="text-black" />
                                         <span className="text-black tracking-wider">TÜMÜNÜ İNDİR</span>
@@ -841,7 +841,7 @@ Cinematic storyboard quality, consistent character.`;
                                     >
                                         {img.status === "extracting" && (
                                             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-3">
-                                                <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                <div className="w-10 h-10 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
                                             </div>
                                         )}
 
@@ -853,7 +853,7 @@ Cinematic storyboard quality, consistent character.`;
                                                             e.stopPropagation();
                                                             onSendToChat(img.url);
                                                         }}
-                                                        className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 flex items-center justify-center transition-all hover:scale-110"
+                                                        className="w-10 h-10 rounded-full bg-[#C9A84C] hover:bg-[#D4B85C] flex items-center justify-center transition-all hover:scale-110"
                                                         title="Chat'e Gönder"
                                                     >
                                                         <MessageSquarePlus size={16} className="text-black" />
@@ -873,7 +873,7 @@ Cinematic storyboard quality, consistent character.`;
                                         )}
 
                                         <div
-                                            className={`absolute bottom-3 left-3 px-2 py-1 text-xs font-medium tracking-wider ${img.status === "extracting" ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-500 text-black"
+                                            className={`absolute bottom-3 left-3 px-2 py-1 text-xs font-medium tracking-wider ${img.status === "extracting" ? "bg-[#C9A84C]/20 text-[#C9A84C]" : "bg-[#C9A84C] text-black"
                                                 }`}
                                         >
                                             {img.status === "extracting" ? "EXTRACTING..." : "READY"}

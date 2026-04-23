@@ -194,7 +194,7 @@ export function GenerationProgressCard({
                                                     color: isDone
                                                         ? "#34d399"
                                                         : isActive
-                                                            ? "#a78bfa"
+                                                            ? "#C9A84C"
                                                             : "rgba(255,255,255,0.3)",
                                                     border: isActive
                                                         ? "1px solid rgba(99,102,241,0.3)"
@@ -288,10 +288,10 @@ export function GenerationProgressCard({
                 {/* Complete state */}
                 {status === "complete" && (
                     <div className="flex items-center justify-center gap-2 py-2">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <span className="text-emerald-400 text-sm">✓</span>
+                        <div className="w-6 h-6 rounded-full bg-[#C9A84C]/20 flex items-center justify-center">
+                            <span className="text-[#C9A84C] text-sm">✓</span>
                         </div>
-                        <span className="text-sm text-emerald-400 font-medium">Tamamlandı!</span>
+                        <span className="text-sm text-[#C9A84C] font-medium">Tamamlandı!</span>
                     </div>
                 )}
 

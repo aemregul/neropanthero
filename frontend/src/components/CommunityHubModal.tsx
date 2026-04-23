@@ -157,11 +157,11 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                 {/* Header */}
                 <div
                     className="flex items-center justify-between p-5 border-b shrink-0"
-                    style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)" }}
+                    style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, rgba(201, 168, 76, 0.08) 0%, rgba(139, 109, 40, 0.05) 100%)" }}
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl" style={{ background: "rgba(167, 139, 250, 0.15)" }}>
-                            <Users size={24} className="text-purple-400" />
+                        <div className="p-2.5 rounded-xl" style={{ background: "rgba(201, 168, 76, 0.15)" }}>
+                            <Users size={24} style={{ color: '#C9A84C' }} />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold">Topluluk Hub&apos;ı</h2>
@@ -200,7 +200,7 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                         <Pin size={16} /> Preset&apos;lerim
                         {myPresets.length > 0 && (
                             <span className="px-1.5 py-0.5 text-[10px] rounded-full font-bold"
-                                style={{ background: "rgba(167, 139, 250, 0.2)", color: "#a78bfa" }}>
+                                style={{ background: "rgba(201, 168, 76, 0.2)", color: "#C9A84C" }}>
                                 {myPresets.length}
                             </span>
                         )}
@@ -245,7 +245,7 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                 <div className="flex-1 overflow-y-auto p-5">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <Loader2 size={32} className="animate-spin text-purple-400" />
+                            <Loader2 size={32} className="animate-spin" style={{ color: '#C9A84C' }} />
                             <p className="text-sm" style={{ color: "var(--foreground-muted)" }}>Yükleniyor...</p>
                         </div>
                     ) : activeTab === "community" ? (
@@ -288,9 +288,9 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                                                 className="px-2 py-0.5 text-[10px] rounded-full font-medium shrink-0"
                                                 style={{
                                                     background: plugin.source === "official"
-                                                        ? "rgba(139, 92, 246, 0.15)"
-                                                        : "rgba(74, 222, 128, 0.15)",
-                                                    color: plugin.source === "official" ? "#a78bfa" : "#4ade80",
+                                                        ? "rgba(201, 168, 76, 0.15)"
+                                                        : "rgba(201, 168, 76, 0.15)",
+                                                    color: plugin.source === "official" ? "#C9A84C" : "#C9A84C",
                                                 }}
                                             >
                                                 {plugin.source === "official" ? "🏪 Resmi" : "👤 Topluluk"}
@@ -362,10 +362,10 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                                                                     <div className="text-sm font-medium truncate">{project.name}</div>
                                                                     {project.id === activeProjectId && (
                                                                         <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-                                                                            style={{ background: "rgba(167, 139, 250, 0.15)", color: "#a78bfa" }}>Aktif</span>
+                                                                            style={{ background: "rgba(201, 168, 76, 0.15)", color: "#C9A84C" }}>Aktif</span>
                                                                     )}
                                                                 </div>
-                                                                {installing === plugin.id && <Loader2 size={14} className="animate-spin text-purple-400 shrink-0" />}
+                                                                {installing === plugin.id && <Loader2 size={14} className="animate-spin shrink-0" style={{ color: '#C9A84C' }} />}
                                                             </button>
                                                         ))
                                                     )}
@@ -380,7 +380,7 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                         /* ===== MY PRESETS TAB ===== */
                         myPresets.length === 0 ? (
                             <div className="text-center py-16">
-                                <Sparkles size={48} className="mx-auto mb-4 opacity-20 text-purple-400" />
+                                <Sparkles size={48} className="mx-auto mb-4 opacity-20" style={{ color: '#C9A84C' }} />
                                 <p className="text-lg font-medium mb-1">Henüz preset&apos;in yok</p>
                                 <p className="text-sm" style={{ color: "var(--foreground-muted)" }}>
                                     Chat&apos;te ✨ butonuna tıklayarak bir preset oluştur!
@@ -403,7 +403,7 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                                                 <h3 className="font-semibold text-sm truncate">{preset.name}</h3>
                                                 {preset.is_public && (
                                                     <span className="px-2 py-0.5 text-[10px] rounded-full font-medium shrink-0"
-                                                        style={{ background: "rgba(167, 139, 250, 0.15)", color: "#a78bfa" }}>
+                                                        style={{ background: "rgba(201, 168, 76, 0.15)", color: "#C9A84C" }}>
                                                         <Check size={8} className="inline mr-0.5" /> Yayında
                                                     </span>
                                                 )}
@@ -434,11 +434,11 @@ export function CommunityHubModal({ isOpen, onClose, projects, activeProjectId, 
                                                 style={{
                                                     background: preset.is_public
                                                         ? "rgba(239, 68, 68, 0.1)"
-                                                        : "rgba(167, 139, 250, 0.15)",
+                                                        : "rgba(201, 168, 76, 0.15)",
                                                     border: preset.is_public
                                                         ? "1px solid rgba(239, 68, 68, 0.3)"
-                                                        : "1px solid rgba(167, 139, 250, 0.3)",
-                                                    color: preset.is_public ? "#ef4444" : "#a78bfa"
+                                                        : "1px solid rgba(201, 168, 76, 0.3)",
+                                                    color: preset.is_public ? "#ef4444" : "#C9A84C"
                                                 }}
                                             >
                                                 {publishing === preset.id ? (

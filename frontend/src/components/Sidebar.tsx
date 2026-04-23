@@ -937,7 +937,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
             case 'sosyal_medya': return { bg: 'rgba(59,130,246,0.15)', text: '#3b82f6' };
             case 'film': return { bg: 'rgba(168,85,247,0.15)', text: '#a855f7' };
             case 'marka': return { bg: 'rgba(245,158,11,0.15)', text: '#f59e0b' };
-            case 'kisisel': return { bg: 'rgba(34,197,94,0.15)', text: '#22c55e' };
+            case 'kisisel': return { bg: 'rgba(201,168,76,0.15)', text: '#C9A84C' };
             default: return { bg: 'rgba(107,114,128,0.15)', text: '#6b7280' };
         }
     };
@@ -988,7 +988,9 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 <div className="sidebar-rail">
                     {/* Logo */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '4px 0', marginBottom: 8 }}>
-                        <span className="text-4xl">🫑</span>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                        </div>
                     </div>
 
                     {/* Main nav */}
@@ -1015,39 +1017,39 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         className="rail-feature-btn"
                         onClick={() => setGridGeneratorOpen(true)}
                         style={{
-                            background: 'rgba(74, 222, 128, 0.10)',
-                            border: '1px solid rgba(74, 222, 128, 0.25)',
-                            color: '#4ade80'
+                            background: 'rgba(201, 168, 76, 0.10)',
+                            border: '1px solid rgba(201, 168, 76, 0.25)',
+                            color: '#C9A84C'
                         }}
                     >
                         <Grid3x3 size={20} />
-                        <span className="rail-label" style={{ color: '#4ade80' }}>Grid Oluşturucu</span>
+                        <span className="rail-label" style={{ color: '#C9A84C' }}>Grid Oluşturucu</span>
                     </button>
 
                     <button
                         className="rail-feature-btn"
                         onClick={() => setSavedImagesOpen(true)}
                         style={{
-                            background: 'rgba(56, 189, 248, 0.10)',
-                            border: '1px solid rgba(56, 189, 248, 0.25)',
-                            color: '#38bdf8'
+                            background: 'rgba(201, 168, 76, 0.08)',
+                            border: '1px solid rgba(201, 168, 76, 0.20)',
+                            color: '#B8963A'
                         }}
                     >
                         <ImageIcon size={20} />
-                        <span className="rail-label" style={{ color: '#60a5fa' }}>Kaydedilenler</span>
+                        <span className="rail-label" style={{ color: '#B8963A' }}>Kaydedilenler</span>
                     </button>
 
                     <button
                         className="rail-feature-btn"
                         onClick={() => setCommunityHubOpen(true)}
                         style={{
-                            background: 'rgba(167, 139, 250, 0.10)',
-                            border: '1px solid rgba(167, 139, 250, 0.25)',
-                            color: '#a78bfa'
+                            background: 'rgba(184, 150, 58, 0.08)',
+                            border: '1px solid rgba(184, 150, 58, 0.20)',
+                            color: '#A68B30'
                         }}
                     >
                         <Users size={20} />
-                        <span className="rail-label" style={{ color: '#a78bfa' }}>Topluluk</span>
+                        <span className="rail-label" style={{ color: '#A68B30' }}>Topluluk</span>
                     </button>
                     {/* Spacer */}
                     <div className="rail-spacer" />
@@ -1303,13 +1305,13 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                     onClick={() => setNewProjectOpen(true)}
                                     style={{
                                         width: '100%', padding: '8px 12px', borderRadius: 8,
-                                        background: 'rgba(74, 222, 128, 0.08)', border: '1px solid rgba(74, 222, 128, 0.15)',
+                                        background: 'rgba(201, 168, 76, 0.08)', border: '1px solid rgba(201, 168, 76, 0.15)',
                                         color: 'var(--accent)', fontSize: 13, fontWeight: 500,
                                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                                         transition: 'all 0.2s ease'
                                     }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(74, 222, 128, 0.15)')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(74, 222, 128, 0.08)')}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.15)')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)')}
                                 >
                                     <Plus size={14} />
                                     Yeni Proje
@@ -1415,7 +1417,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
                                                         <span style={{
                                                             width: 6, height: 6, borderRadius: '50%',
-                                                            background: plugin.isPublic ? '#8b5cf6' : '#f59e0b', flexShrink: 0
+                                                            background: plugin.isPublic ? '#C9A84C' : '#f59e0b', flexShrink: 0
                                                         }} />
                                                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plugin.name}</span>
                                                     </div>

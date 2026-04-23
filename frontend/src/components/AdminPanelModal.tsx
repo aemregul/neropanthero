@@ -19,8 +19,8 @@ interface AdminPanelModalProps {
 
 // Default model distribution (veri yokken)
 const defaultModelDistribution: ModelDistributionItem[] = [
-    { name: "GPT-4o", value: 0, color: "#22c55e" },
-    { name: "fal.ai", value: 0, color: "#8b5cf6" },
+    { name: "GPT-4o", value: 0, color: "#C9A84C" },
+    { name: "fal.ai", value: 0, color: "#D4B85C" },
     { name: "Kling", value: 0, color: "#3b82f6" },
 ];
 
@@ -176,8 +176,8 @@ export function AdminPanelModal({ isOpen, onClose }: AdminPanelModalProps) {
                                     {/* Stats Grid */}
                                     <div className="grid grid-cols-4 gap-3">
                                         {[
-                                            { label: "Toplam Çağrı", value: overviewStats?.total_messages || 0, icon: Zap, color: "#22c55e" },
-                                            { label: "Görseller", value: overviewStats?.total_images || 0, icon: PieChartIcon, color: "#8b5cf6" },
+                                            { label: "Toplam Çağrı", value: overviewStats?.total_messages || 0, icon: Zap, color: "#C9A84C" },
+                                            { label: "Görseller", value: overviewStats?.total_images || 0, icon: PieChartIcon, color: "#D4B85C" },
                                             { label: "Videolar", value: overviewStats?.total_videos || 0, icon: TrendingUp, color: "#3b82f6" },
                                             { label: "Aktif Model", value: overviewStats?.active_models || 0, icon: Activity, color: "#f59e0b" },
                                         ].map((stat) => (
@@ -217,9 +217,9 @@ export function AdminPanelModal({ isOpen, onClose }: AdminPanelModalProps) {
                                                 <Line
                                                     type="monotone"
                                                     dataKey="calls"
-                                                    stroke="#22c55e"
+                                                    stroke="#C9A84C"
                                                     strokeWidth={2}
-                                                    dot={{ fill: "#22c55e", strokeWidth: 2 }}
+                                                    dot={{ fill: "#C9A84C", strokeWidth: 2 }}
                                                     name="API Çağrısı"
                                                 />
                                             </LineChart>
@@ -234,7 +234,7 @@ export function AdminPanelModal({ isOpen, onClose }: AdminPanelModalProps) {
                                                 <span
                                                     key={model.id}
                                                     className="px-3 py-1.5 rounded-full text-sm flex items-center gap-2"
-                                                    style={{ background: "rgba(34, 197, 94, 0.2)", color: "#22c55e" }}
+                                                    style={{ background: "rgba(201, 168, 76, 0.2)", color: "#C9A84C" }}
                                                 >
                                                     <span>{model.icon}</span>
                                                     {model.display_name}
@@ -381,7 +381,7 @@ export function AdminPanelModal({ isOpen, onClose }: AdminPanelModalProps) {
                                                             borderRadius: "8px"
                                                         }}
                                                     />
-                                                    <Bar dataKey="images" fill="#8b5cf6" name="Görsel" radius={[4, 4, 0, 0]} />
+                                                    <Bar dataKey="images" fill="#D4B85C" name="Görsel" radius={[4, 4, 0, 0]} />
                                                     <Bar dataKey="videos" fill="#3b82f6" name="Video" radius={[4, 4, 0, 0]} />
                                                 </BarChart>
                                             </ResponsiveContainer>
@@ -404,7 +404,7 @@ export function AdminPanelModal({ isOpen, onClose }: AdminPanelModalProps) {
                                                     }}
                                                 />
                                                 <Legend />
-                                                <Line type="monotone" dataKey="images" stroke="#8b5cf6" strokeWidth={2} name="Görsel" />
+                                                <Line type="monotone" dataKey="images" stroke="#D4B85C" strokeWidth={2} name="Görsel" />
                                                 <Line type="monotone" dataKey="videos" stroke="#3b82f6" strokeWidth={2} name="Video" />
                                             </LineChart>
                                         </ResponsiveContainer>

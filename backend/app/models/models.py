@@ -5,9 +5,13 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func, JSON, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+# Use JSON (works on both PostgreSQL and SQLite) instead of JSONB
+JSONB = JSON
+# Use generic Uuid (works on both PostgreSQL and SQLite)
+UUID = Uuid
 
 from app.core.database import Base
 

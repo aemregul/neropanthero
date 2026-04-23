@@ -1,53 +1,54 @@
 @import "tailwindcss";
 
 /* ====================================
-   PEPPER ROOT AI AGENCY - Premium Tasarım
-   ChatGPT Referanslı Dark Theme
+   LUXORA AI STUDIO - Quiet Luxury Design
+   Gold + Onyx Dark Theme
    ==================================== */
 
-/* Dark Mode (Varsayılan) - Premium Koyu */
+/* Dark Mode (Varsayılan) - Luxora Onyx */
 :root {
-  --background: #0d0d12;
-  --background-secondary: #14141b;
-  --background-tertiary: #1a1a24;
-  --foreground: #e4e4e7;
-  --foreground-muted: #71717a;
-  --accent: #4ade80;
-  --accent-hover: #22c55e;
-  --accent-blue: #60a5fa;
-  --accent-purple: #a78bfa;
-  --border: #27272a;
-  --card: #18181f;
-  --card-hover: #1f1f28;
-  --sidebar: #0a0a0f;
-  --user-bubble: linear-gradient(135deg, #1a3a2a 0%, #1e4d35 100%);
-  --ai-bubble: #18181f;
-  --input-bg: #1a1a24;
-  --mention-bg: rgba(74, 222, 128, 0.15);
-  --mention-color: #4ade80;
+  --background: #140F0A;
+  --background-secondary: #1A1510;
+  --background-tertiary: #221C14;
+  --foreground: #E8E3D8;
+  --foreground-muted: #6B6458;
+  --accent: #C9A84C;
+  --accent-hover: #D4B85C;
+  --accent-blue: #8BA4C9;
+  --accent-purple: #A48BC9;
+  --border: #2A2620;
+  --card: #151210;
+  --card-hover: #1E1B15;
+  --sidebar: #0C0A07;
+  --user-bubble: linear-gradient(135deg, #1A1608 0%, #252010 100%);
+  --ai-bubble: #151210;
+  --input-bg: #1E1A14;
+  --mention-bg: rgba(201, 168, 76, 0.12);
+  --mention-color: #C9A84C;
 }
 
 /* Light Mode */
 [data-theme="light"] {
-  --background: #f4f4f5;
-  --background-secondary: #ffffff;
-  --background-tertiary: #fafafa;
-  --foreground: #18181b;
-  --foreground-muted: #71717a;
-  --accent: #22c55e;
-  --accent-hover: #16a34a;
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
-  --border: #e4e4e7;
-  --card: #ffffff;
-  --card-hover: #f4f4f5;
-  --sidebar: #fafafa;
-  --user-bubble: linear-gradient(135deg, #f0f0f5 0%, #e8e8ed 100%);
-  --ai-bubble: #ffffff;
-  --input-bg: #ffffff;
-  --mention-bg: rgba(34, 197, 94, 0.1);
-  --mention-color: #16a34a;
+  --background: #F5F3EE;
+  --background-secondary: #FFFFFF;
+  --background-tertiary: #FAF8F5;
+  --foreground: #1A1815;
+  --foreground-muted: #6B6458;
+  --accent: #A08030;
+  --accent-hover: #8B6D28;
+  --accent-blue: #5B7BA0;
+  --accent-purple: #7B5BA0;
+  --border: #E0DDD5;
+  --card: #FFFFFF;
+  --card-hover: #F5F3EE;
+  --sidebar: #FAF8F5;
+  --user-bubble: linear-gradient(135deg, #F0EDE5 0%, #E8E4D8 100%);
+  --ai-bubble: #FFFFFF;
+  --input-bg: #FFFFFF;
+  --mention-bg: rgba(160, 128, 48, 0.08);
+  --mention-color: #8B6D28;
 }
+
 
 @theme inline {
   --color-background: var(--background);
@@ -66,9 +67,13 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--background) !important;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--background) !important;
+  color: var(--foreground) !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
   -webkit-font-smoothing: antialiased;
@@ -187,8 +192,8 @@ body {
 
 /* ====================================
    SIDEBAR V2 — Premium Glassmorphism
-   Matches mockup: navy palette,
-   glass cards, green accents
+   Luxora: warm onyx palette,
+   glass cards, gold accents
    ==================================== */
 
 /* Icon Rail — expands on hover to show labels */
@@ -201,7 +206,7 @@ body {
   align-items: stretch;
   padding: 16px 8px;
   gap: 4px;
-  background: rgba(8, 10, 18, 0.98);
+  background: rgba(12, 10, 7, 0.98);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   overflow-y: auto;
   overflow-x: hidden;
@@ -241,7 +246,7 @@ body {
   font-size: 22px;
   margin-bottom: 16px;
   border-radius: 10px;
-  background: rgba(74, 222, 128, 0.06);
+  background: rgba(201, 168, 76, 0.06);
   flex-shrink: 0;
 }
 
@@ -349,8 +354,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--accent) 0%, #059669 100%);
-  color: #000;
+  background: linear-gradient(135deg, var(--accent) 0%, #8B6D28 100%);
+  color: #0A0908;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -360,7 +365,7 @@ body {
 
 .rail-avatar:hover {
   transform: scale(1.08);
-  box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.3);
 }
 
 
@@ -371,7 +376,7 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: rgba(12, 15, 24, 0.92);
+  background: rgba(14, 12, 8, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -427,9 +432,9 @@ body {
 }
 
 .project-card-v2.active {
-  background: rgba(74, 222, 128, 0.06);
-  border-color: rgba(74, 222, 128, 0.15);
-  box-shadow: 0 0 20px rgba(74, 222, 128, 0.05);
+  background: rgba(201, 168, 76, 0.06);
+  border-color: rgba(201, 168, 76, 0.15);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.05);
 }
 
 /* Green left accent for active card */
@@ -452,7 +457,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(30, 35, 50, 0.8) 0%, rgba(20, 24, 38, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(26, 24, 18, 0.8) 0%, rgba(18, 16, 12, 0.9) 100%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 22px;
   flex-shrink: 0;
@@ -460,8 +465,8 @@ body {
 }
 
 .project-card-v2.active .project-thumb {
-  border-color: rgba(74, 222, 128, 0.2);
-  box-shadow: 0 0 12px rgba(74, 222, 128, 0.1);
+  border-color: rgba(201, 168, 76, 0.2);
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.1);
 }
 
 /* Project info */
@@ -531,8 +536,8 @@ body {
   width: 100%;
   padding: 10px 16px;
   border-radius: 10px;
-  background: rgba(74, 222, 128, 0.06);
-  border: 1px solid rgba(74, 222, 128, 0.12);
+  background: rgba(201, 168, 76, 0.06);
+  border: 1px solid rgba(201, 168, 76, 0.12);
   color: var(--accent);
   font-size: 13px;
   font-weight: 500;
@@ -545,8 +550,8 @@ body {
 }
 
 .new-project-btn:hover {
-  background: rgba(74, 222, 128, 0.1);
-  border-color: rgba(74, 222, 128, 0.2);
+  background: rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.2);
 }
 
 
@@ -616,7 +621,7 @@ body {
 }
 
 [data-theme="light"] .rail-logo {
-  background: rgba(34, 197, 94, 0.08) !important;
+  background: rgba(160, 128, 48, 0.08) !important;
 }
 
 [data-theme="light"] .rail-divider {
@@ -644,9 +649,9 @@ body {
 }
 
 [data-theme="light"] .project-card-v2.active {
-  background: rgba(34, 197, 94, 0.06) !important;
-  border-color: rgba(34, 197, 94, 0.2) !important;
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.06) !important;
+  background: rgba(160, 128, 48, 0.06) !important;
+  border-color: rgba(160, 128, 48, 0.2) !important;
+  box-shadow: 0 0 16px rgba(160, 128, 48, 0.06) !important;
 }
 
 [data-theme="light"] .project-thumb {
@@ -675,13 +680,13 @@ body {
 }
 
 [data-theme="light"] .new-project-btn {
-  background: rgba(34, 197, 94, 0.08) !important;
-  border-color: rgba(34, 197, 94, 0.18) !important;
+  background: rgba(160, 128, 48, 0.08) !important;
+  border-color: rgba(160, 128, 48, 0.18) !important;
 }
 
 [data-theme="light"] .new-project-btn:hover {
-  background: rgba(34, 197, 94, 0.12) !important;
-  border-color: rgba(34, 197, 94, 0.25) !important;
+  background: rgba(160, 128, 48, 0.12) !important;
+  border-color: rgba(160, 128, 48, 0.25) !important;
 }
 
 /* Chat bubbles in light mode */
@@ -700,10 +705,10 @@ body {
   color: rgba(255, 255, 255, 0.75) !important;
 }
 .admin-tab-active {
-  background-color: #22c55e !important;
+  background-color: #C9A84C !important;
   color: #0a0a0a !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3) !important;
 }
 [data-theme="light"] .admin-tab {
   color: rgba(0, 0, 0, 0.5) !important;

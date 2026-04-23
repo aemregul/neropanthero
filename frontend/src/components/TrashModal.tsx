@@ -83,8 +83,8 @@ function getTypeColor(item: TrashItem): string {
     if (media === "audio") return "#a855f7";
     if (media === "image") return "#f97316";
     const colors: Partial<Record<TrashItem["type"], string>> = {
-        proje: "#22c55e", session: "#22c55e",
-        karakter: "#8b5cf6", character: "#8b5cf6",
+        proje: "#C9A84C", session: "#C9A84C",
+        karakter: "#B8963A", character: "#B8963A",
         lokasyon: "#3b82f6", location: "#3b82f6",
         preset: "#ec4899",
         marka: "#06b6d4", brand: "#06b6d4",
@@ -266,8 +266,8 @@ export function TrashModal({
                             { key: "image", label: "Görseller", color: "#f97316" },
                             { key: "video", label: "Videolar", color: "#3b82f6" },
                             { key: "audio", label: "Sesler", color: "#a855f7" },
-                            { key: "proje", label: "Projeler", color: "#22c55e" },
-                            { key: "karakter", label: "Karakterler", color: "#8b5cf6" },
+                            { key: "proje", label: "Projeler", color: "#C9A84C" },
+                            { key: "karakter", label: "Karakterler", color: "#B8963A" },
                             { key: "lokasyon", label: "Lokasyonlar", color: "#3b82f6" },
                             { key: "preset", label: "Presetler", color: "#ec4899" },
                             { key: "marka", label: "Markalar", color: "#06b6d4" },
@@ -431,7 +431,7 @@ export function TrashModal({
                                                 </div>
                                             );
                                             if (media === 'audio') return (
-                                                <div className="w-14 h-14 rounded-lg shrink-0 border border-[var(--border)] bg-gradient-to-br from-emerald-900/50 to-teal-900/50 flex items-center justify-center">
+                                                <div className="w-14 h-14 rounded-lg shrink-0 border border-[var(--border)] bg-gradient-to-br from-amber-900/50 to-stone-900/50 flex items-center justify-center">
                                                     <span className="text-2xl">🎵</span>
                                                 </div>
                                             );

@@ -16,6 +16,16 @@ from app.services.plugins.plugin_loader import initialize_plugins
 async def lifespan(app: FastAPI):
     print(f"🚀 {settings.APP_NAME} başlatılıyor...")
     
+    # Veritabanı tablolarını oluştur (SQLite için özellikle gerekli)
+    try:
+        from app.core.database import engine, Base
+        from app.models import models  # tüm modelleri import et
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("   ✅ Veritabanı tabloları hazır")
+    except Exception as e:
+        print(f"   ⚠️ Tablo oluşturma hatası: {e}")
+    
     # Pluginleri yükle
     initialize_plugins()
     

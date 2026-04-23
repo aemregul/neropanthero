@@ -13,11 +13,15 @@ db_url = settings.DATABASE_URL
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-engine = create_async_engine(
-    db_url,
-    echo=settings.DEBUG,
-    future=True,
-)
+# SQLite needs special config (no pool, check_same_thread=False)
+engine_kwargs = {
+    "echo": settings.DEBUG,
+    "future": True,
+}
+if db_url.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+engine = create_async_engine(db_url, **engine_kwargs)
 
 async_session_maker = async_sessionmaker(
     engine,

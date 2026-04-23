@@ -44,8 +44,8 @@ class AgentOrchestrator:
     """Agent'ı yöneten ana sınıf."""
     
     def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.async_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self._client = None
+        self._async_client = None
         self.fal_plugin = FalPluginV2()
         self.google_video = GoogleVideoService()
         self.model = "gpt-4o"
@@ -233,6 +233,18 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
 - Her yanıtın ANLAMLI ve SPESİFİK olmalı — ne yaptığını/ne ürettiğini açıkla.
 - generate_image çağrıyorsan "Görsel oluşturuluyor" de, generate_video çağrıyorsan "Video oluşturuluyor" de. İKİSİNİ KARIŞTIRMA!
 """
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = OpenAI(api_key=settings.OPENAI_API_KEY or "sk-placeholder")
+        return self._client
+
+    @property
+    def async_client(self):
+        if self._async_client is None:
+            self._async_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY or "sk-placeholder")
+        return self._async_client
 
     def _is_direct_image_to_video_request(self, user_message: str) -> bool:
         """Basit referanslı i2v dönüşüm isteklerini tespit et."""

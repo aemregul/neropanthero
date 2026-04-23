@@ -35,12 +35,7 @@ export default function Home() {
 
   const [hasNoProjects, setHasNoProjects] = useState(false);
 
-  // Auth kontrolü
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [authLoading, user, router]);
+  // Auth kontrolü kaldırıldı — direkt erişim
 
   // === PROJE LİSTESİ BAŞLAT ===
   useEffect(() => {
@@ -68,7 +63,7 @@ export default function Home() {
       }
     };
 
-    if (user) init();
+    init();
   }, [user, entityRefreshKey]);
 
   // Proje değiştiğinde SADECE activeProjectId güncellenir, chat aynı kalır
@@ -123,7 +118,7 @@ export default function Home() {
     }
   };
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <main className="flex h-screen items-center justify-center" style={{ background: "var(--background)" }}>
         <div className="text-center">
@@ -134,7 +129,7 @@ export default function Home() {
     );
   }
 
-  if (!user) return null;
+
 
   return (
     <main className="flex h-screen overflow-hidden">
@@ -159,17 +154,17 @@ export default function Home() {
             <div
               className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
               style={{
-                background: "linear-gradient(135deg, var(--accent) 0%, rgba(139, 92, 246, 0.8) 100%)",
-                boxShadow: "0 10px 40px rgba(139, 92, 246, 0.3)"
+                background: "linear-gradient(135deg, #D4B85C 0%, #8B6D28 100%)",
+                boxShadow: "0 10px 40px rgba(201, 168, 76, 0.3)"
               }}
             >
               <Sparkles size={40} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold mb-3" style={{ color: "var(--foreground)" }}>
-              Pepper Root&apos;a Hoş Geldiniz
+            <h1 className="text-2xl font-bold mb-3" style={{ color: "var(--foreground)", fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>
+              Luxora AI Studio&apos;ya Hoş Geldiniz
             </h1>
             <p className="mb-8" style={{ color: "var(--foreground-muted)" }}>
-              AI destekli görsel ve video üretimi için yeni bir proje oluşturun.
+              AI destekli iç mekan tasarımı için yeni bir proje oluşturun.
             </p>
             <button
               onClick={() => setNewProjectModalOpen(true)}
@@ -178,7 +173,7 @@ export default function Home() {
               style={{
                 background: "var(--accent)",
                 color: "var(--background)",
-                boxShadow: "0 4px 20px rgba(139, 92, 246, 0.4)"
+                boxShadow: "0 4px 20px rgba(201, 168, 76, 0.4)"
               }}
             >
               {isCreatingProject ? (

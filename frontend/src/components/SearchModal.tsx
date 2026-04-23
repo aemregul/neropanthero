@@ -94,7 +94,7 @@ export function SearchModal({ isOpen, onClose, sessionId }: SearchModalProps) {
             case "wardrobe":
                 return <FileText size={16} className="text-yellow-400" />;
             case "asset":
-                return <Image size={16} className="text-purple-400" />;
+                return <Image size={16} style={{ color: '#C9A84C' }} />;
             default:
                 return null;
         }

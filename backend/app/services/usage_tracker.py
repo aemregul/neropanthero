@@ -2,6 +2,8 @@
 Model Kullanım Geçmişi Tracking Servisi.
 Her AI model çağrısını UsageStats tablosuna kaydeder.
 """
+from __future__ import annotations
+
 import uuid
 from datetime import datetime, timezone
 

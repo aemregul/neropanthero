@@ -184,7 +184,7 @@ export function SavedImagesModal({ isOpen, onClose, sessionId, onRefresh, onItem
                     <div className="flex items-center gap-3">
                         <div
                             className="p-2.5 rounded-xl"
-                            style={{ background: "linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)" }}
+                            style={{ background: "linear-gradient(135deg, var(--accent) 0%, #8B6D28 100%)" }}
                         >
                             <ImageIcon size={24} className="text-white" />
                         </div>
@@ -290,7 +290,7 @@ export function SavedImagesModal({ isOpen, onClose, sessionId, onRefresh, onItem
                                             }}
                                         />
                                     ) : image.type === 'audio' ? (
-                                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 to-purple-900/40 p-3">
+                                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-900/40 to-stone-900/40 p-3">
                                             <span className="text-3xl mb-2">🎵</span>
                                             <span className="text-xs text-white/70 text-center truncate w-full">{image.name}</span>
                                             <audio src={image.imageUrl} controls className="w-full mt-2" style={{ height: '28px' }} onClick={e => e.stopPropagation()} />
@@ -345,7 +345,7 @@ export function SavedImagesModal({ isOpen, onClose, sessionId, onRefresh, onItem
                                     style={{ borderColor: "var(--border)" }}
                                 >
                                     {image.type === 'audio' ? (
-                                        <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gradient-to-br from-emerald-900/40 to-purple-900/40">
+                                        <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gradient-to-br from-amber-900/40 to-stone-900/40">
                                             <span className="text-2xl">🎵</span>
                                         </div>
                                     ) : (

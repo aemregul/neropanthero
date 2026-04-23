@@ -62,11 +62,11 @@ export function SavePluginModal({ isOpen, onClose, onSave, suggestedName, plugin
                 {/* Header */}
                 <div
                     className="p-5 border-b"
-                    style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%)" }}
+                    style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, rgba(201, 168, 76, 0.15) 0%, transparent 100%)" }}
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl" style={{ background: "rgba(139, 92, 246, 0.2)" }}>
-                            <Sparkles size={24} className="text-purple-500" />
+                        <div className="p-2 rounded-xl" style={{ background: "rgba(201, 168, 76, 0.2)" }}>
+                            <Sparkles size={24} style={{ color: '#C9A84C' }} />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold">Plugin Olarak Kaydet</h2>
@@ -128,12 +128,12 @@ export function SavePluginModal({ isOpen, onClose, onSave, suggestedName, plugin
 
                     <div
                         className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all"
-                        style={{ background: isPublic ? "rgba(139, 92, 246, 0.1)" : "var(--background)" }}
+                        style={{ background: isPublic ? "rgba(201, 168, 76, 0.1)" : "var(--background)" }}
                         onClick={() => setIsPublic(!isPublic)}
                     >
                         <div
-                            className={`w-5 h-5 rounded flex items-center justify-center transition-all ${isPublic ? "bg-purple-500" : ""}`}
-                            style={!isPublic ? { border: "2px solid var(--border)" } : {}}
+                            className={`w-5 h-5 rounded flex items-center justify-center transition-all ${isPublic ? "" : ""}`}
+                            style={isPublic ? { background: '#C9A84C' } : { border: "2px solid var(--border)" }}
                         >
                             {isPublic && <Check size={14} className="text-white" />}
                         </div>
@@ -301,12 +301,12 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                 {/* Header */}
                 <div
                     className="p-5 border-b"
-                    style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.05) 100%)" }}
+                    style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, rgba(201, 168, 76, 0.12) 0%, rgba(139, 109, 40, 0.05) 100%)" }}
                 >
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="p-2.5 rounded-xl" style={{ background: "rgba(139, 92, 246, 0.2)" }}>
-                                <Sparkles size={22} className="text-purple-400" />
+                            <div className="p-2.5 rounded-xl" style={{ background: "rgba(201, 168, 76, 0.2)" }}>
+                                <Sparkles size={22} style={{ color: '#C9A84C' }} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 {isEditing ? (
@@ -332,7 +332,7 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                                 )}
                                 <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: "var(--foreground-muted)" }}>
                                     {plugin.isPublic && (
-                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: "rgba(139, 92, 246, 0.25)", color: "#a78bfa" }}>
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: "rgba(201, 168, 76, 0.25)", color: "#C9A84C" }}>
                                             Topluluk
                                         </span>
                                     )}
@@ -448,7 +448,7 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                                                 <span
                                                     key={i}
                                                     className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg group"
-                                                    style={{ background: "rgba(139, 92, 246, 0.15)", color: "#a78bfa" }}
+                                                    style={{ background: "rgba(201, 168, 76, 0.15)", color: "#C9A84C" }}
                                                 >
                                                     {angle}
                                                     <button
@@ -472,7 +472,7 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                                             <button
                                                 onClick={addCameraAngle}
                                                 className="px-3 py-1.5 text-xs rounded-lg font-medium"
-                                                style={{ background: "rgba(139, 92, 246, 0.2)", color: "#a78bfa" }}
+                                                style={{ background: "rgba(201, 168, 76, 0.2)", color: "#C9A84C" }}
                                             >
                                                 + Ekle
                                             </button>
@@ -485,7 +485,7 @@ export function PluginDetailModal({ isOpen, onClose, plugin, onDelete, onUse, on
                                                 <span
                                                     key={i}
                                                     className="px-2.5 py-1 text-xs rounded-lg"
-                                                    style={{ background: "rgba(139, 92, 246, 0.1)", color: "#a78bfa" }}
+                                                    style={{ background: "rgba(201, 168, 76, 0.1)", color: "#C9A84C" }}
                                                 >
                                                     {angle}
                                                 </span>

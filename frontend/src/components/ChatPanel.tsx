@@ -147,7 +147,7 @@ function MarkdownContent({ content, onImageClick }: { content: string; onImageCl
             if (href.match(/\.(wav|mp3|ogg|aac|flac)(\?.*)?$/i)) {
                 return (
                     <div className="mt-2 mb-2 rounded-2xl overflow-hidden" style={{ maxWidth: '360px' }}>
-                        <div className="bg-gradient-to-br from-emerald-900/60 via-[#1a1a2e] to-purple-900/50 p-4">
+                        <div className="bg-gradient-to-br from-amber-900/60 via-[#1A1815] to-stone-900/50 p-4">
                             <div className="flex items-center gap-3 mb-3">
                                 <span className="text-xl">🎵</span>
                                 <span className="text-sm font-medium text-white">{children || 'Müzik'}</span>
@@ -287,7 +287,7 @@ function renderContent(content: string | undefined | null, onImageClick?: (url: 
                 // Audio player — premium card
                 elements.push(
                     <div key={key++} className="mt-3 mb-2 rounded-2xl overflow-hidden" style={{ maxWidth: '360px' }}>
-                        <div className="bg-gradient-to-br from-emerald-900/60 via-[#1a1a2e] to-purple-900/50 p-4 relative">
+                        <div className="bg-gradient-to-br from-amber-900/60 via-[#1A1815] to-stone-900/50 p-4 relative">
                             {/* Download — top right */}
                             <a
                                 href={url}
@@ -1460,14 +1460,14 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             >
                 <div className="flex items-center gap-3 pl-12 lg:pl-0">
                     <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, #D4B85C, #8B6D28)' }}
                     >
-                        P
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
                     </div>
                     <div className="flex items-center gap-1">
-                        <span className="font-medium">PepperRoot</span>
-                        <span style={{ color: "var(--foreground-muted)" }}>AI Agency</span>
+                        <span className="font-medium" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Luxora</span>
+                        <span style={{ color: '#C9A84C' }}>AI Studio</span>
                         <ChevronDown size={16} style={{ color: "var(--foreground-muted)" }} />
                     </div>
 
@@ -1520,45 +1520,47 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center py-16">
                             {/* Logo & Title */}
-                            <span className="text-6xl mb-4">🫑</span>
-                            <h2 className="text-2xl font-bold mb-2">Pepper Root AI</h2>
+                            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                            </div>
+                            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Luxora AI</h2>
                             <p className="text-sm mb-8" style={{ color: "var(--foreground-muted)" }}>
-                                Yapay zeka destekli görsel üretim asistanın
+                                AI destekli iç mekan tasarım asistanınız
                             </p>
 
                             {/* Quick Actions */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
                                 <button
-                                    onClick={() => setInput("Profesyonel bir stüdyo ortamında, yumuşak aydınlatma altında, 30'lu yaşlarında karizmatik bir iş insanı portresi oluştur. Modern ve minimal bir arka plan kullan.")}
+                                    onClick={() => setInput("Modern minimalist tarzda bir oturma odası tasarımı oluştur. Açık tonlarda, geniş pencereli, doğal ışık alan bir mekan olsun.")}
                                     className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
                                     style={{ background: "var(--card)", border: "1px solid var(--border)" }}
                                 >
-                                    <span className="text-lg mb-2 block">🎨</span>
-                                    <span className="text-sm font-medium">Görsel Oluştur</span>
+                                    <span className="text-lg mb-2 block">🏠</span>
+                                    <span className="text-sm font-medium">Oda Tasarımı</span>
                                     <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Profesyonel görsel üret
+                                        Fotorealistik iç mekan üret
                                     </p>
                                 </button>
                                 <button
-                                    onClick={() => setInput("Yeni bir ana karakter oluşturmak istiyorum. İsmi Ayşe olsun, 28 yaşında, profesyonel bir iç mimar. Kısa kahverengi saçları, yeşil gözleri ve modern, şık bir giyim tarzı var. @karakter_ayse olarak kaydet.")}
+                                    onClick={() => setInput("Bir salon için mobilya önerileri ver. Modern tarzdaki bir oturma odasına uygun koltuk, sehpa ve TV ünitesi seçenekleri olsun.")}
                                     className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
                                     style={{ background: "var(--card)", border: "1px solid var(--border)" }}
                                 >
-                                    <span className="text-lg mb-2 block">👤</span>
-                                    <span className="text-sm font-medium">Karakter Ekle</span>
+                                    <span className="text-lg mb-2 block">🛋️</span>
+                                    <span className="text-sm font-medium">Mobilya Önerisi</span>
                                     <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Detaylı karakter profili
+                                        Tarza uygun mobilya seç
                                     </p>
                                 </button>
                                 <button
-                                    onClick={() => setInput("Yeni bir mekan oluşturmak istiyorum: Lüks bir penthouse dairesi, geniş pencerelerden şehir manzarası görünen, minimalist dekorasyonlu, beyaz ve gri tonlarında modern bir oturma odası. @lokasyon_penthouse olarak kaydet.")}
+                                    onClick={() => setInput("Lamel panel tasarımı yapmak istiyorum. 15cm genişlik, 2cm aralık, meşe rengi, TV ünitesinin yan duvarına uygun olsun.")}
                                     className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
                                     style={{ background: "var(--card)", border: "1px solid var(--border)" }}
                                 >
-                                    <span className="text-lg mb-2 block">📍</span>
-                                    <span className="text-sm font-medium">Lokasyon Ekle</span>
+                                    <span className="text-lg mb-2 block">🏛️</span>
+                                    <span className="text-sm font-medium">Duvar Paneli</span>
                                     <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Atmosferik mekan tanımla
+                                        Parametrik lamel tasarımı
                                     </p>
                                 </button>
                                 <button
@@ -1573,14 +1575,14 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                     </p>
                                 </button>
                                 <button
-                                    onClick={() => setInput("PepperStoryReel özelliğini kullanarak birden fazla görselden geçişli montaj video oluşturmak istiyorum. Bu özellik nasıl çalışıyor?")}
+                                    onClick={() => setInput("Bu odanın renk paletini değiştirmek istiyorum. Duvarları su yeşili, zemini açık meşe olsun. Fotorealistik render al.")}
                                     className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
                                     style={{ background: "var(--card)", border: "1px solid var(--border)" }}
                                 >
-                                    <span className="text-lg mb-2 block">🎬</span>
-                                    <span className="text-sm font-medium">PepperStoryReel</span>
+                                    <span className="text-lg mb-2 block">🎨</span>
+                                    <span className="text-sm font-medium">Renk & Malzeme</span>
                                     <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Çoklu görselden hikaye videosu
+                                        Fotorealistik render al
                                     </p>
                                 </button>
                             </div>
@@ -1654,7 +1656,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                         </div>
                                     )}
                                     {msg.audio_url && (
-                                        <div className="w-36 h-24 rounded-xl flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 to-purple-900/40 overflow-hidden px-1" style={{ border: '1px solid var(--border)' }}>
+                                        <div className="w-36 h-24 rounded-xl flex flex-col items-center justify-center bg-gradient-to-br from-amber-900/40 to-stone-900/40 overflow-hidden px-1" style={{ border: '1px solid var(--border)' }}>
                                             <span className="text-lg mb-0.5">🎵</span>
                                             {msg.audio_label && (
                                                 <span className="text-[9px] text-white/80 text-center leading-tight line-clamp-2 mb-0.5">{msg.audio_label}</span>
@@ -1675,7 +1677,9 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                 </div>
                             ) : (
                                 <div className="flex gap-3 max-w-[85%] group/feedback">
-                                    <span className="text-2xl shrink-0 mt-1">🫑</span>
+                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4 }}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                                    </div>
                                     <div className="flex-1 flex flex-col gap-2">
                                         {/* Text bubble — strip inline images if image_url exists */}
                                         {(() => {
@@ -1787,7 +1791,9 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
 
                     {isLoading && (
                         <div className="flex gap-3">
-                            <span className="text-2xl shrink-0">🫑</span>
+                            <div style={{ width: 24, height: 24, borderRadius: 6, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                            </div>
                             <div className="message-bubble message-ai">
                                 {loadingStatus ? (
                                     <div className="flex items-center gap-2">
@@ -1926,7 +1932,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                             <div key={index} className="relative shrink-0">
                                                 {isAudioPreview ? (
                                                     <div
-                                                        className="w-20 h-20 rounded-lg flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 to-purple-900/40"
+                                                        className="w-20 h-20 rounded-lg flex flex-col items-center justify-center bg-gradient-to-br from-amber-900/40 to-stone-900/40"
                                                         style={{ border: '1px solid var(--border)' }}
                                                     >
                                                         <span className="text-2xl">🎵</span>
@@ -1999,7 +2005,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                 {attachedAudioUrl && (
                                     <div className="relative inline-block">
                                         <div
-                                            className="w-36 h-24 rounded-xl overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 to-purple-900/40"
+                                            className="w-36 h-24 rounded-xl overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-amber-900/40 to-stone-900/40"
                                             style={{ border: "1px solid var(--border)" }}
                                         >
                                             <span className="text-3xl">🎵</span>
@@ -2084,13 +2090,13 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                     }}
                                     className="p-2 rounded-lg transition-all hover:shadow-md"
                                     style={{
-                                        background: "linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%)",
-                                        border: "1px solid rgba(139, 92, 246, 0.3)"
+                                        background: "linear-gradient(135deg, rgba(201, 168, 76, 0.2) 0%, rgba(184, 150, 58, 0.15) 100%)",
+                                        border: "1px solid rgba(201, 168, 76, 0.3)"
                                     }}
                                     title="Preset Oluştur"
                                     disabled={isLoading || !isConnected}
                                 >
-                                    <Sparkles size={18} className="text-purple-400" />
+                                    <Sparkles size={18} style={{ color: '#C9A84C' }} />
                                 </button>
                                 {/* Mic icon removed — was non-functional */}
                                 {isLoading ? (

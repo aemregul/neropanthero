@@ -36,11 +36,11 @@ export default function LoginPage() {
     // Loading state while checking auth
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+            <div className="min-h-screen bg-[#0A0908] flex items-center justify-center">
                 <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-[#C9A84C] animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-[#C9A84C] animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-[#C9A84C] animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
             </div>
         );
@@ -63,13 +63,13 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4 overflow-hidden relative">
+        <div className="min-h-screen bg-[#0A0908] flex items-center justify-center p-4 overflow-hidden relative">
             {/* Animated Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <FloatingOrb delay={0} size="w-96 h-96" color="bg-emerald-500" position={{ top: '10%', left: '10%' }} />
-                <FloatingOrb delay={2} size="w-80 h-80" color="bg-purple-500" position={{ top: '60%', left: '70%' }} />
-                <FloatingOrb delay={4} size="w-72 h-72" color="bg-cyan-500" position={{ top: '30%', left: '80%' }} />
-                <FloatingOrb delay={1} size="w-64 h-64" color="bg-pink-500" position={{ top: '70%', left: '20%' }} />
+                <FloatingOrb delay={0} size="w-96 h-96" color="bg-amber-600" position={{ top: '10%', left: '10%' }} />
+                <FloatingOrb delay={2} size="w-80 h-80" color="bg-amber-800" position={{ top: '60%', left: '70%' }} />
+                <FloatingOrb delay={4} size="w-72 h-72" color="bg-yellow-700" position={{ top: '30%', left: '80%' }} />
+                <FloatingOrb delay={1} size="w-64 h-64" color="bg-orange-900" position={{ top: '70%', left: '20%' }} />
 
                 {/* Grid pattern overlay */}
                 <div
@@ -87,19 +87,21 @@ export default function LoginPage() {
                     href="/"
                     className="flex items-center justify-center gap-3 mb-8 hover:opacity-80 transition-opacity"
                 >
-                    <span className="text-5xl">🫑</span>
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#D4B85C] to-[#8B6D28] flex items-center justify-center">
+                        <svg className="w-5 h-5 text-black" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                    </div>
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Pepper Root</h1>
-                        <p className="text-emerald-400 text-sm -mt-1">AI Agency</p>
+                        <h1 className="text-2xl font-bold bg-gradient-to-r from-[#E8E3D8] to-[#C9A84C] bg-clip-text text-transparent" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Luxora</h1>
+                        <p className="text-[#C9A84C] text-sm -mt-1">AI Studio</p>
                     </div>
                 </Link>
 
                 {/* Card */}
                 <div className="relative">
                     {/* Glowing border effect */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/30 via-cyan-500/30 to-purple-500/30 rounded-3xl blur-lg opacity-50" />
+                    <div className="absolute -inset-1 bg-gradient-to-r from-[#C9A84C]/30 via-[#8B6D28]/20 to-[#C9A84C]/30 rounded-3xl blur-lg opacity-50" />
 
-                    <div className="relative bg-gray-900/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800/50 shadow-2xl">
+                    <div className="relative bg-[#12110F]/90 backdrop-blur-xl rounded-2xl p-8 border border-[#2A2620] shadow-2xl">
                         {/* Title */}
                         <div className="text-center mb-6">
                             <h2 className="text-xl font-semibold text-white mb-2">Hoş Geldin</h2>
@@ -147,7 +149,7 @@ export default function LoginPage() {
                                 type="button"
                                 onClick={() => setRememberMe(!rememberMe)}
                                 className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${rememberMe
-                                    ? 'bg-emerald-500 border-emerald-500'
+                                    ? 'bg-[#C9A84C] border-[#C9A84C]'
                                     : 'bg-gray-800/50 border-gray-600 hover:border-gray-500'
                                     }`}
                             >
@@ -171,7 +173,7 @@ export default function LoginPage() {
                 <div className="text-center mt-6">
                     <Link
                         href="/"
-                        className="text-gray-500 hover:text-emerald-400 text-sm transition-colors inline-flex items-center gap-2"
+                        className="text-gray-500 hover:text-[#C9A84C] text-sm transition-colors inline-flex items-center gap-2"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -182,7 +184,7 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <p className="text-center text-gray-600 text-sm mt-4">
-                    © 2026 Pepper Root AI Agency
+                    © 2026 Luxora AI Studio
                 </p>
             </div>
 
