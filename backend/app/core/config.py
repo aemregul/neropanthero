@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     """Uygulama ayarları."""
     
     # Uygulama
-    APP_NAME: str = "Pepper Root AI Agency"
+    APP_NAME: str = "Nero Panthero AI Studio"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = True
     
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     
     # Pinecone Semantic Search
     PINECONE_API_KEY: Optional[str] = None
-    PINECONE_INDEX_NAME: str = "pepperroot"
+    PINECONE_INDEX_NAME: str = "neropanthero"
     PINECONE_ENVIRONMENT: str = "us-east-1"
     USE_PINECONE: bool = False
     

@@ -1,4 +1,4 @@
-# Pepper Root AI Agency
+# Nero Panthero AI Studio
 
 Web tabanlı, ajantik AI yaratıcı platform.
 
@@ -11,19 +11,20 @@ Web tabanlı, ajantik AI yaratıcı platform.
 - PostgreSQL
 
 ### Frontend
-- Next.js 14
-- React 18
+- Next.js
+- React
 - TypeScript
 - Tailwind CSS
 
 ### AI/Media
 - fal.ai
-- Claude API
+- OpenAI GPT-4o
+- Anthropic Claude
 
-## Kurulum
+## Repo
 
-Yakında...
+[github.com/aemregul/neropanthero](https://github.com/aemregul/neropanthero)
 
 ## Lisans
 
-Proprietary - Pepper Root AI Agency
+Proprietary - Nero Panthero AI Studio

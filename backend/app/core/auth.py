@@ -16,8 +16,8 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.models.models import User
 
-# Password hashing - using argon2 instead of bcrypt for Python 3.14 compatibility
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+# Password hashing - using bcrypt for broad compatibility
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Bearer token security
 security = HTTPBearer(auto_error=False)
