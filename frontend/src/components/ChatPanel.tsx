@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 
-import { Send, Paperclip, Loader2, MoreHorizontal, ChevronDown, AlertCircle, Sparkles, X, ZoomIn, Download, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Send, Paperclip, Loader2, MoreHorizontal, ChevronDown, AlertCircle, Sparkles, X, ZoomIn, Download, ThumbsUp, ThumbsDown, PanelLeftClose } from "lucide-react";
 import { useToast } from "./ToastProvider";
 import { sendMessage, sendMessageStream, checkHealth, getSessionHistory, sendFeedback, type MessageResponse as ApiMessageResponse } from "@/lib/api";
 import { GenerationProgressCard } from "./GenerationProgressCard";
@@ -31,6 +31,8 @@ interface ChatPanelProps {
     installedPlugins?: Array<{ id: string; name: string; promptText: string; emoji?: string }>;
     pendingAssetUrl?: { url: string; type: "image" | "video" | "audio" | "uploaded" } | null;
     onAssetUrlConsumed?: () => void;
+    onCollapseChat?: () => void;
+    isCompact?: boolean;
 }
 
 function mapApiMessageToChatMessage(msg: ApiMessageResponse): Message {
@@ -465,7 +467,7 @@ function stripInlineMediaContent(
     return cleaned;
 }
 
-export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityChange, pendingPrompt, onPromptConsumed, pendingInputText, onInputTextConsumed, installedPlugins = [], pendingAssetUrl, onAssetUrlConsumed }: ChatPanelProps) {
+export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityChange, pendingPrompt, onPromptConsumed, pendingInputText, onInputTextConsumed, installedPlugins = [], pendingAssetUrl, onAssetUrlConsumed, onCollapseChat, isCompact = false }: ChatPanelProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -1445,36 +1447,35 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
 
     return (
         <div
-            className={`flex-1 flex flex-col h-screen ${isDragOver ? 'ring-2 ring-[var(--accent)] ring-inset' : ''}`}
+            className={`flex flex-col ${isCompact ? 'h-full' : 'flex-1 h-screen'} ${isDragOver ? 'ring-2 ring-[var(--accent)] ring-inset' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             {/* Header */}
             <header
-                className="h-14 px-4 lg:px-6 flex items-center justify-between border-b shrink-0"
+                className={`${isCompact ? 'h-12 px-3' : 'h-14 px-4 lg:px-6'} flex items-center justify-between border-b shrink-0`}
                 style={{
                     background: "var(--background-secondary)",
                     borderColor: "var(--border)"
                 }}
             >
-                <div className="flex items-center gap-3 pl-12 lg:pl-0">
+                <div className={`flex items-center gap-2 ${isCompact ? '' : 'pl-12 lg:pl-0'}`}>
                     <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        className={`${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg flex items-center justify-center`}
                         style={{ background: 'linear-gradient(135deg, #D4B85C, #8B6D28)' }}
                     >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                        <svg width={isCompact ? 10 : 14} height={isCompact ? 10 : 14} viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
                     </div>
                     <div className="flex items-center gap-1">
-                        <span className="font-medium" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero</span>
-                        <span style={{ color: '#C9A84C' }}>AI Studio</span>
-                        <ChevronDown size={16} style={{ color: "var(--foreground-muted)" }} />
+                        <span className={`font-medium ${isCompact ? 'text-sm' : ''}`} style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero</span>
+                        <span className={isCompact ? 'text-sm' : ''} style={{ color: '#C9A84C' }}>AI</span>
                     </div>
 
                     {/* Connection status */}
-                    <div className="ml-2">
+                    <div>
                         {isConnected === null ? (
-                            <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--foreground-muted)" }} />
+                            <Loader2 className="w-3 h-3 animate-spin" style={{ color: "var(--foreground-muted)" }} />
                         ) : isConnected && !isOffline ? (
                             <div className="w-2 h-2 rounded-full bg-green-500" title="Bağlı" />
                         ) : (
@@ -1483,9 +1484,20 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                     </div>
                 </div>
 
-                <button className="p-2 rounded-lg hover:bg-[var(--card)]">
-                    <MoreHorizontal size={20} style={{ color: "var(--foreground-muted)" }} />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button className="p-1.5 rounded-lg hover:bg-[var(--card)]">
+                        <MoreHorizontal size={16} style={{ color: "var(--foreground-muted)" }} />
+                    </button>
+                    {isCompact && onCollapseChat && (
+                        <button
+                            onClick={onCollapseChat}
+                            className="p-1.5 rounded-lg hover:bg-[var(--card)] transition-colors"
+                            title="Chat'i Daralt"
+                        >
+                            <PanelLeftClose size={16} style={{ color: "var(--foreground-muted)" }} />
+                        </button>
+                    )}
+                </div>
             </header>
 
             {/* Offline banner */}

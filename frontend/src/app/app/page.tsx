@@ -7,12 +7,13 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { AssetsPanel } from "@/components/AssetsPanel";
 import { NewProjectModal } from "@/components/NewProjectModal";
 import { createSession, getSessions } from "@/lib/api";
-import { FolderPlus, Sparkles } from "lucide-react";
+import { FolderPlus, Sparkles, MessageSquare, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
 
   const [assetsCollapsed, setAssetsCollapsed] = useState(false);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
 
   // === PROJE-BAZLI CHAT MİMARİSİ ===
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -34,7 +35,6 @@ export default function Home() {
       try {
         const sessions = await getSessions();
         const projects = sessions.filter(s => s.category !== 'main_chat');
-
         if (projects.length > 0) {
           const savedProjectId = localStorage.getItem('nero_active_project');
           const savedProject = savedProjectId ? projects.find(p => p.id === savedProjectId) : null;
@@ -51,7 +51,6 @@ export default function Home() {
         setIsLoading(false);
       }
     };
-
     init();
   }, [refreshKey]);
 
@@ -105,7 +104,7 @@ export default function Home() {
 
   return (
     <main className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar Icon Rail */}
       <Sidebar
         activeProjectId={activeProjectId || ""}
         onProjectChange={handleProjectChange}
@@ -117,7 +116,7 @@ export default function Home() {
         onPluginsLoaded={setInstalledPlugins}
       />
 
-      {/* Chat — proje seçili değilse hoşgeldin ekranı */}
+      {/* Chat Panel — sol taraf, sabit 380px, daraltılabilir */}
       {!activeProjectId && hasNoProjects ? (
         <div className="flex-1 flex items-center justify-center" style={{ background: "var(--background)" }}>
           <div className="text-center max-w-md px-6">
@@ -166,31 +165,60 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <ChatPanel
-          sessionId={activeProjectId || undefined}
-          onNewAsset={handleNewAsset}
-          onEntityChange={() => {}}
-          pendingPrompt={pendingPrompt}
-          onPromptConsumed={() => setPendingPrompt(null)}
-          pendingInputText={pendingInputText}
-          onInputTextConsumed={() => setPendingInputText(null)}
-          installedPlugins={installedPlugins}
-          pendingAssetUrl={pendingAssetUrl}
-          onAssetUrlConsumed={() => setPendingAssetUrl(null)}
-        />
-      )}
+        <>
+          {/* Chat Panel — daraltılabilir */}
+          {chatCollapsed ? (
+            <button
+              onClick={() => setChatCollapsed(false)}
+              className="h-screen shrink-0 flex items-center justify-center border-r transition-colors hover:bg-[var(--card)]"
+              style={{
+                width: 40,
+                background: "var(--background-secondary)",
+                borderColor: "var(--border)",
+              }}
+              title="Chat'i Aç"
+            >
+              <PanelLeftOpen size={18} style={{ color: "var(--foreground-muted)" }} />
+            </button>
+          ) : (
+            <div
+              className="h-screen shrink-0 flex flex-col border-r"
+              style={{
+                width: 380,
+                background: "var(--background-secondary)",
+                borderColor: "var(--border)",
+              }}
+            >
+              <ChatPanel
+                sessionId={activeProjectId || undefined}
+                onNewAsset={handleNewAsset}
+                onEntityChange={() => {}}
+                pendingPrompt={pendingPrompt}
+                onPromptConsumed={() => setPendingPrompt(null)}
+                pendingInputText={pendingInputText}
+                onInputTextConsumed={() => setPendingInputText(null)}
+                installedPlugins={installedPlugins}
+                pendingAssetUrl={pendingAssetUrl}
+                onAssetUrlConsumed={() => setPendingAssetUrl(null)}
+                onCollapseChat={() => setChatCollapsed(true)}
+                isCompact
+              />
+            </div>
+          )}
 
-      {/* Assets Panel — oluşturulan görselleri gösterir */}
-      <AssetsPanel
-        collapsed={assetsCollapsed}
-        onToggle={() => setAssetsCollapsed(!assetsCollapsed)}
-        sessionId={activeProjectId}
-        refreshKey={assetRefreshKey}
-        incomingAsset={incomingAsset}
-        onIncomingAssetConsumed={() => setIncomingAsset(null)}
-        onAssetDeleted={() => setRefreshKey(prev => prev + 1)}
-        onAttachAssetUrl={(url, type) => setPendingAssetUrl({ url, type })}
-      />
+          {/* Görseller Galerisi — kalan tüm alan */}
+          <AssetsPanel
+            collapsed={false}
+            sessionId={activeProjectId}
+            refreshKey={assetRefreshKey}
+            incomingAsset={incomingAsset}
+            onIncomingAssetConsumed={() => setIncomingAsset(null)}
+            onAssetDeleted={() => setRefreshKey(prev => prev + 1)}
+            onAttachAssetUrl={(url, type) => setPendingAssetUrl({ url, type })}
+            isMainGallery
+          />
+        </>
+      )}
 
       {/* New Project Modal */}
       <NewProjectModal

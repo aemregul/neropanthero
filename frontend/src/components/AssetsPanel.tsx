@@ -29,6 +29,7 @@ interface AssetsPanelProps {
     onSaveToImages?: () => void;
     onAssetDeleted?: () => void;
     onAttachAssetUrl?: (url: string, type: "image" | "video" | "audio" | "uploaded") => void;
+    isMainGallery?: boolean;
 }
 
 export function AssetsPanel({
@@ -41,6 +42,7 @@ export function AssetsPanel({
     onSaveToImages,
     onAssetDeleted,
     onAttachAssetUrl,
+    isMainGallery = false,
 }: AssetsPanelProps) {
     const [assets, setAssets] = useState<Asset[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -398,16 +400,44 @@ export function AssetsPanel({
             )}
 
             {/* Main Panel */}
-            <aside
-                className="hidden lg:flex flex-col w-[300px] xl:w-[340px] h-screen border-l"
-                style={{ background: "var(--background-secondary)", borderColor: "var(--border)" }}
+            <div
+                className={isMainGallery
+                    ? "flex flex-col flex-1 h-screen"
+                    : "hidden lg:flex flex-col w-[300px] xl:w-[340px] h-screen border-l"
+                }
+                style={{ background: "var(--background)", borderColor: "var(--border)" }}
             >
                 {/* Header */}
                 <header className="h-12 px-4 border-b shrink-0 flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
-                    <span className="text-sm font-medium" style={{ color: "var(--foreground-muted)" }}>
-                        Görseller {assets.length > 0 && <span style={{ opacity: 0.5 }}>({assets.length})</span>}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
+                            Tüm Görseller
+                        </span>
+                        {assets.length > 0 && (
+                            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--card)", color: "var(--foreground-muted)" }}>
+                                {assets.length}
+                            </span>
+                        )}
+                    </div>
                     <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
+                            className={`p-1.5 rounded-lg transition-colors ${selectMode ? '' : 'hover:bg-[var(--card)]'}`}
+                            style={selectMode ? { background: 'var(--accent)', color: 'white' } : { color: 'var(--foreground-muted)' }}
+                            title={selectMode ? 'Seçimi İptal' : 'Seç'}
+                        >
+                            <CheckSquare size={15} />
+                        </button>
+                        {selectMode && selectedIds.size > 0 && (
+                            <button
+                                onClick={handleDownloadSelected}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors hover:opacity-90"
+                                style={{ background: 'var(--accent)', color: 'white' }}
+                            >
+                                <Download size={12} />
+                                {selectedIds.size} İndir
+                            </button>
+                        )}
                         <button
                             onClick={fetchAssets}
                             className="p-1.5 rounded-lg hover:bg-[var(--card)] transition-colors"
@@ -415,43 +445,42 @@ export function AssetsPanel({
                         >
                             <RefreshCw size={14} className={isLoading || isRefreshing ? "animate-spin" : ""} style={{ color: "var(--foreground-muted)" }} />
                         </button>
-                        <button
-                            onClick={onToggle}
-                            className="p-1.5 rounded-lg hover:bg-[var(--card)] transition-colors"
-                            title="Paneli Gizle"
-                        >
-                            <ChevronRight size={14} style={{ color: "var(--foreground-muted)" }} />
-                        </button>
                     </div>
                 </header>
 
                 {/* Assets Grid */}
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto p-3">
                     {isLoading && filteredAssets.length === 0 ? (
                         <div className="flex items-center justify-center h-40">
                             <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
                         </div>
                     ) : filteredAssets.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-3" style={{ background: "var(--card)" }}>
-                                {activeFilter === "images" ? <ImageIcon size={28} style={{ color: "var(--foreground-muted)" }} /> :
-                                    activeFilter === "videos" ? <Video size={28} style={{ color: "var(--foreground-muted)" }} /> :
-                                        activeFilter === "uploads" ? <Upload size={28} style={{ color: "var(--foreground-muted)" }} /> :
-                                            <LayoutGrid size={28} style={{ color: "var(--foreground-muted)" }} />}
+                            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{ background: "var(--card)" }}>
+                                <LayoutGrid size={32} style={{ color: "var(--foreground-muted)" }} />
                             </div>
-                            <p className="text-sm" style={{ color: "var(--foreground-muted)" }}>
-                                {searchQuery ? "Sonuç bulunamadı" : "Henüz medya yok"}
+                            <p className="text-sm font-medium" style={{ color: "var(--foreground-muted)" }}>
+                                Henüz görsel yok
                             </p>
-                            <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                {searchQuery ? "Farklı bir arama deneyin" : "Chat'te içerik üretmeye başlayın!"}
+                            <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)", opacity: 0.6 }}>
+                                Chat&apos;te içerik üretmeye başlayın!
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div
+                            className="gallery-grid"
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: isMainGallery
+                                    ? 'repeat(auto-fill, minmax(220px, 1fr))'
+                                    : 'repeat(2, 1fr)',
+                                gap: isMainGallery ? 8 : 6,
+                            }}
+                        >
                             {filteredAssets.map((asset) => (
                                 <div
                                     key={asset.id}
-                                    className={`group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectMode && selectedIds.has(asset.id) ? 'ring-2 ring-[var(--accent)]' : 'hover:ring-2 hover:ring-[var(--accent)]/40'}`}
+                                    className={`gallery-item group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectMode && selectedIds.has(asset.id) ? 'ring-2 ring-[var(--accent)]' : 'hover:ring-2 hover:ring-[var(--accent)]/40'}`}
                                     style={{ background: "var(--card)" }}
                                     onClick={() => selectMode ? toggleSelect(asset.id) : setSelectedAsset(asset)}
                                     onContextMenu={e => { e.preventDefault(); setContextMenu({ asset, x: e.clientX, y: e.clientY }); }}
@@ -495,60 +524,77 @@ export function AssetsPanel({
                                             </div>
                                         )}
 
-                                        {/* Hover overlay */}
-                                        <div className={`absolute inset-0 transition-all duration-200 pointer-events-none ${selectMode && selectedIds.has(asset.id) ? 'bg-black/30' : 'bg-black/0 group-hover:bg-black/30'}`} />
+                                        {/* Hover overlay gradient */}
+                                        <div className={`absolute inset-0 transition-all duration-200 pointer-events-none ${selectMode && selectedIds.has(asset.id) ? 'bg-black/30' : 'bg-black/0 group-hover:bg-gradient-to-t group-hover:from-black/50 group-hover:via-transparent group-hover:to-black/30'}`} />
 
                                         {/* Selection checkbox */}
                                         {selectMode && (
-                                            <div className="absolute top-1.5 left-1.5 z-10">
+                                            <div className="absolute top-2 left-2 z-10">
                                                 {selectedIds.has(asset.id) ? (
-                                                    <CheckSquare size={18} style={{ color: 'var(--accent)' }} fill="var(--accent)" className="drop-shadow" />
+                                                    <CheckSquare size={20} style={{ color: 'var(--accent)' }} fill="var(--accent)" className="drop-shadow-lg" />
                                                 ) : (
-                                                    <Square size={18} className="text-white/70 drop-shadow" />
+                                                    <Square size={20} className="text-white/70 drop-shadow-lg" />
                                                 )}
                                             </div>
                                         )}
 
                                         {/* Top-left: type badge */}
-                                        {asset.type === "video" && (
-                                            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-black/60 text-white flex items-center gap-1">
+                                        {asset.type === "video" && !selectMode && (
+                                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-black/60 text-white flex items-center gap-1">
                                                 <Video size={10} /> VİDEO
                                             </div>
                                         )}
 
                                         {asset.isPending && (
                                             <div className="absolute inset-0 bg-black/35 flex items-center justify-center pointer-events-none">
-                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/55 text-white text-[10px] font-medium">
-                                                    <Loader2 size={10} className="animate-spin" />
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/55 text-white text-xs font-medium">
+                                                    <Loader2 size={12} className="animate-spin" />
                                                     Yükleniyor
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* Top-right: favorite star */}
+                                        {/* Top-right: action buttons (hover only) */}
+                                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                            <button
+                                                onClick={e => { e.stopPropagation(); toggleFavorite(asset.id); }}
+                                                className="p-1.5 rounded-lg bg-black/50 hover:bg-black/70 transition-colors"
+                                                title={asset.isFavorite ? 'Favoriden Çıkar' : 'Favorilere Ekle'}
+                                            >
+                                                <Star size={14} fill={asset.isFavorite ? "#eab308" : "none"} className={asset.isFavorite ? "text-yellow-500" : "text-white"} />
+                                            </button>
+                                            <button
+                                                onClick={e => { e.stopPropagation(); downloadAsset(asset); }}
+                                                className="p-1.5 rounded-lg bg-black/50 hover:bg-black/70 transition-colors"
+                                                title="İndir"
+                                            >
+                                                <Download size={14} className="text-white" />
+                                            </button>
+                                            <button
+                                                onClick={e => { e.stopPropagation(); setContextMenu({ asset, x: e.clientX, y: e.clientY }); }}
+                                                className="p-1.5 rounded-lg bg-black/50 hover:bg-black/70 transition-colors"
+                                                title="Daha Fazla"
+                                            >
+                                                <MoreHorizontal size={14} className="text-white" />
+                                            </button>
+                                        </div>
+
+                                        {/* Favorite star (always visible when favorited) */}
                                         {asset.isFavorite && (
-                                            <div className="absolute top-1.5 right-1.5">
-                                                <Star size={14} fill="#eab308" className="text-yellow-500 drop-shadow" />
+                                            <div className="absolute top-2 right-2 group-hover:opacity-0 transition-opacity duration-200">
+                                                <Star size={16} fill="#eab308" className="text-yellow-500 drop-shadow-lg" />
                                             </div>
                                         )}
 
                                         {/* Bottom-right: attach to chat button (hover only) */}
                                         <button
                                             onClick={e => handleAttachToChat(asset, e)}
-                                            className="absolute bottom-1.5 right-1.5 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                                            style={{ background: "var(--accent)", color: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
+                                            className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105 text-xs font-medium"
+                                            style={{ background: "var(--accent)", color: "white", boxShadow: "0 2px 12px rgba(0,0,0,0.4)" }}
                                             title="Chat'e Ekle"
                                         >
                                             <MessageSquarePlus size={14} />
-                                        </button>
-
-                                        {/* Bottom-left: more options (hover only) */}
-                                        <button
-                                            onClick={e => { e.stopPropagation(); setContextMenu({ asset, x: e.clientX, y: e.clientY }); }}
-                                            className="absolute bottom-1.5 left-1.5 p-1.5 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-black/70"
-                                            title="Daha Fazla"
-                                        >
-                                            <MoreHorizontal size={14} className="text-white" />
+                                            {isMainGallery && 'Chat\u0027e Ekle'}
                                         </button>
                                     </div>
                                 </div>
@@ -557,33 +603,13 @@ export function AssetsPanel({
                     )}
                 </div>
 
-                {/* Bottom bar */}
-                <div className="p-2 border-t flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
-                            className={`p-1.5 rounded-lg transition-colors ${selectMode ? '' : 'hover:bg-[var(--card)]'}`}
-                            style={selectMode ? { background: 'var(--accent)', color: 'white' } : { color: 'var(--foreground-muted)' }}
-                            title={selectMode ? 'Seçimi İptal' : 'Seç ve İndir'}
-                        >
-                            <CheckSquare size={15} />
-                        </button>
-                        {selectMode && selectedIds.size > 0 && (
-                            <button
-                                onClick={handleDownloadSelected}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors hover:opacity-90"
-                                style={{ background: 'var(--accent)', color: 'white' }}
-                            >
-                                <Download size={12} />
-                                {selectedIds.size} İndir
-                            </button>
-                        )}
-                    </div>
+                {/* Bottom bar — minimal */}
+                <div className="px-4 py-2 border-t flex items-center justify-end" style={{ borderColor: "var(--border)" }}>
                     <span className="text-xs" style={{ color: "var(--foreground-muted)" }}>
-                        {selectMode ? `${selectedIds.size} / ${filteredAssets.length} seçili` : `${filteredAssets.length} medya`}
+                        {selectMode ? `${selectedIds.size} / ${filteredAssets.length} seçili` : `${filteredAssets.length} görsel`}
                     </span>
                 </div>
-            </aside >
+            </div>
         </>
     );
 }
