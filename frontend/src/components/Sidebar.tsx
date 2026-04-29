@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-    getEntities, deleteEntity, Entity, createSession, getSessions, deleteSession, updateSession,
+    createSession, getSessions, deleteSession, updateSession,
     getPresets, createPreset, deletePreset, PresetData,
     getTrashItems, restoreTrashItem, permanentDeleteTrashItem, TrashItemData
 } from "@/lib/api";
@@ -28,16 +28,16 @@ import {
 
     Pencil,
     Grid3x3,
-    LogOut,
+
     Tag,
     GripVertical
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { SettingsModal } from "./SettingsModal";
 import { SearchModal } from "./SearchModal";
 import { NewProjectModal } from "./NewProjectModal";
-import { AdminPanelModal } from "./AdminPanelModal";
+
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { TrashModal, TrashItem } from "./TrashModal";
 import { SavePluginModal, PluginDetailModal, CreativePlugin } from "./CreativePluginModal";
@@ -114,192 +114,7 @@ const mockPresets: CreativePlugin[] = [
     },
 ];
 
-interface CollapsibleSectionProps {
-    title: string;
-    icon: React.ReactNode;
-    items: { id: string; name: string }[];
-    defaultOpen?: boolean;
-    onDelete?: (id: string) => void;
-    onItemClick?: (item: { id: string; name: string }) => void;
-}
 
-function CollapsibleSection({ title, icon, items, defaultOpen = false, onDelete, onItemClick }: CollapsibleSectionProps) {
-    // Her zaman items.length > 0 ise true, değilse false
-    // Kullanıcının manuel açıp kapatmasına da izin ver
-    const [userOverride, setUserOverride] = useState<boolean | null>(null);
-
-    // Gerçek open durumu: kullanıcı override ettiyse onu kullan, yoksa items.length'e göre
-    const open = userOverride !== null ? userOverride : items.length > 0;
-
-    // items değiştiğinde user override'ı sıfırla (yeni data geldi)
-    useEffect(() => {
-        setUserOverride(null);
-    }, [items.length]);
-
-    const toggleOpen = () => {
-        setUserOverride(!open);
-    };
-
-
-    const handleDragStart = (e: React.DragEvent, item: { id: string; name: string }) => {
-        e.dataTransfer.setData('text/plain', item.name);
-        e.dataTransfer.setData('application/x-entity-tag', item.name);
-        e.dataTransfer.effectAllowed = 'copy';
-    };
-
-    return (
-        <div className="mb-1">
-            <button
-                onClick={toggleOpen}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--card)] rounded-lg transition-colors"
-            >
-                {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                {icon}
-                <span className="font-medium">{title}</span>
-            </button>
-
-            {open && (
-                <div className="ml-4 mt-1 space-y-0.5">
-                    {items.map((item) => (
-                        <div
-                            key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item)}
-                            onClick={() => onItemClick?.(item)}
-                            className="flex items-center justify-between group px-3 py-1.5 text-sm rounded-lg hover:bg-[var(--card)] cursor-pointer transition-colors"
-                            style={{ color: "var(--foreground-muted)" }}
-                            title={`${item.name} etiketini chat'e ekle`}
-                        >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--accent)" }} />
-                                <span className="truncate">{item.name}</span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                                {onItemClick && (
-                                    <span
-                                        className="p-1 rounded opacity-0 group-hover:opacity-60 transition-colors"
-                                        title="Chat'e ekle"
-                                        style={{ color: 'var(--accent)', fontSize: 11 }}
-                                    >
-                                        ↗
-                                    </span>
-                                )}
-                                {onDelete && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            onDelete(item.id);
-                                        }}
-                                        className="p-1 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
-                                        title="Sil"
-                                    >
-                                        <Trash2 size={14} className="text-red-400" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-
-// SavedImagesSection - Thumbnail grid ile kaydedilen görseller
-interface SavedImagesSectionProps {
-    items: { id: string; name: string; imageUrl?: string }[];
-    onDelete?: (id: string) => void;
-}
-
-function SavedImagesSection({ items, onDelete }: SavedImagesSectionProps) {
-    const [hoveredId, setHoveredId] = useState<string | null>(null);
-    const [userOverride, setUserOverride] = useState<boolean | null>(null);
-
-    const open = userOverride !== null ? userOverride : items.length > 0;
-
-    useEffect(() => {
-        setUserOverride(null);
-    }, [items.length]);
-
-    const toggleOpen = () => {
-        setUserOverride(!open);
-    };
-
-    const handleDragStart = (e: React.DragEvent, item: { id: string; name: string; imageUrl?: string }) => {
-        const url = item.imageUrl || '';
-        e.dataTransfer.setData('text/plain', url || item.name);
-        e.dataTransfer.setData('application/x-asset-url', url); // Changed from x-image-url
-        e.dataTransfer.setData('application/x-entity-tag', item.name);
-
-        // Detect type
-        const isVideo = url.match(/\.(mp4|mov|webm)(\?.*)?$/i);
-        e.dataTransfer.setData('application/x-asset-type', isVideo ? 'video' : 'image');
-
-        e.dataTransfer.effectAllowed = 'copy';
-    };
-
-    return (
-        <div className="mb-1">
-            <button
-                onClick={toggleOpen}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--card)] rounded-lg transition-colors"
-            >
-                {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <ImageIcon size={16} />
-                <span className="font-medium">Kaydedilen Medya Varlıkları</span>
-                {items.length > 0 && (
-                    <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-[var(--accent)]/20" style={{ color: "var(--accent)" }}>
-                        {items.length}
-                    </span>
-                )}
-            </button>
-
-            {open && (
-                <div className="ml-4 mt-2 grid grid-cols-3 gap-1.5">
-                    {items.map((item) => (
-                        <div
-                            key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item)}
-                            className="relative group aspect-square rounded-lg overflow-hidden cursor-grab active:cursor-grabbing border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
-                            onMouseEnter={() => setHoveredId(item.id)}
-                            onMouseLeave={() => setHoveredId(null)}
-                            title={item.name}
-                        >
-                            {item.imageUrl ? (
-                                <img
-                                    src={item.imageUrl}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-[var(--card)]">
-                                    <ImageIcon size={20} style={{ color: "var(--foreground-muted)" }} />
-                                </div>
-                            )}
-
-                            {/* Delete button overlay */}
-                            {onDelete && hoveredId === item.id && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDelete(item.id);
-                                    }}
-                                    className="absolute top-1 right-1 p-1 rounded bg-black/60 hover:bg-red-500/80 transition-colors"
-                                    title="Sil"
-                                >
-                                    <Trash2 size={12} className="text-white" />
-                                </button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
 
 interface SidebarProps {
     activeProjectId?: string;
@@ -316,21 +131,18 @@ interface SidebarProps {
 
 export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, sessionId, refreshKey, onSendPrompt, onSetInputText, onPluginsLoaded, onAssetRestore, onAttachAssetUrl }: SidebarProps) {
     const { theme } = useTheme();
-    const { user, logout } = useAuth();
+
     const toast = useToast();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [newProjectOpen, setNewProjectOpen] = useState(false);
-    const [adminOpen, setAdminOpen] = useState(false);
+
     const [trashOpen, setTrashOpen] = useState(false);
     const [gridGeneratorOpen, setGridGeneratorOpen] = useState(false);
     const [savedImagesOpen, setSavedImagesOpen] = useState(false);
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [projects, setProjects] = useState<{ id: string; name: string; active: boolean; category?: string; description?: string }[]>([]);
-    const [isLoadingEntities, setIsLoadingEntities] = useState(false);
     const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-    const [entitySearchQuery, setEntitySearchQuery] = useState("");
 
     // Drag-and-drop reorder state
     const [dragProjectId, setDragProjectId] = useState<string | null>(null);
@@ -408,7 +220,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
             { ...SHORTCUTS.NEW_PROJECT, action: () => setNewProjectOpen(true) },
             { ...SHORTCUTS.SETTINGS, action: () => setSettingsOpen(true) },
             { ...SHORTCUTS.GRID, action: () => setGridGeneratorOpen(true) },
-            { ...SHORTCUTS.ADMIN, action: () => setAdminOpen(true) },
+
             {
                 ...SHORTCUTS.ESCAPE,
                 action: () => {
@@ -416,10 +228,8 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                     if (searchOpen) setSearchOpen(false);
                     else if (settingsOpen) setSettingsOpen(false);
                     else if (newProjectOpen) setNewProjectOpen(false);
-                    else if (adminOpen) setAdminOpen(false);
                     else if (trashOpen) setTrashOpen(false);
                     else if (gridGeneratorOpen) setGridGeneratorOpen(false);
-                    else if (userMenuOpen) setUserMenuOpen(false);
                 }
             },
         ],
@@ -457,26 +267,8 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         cancelEditingProject();
     };
 
-    // Entity states - API'den gelecek
-    const [characters, setCharacters] = useState<{ id: string; name: string }[]>([]);
-    const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
-    const [savedImages, setSavedImages] = useState<{ id: string; name: string; imageUrl?: string }[]>([]);
-    const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+    // Preset states
     const [presetsList, setPresetsList] = useState<CreativePlugin[]>([]);
-
-    // Filtrelenmiş entity'ler (arama için)
-    const filteredCharacters = characters.filter(c =>
-        c.name.toLowerCase().includes(entitySearchQuery.toLowerCase())
-    );
-    const filteredLocations = locations.filter(l =>
-        l.name.toLowerCase().includes(entitySearchQuery.toLowerCase())
-    );
-    const filteredSavedImages = savedImages.filter(w =>
-        w.name.toLowerCase().includes(entitySearchQuery.toLowerCase())
-    );
-    const filteredBrands = brands.filter(b =>
-        b.name.toLowerCase().includes(entitySearchQuery.toLowerCase())
-    );
 
     // Backend'den projeleri yükle
     useEffect(() => {
@@ -550,51 +342,8 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         }
     }, [presetsList, onPluginsLoaded]);
 
-    // API'den entity'leri çek
-    useEffect(() => {
-        const fetchEntities = async () => {
-            if (!sessionId) return;
 
-            setIsLoadingEntities(true);
-            try {
-                const entities = await getEntities(sessionId);
 
-                // getEntities artık her zaman array döndürüyor (API düzeltildi)
-                // Yine de güvenlik için kontrol ekle
-                const entityList = Array.isArray(entities) ? entities : [];
-
-                // Entity'leri türlerine göre ayır
-                const chars = entityList
-                    .filter((e: Entity) => e.entity_type === 'character')
-                    .map((e: Entity) => ({ id: e.id, name: e.tag || e.name }));
-                const locs = entityList
-                    .filter((e: Entity) => e.entity_type === 'location')
-                    .map((e: Entity) => ({ id: e.id, name: e.tag || e.name }));
-                const ward = entityList
-                    .filter((e: Entity) => e.entity_type === 'wardrobe')
-                    .map((e: Entity) => ({ id: e.id, name: e.tag || e.name, imageUrl: e.reference_image_url }));
-                const brandList = entityList
-                    .filter((e: Entity) => e.entity_type === 'brand')
-                    .map((e: Entity) => ({ id: e.id, name: e.tag || e.name }));
-
-                setCharacters(chars);
-                setLocations(locs);
-                setSavedImages(ward);
-                setBrands(brandList);
-            } catch (error) {
-                console.error('Entity yükleme hatası:', error);
-                // Hata durumunda boş göster
-                setCharacters([]);
-                setLocations([]);
-                setSavedImages([]);
-                setBrands([]);
-            } finally {
-                setIsLoadingEntities(false);
-            }
-        };
-
-        fetchEntities();
-    }, [sessionId, refreshKey]);
     const [selectedPlugin, setSelectedPlugin] = useState<CreativePlugin | null>(null);
     const [pluginDetailOpen, setPluginDetailOpen] = useState(false);
     const [communityHubOpen, setCommunityHubOpen] = useState(false);
@@ -658,91 +407,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         }]);
     };
 
-    // Confirm delete handlers - API'ye bağlı
-    const confirmDeleteCharacter = (id: string) => {
-        const char = characters.find(c => c.id === id);
-        if (!char) return;
-        setDeleteConfirm({
-            isOpen: true,
-            itemId: id,
-            itemName: char.name,
-            itemType: "karakter",
-            onConfirm: async () => {
-                // Backend'den sil
-                const success = await deleteEntity(id);
-                if (success) {
-                    moveToTrash(id, char.name, "karakter", char);
-                    setCharacters(characters.filter(c => c.id !== id));
-                    toast.success(`"${char.name}" çöp kutusuna taşındı`);
-                } else {
-                    toast.error('Karakter silinemedi');
-                }
-            }
-        });
-    };
 
-    const confirmDeleteLocation = (id: string) => {
-        const loc = locations.find(l => l.id === id);
-        if (!loc) return;
-        setDeleteConfirm({
-            isOpen: true,
-            itemId: id,
-            itemName: loc.name,
-            itemType: "lokasyon",
-            onConfirm: async () => {
-                const success = await deleteEntity(id);
-                if (success) {
-                    moveToTrash(id, loc.name, "lokasyon", loc);
-                    setLocations(locations.filter(l => l.id !== id));
-                    toast.success(`"${loc.name}" çöp kutusuna taşındı`);
-                } else {
-                    toast.error('Lokasyon silinemedi');
-                }
-            }
-        });
-    };
-
-    const confirmDeleteWardrobe = (id: string) => {
-        const item = savedImages.find((w: { id: string; name: string; imageUrl?: string }) => w.id === id);
-        if (!item) return;
-        setDeleteConfirm({
-            isOpen: true,
-            itemId: id,
-            itemName: item.name,
-            itemType: "wardrobe",
-            onConfirm: async () => {
-                const success = await deleteEntity(id);
-                if (success) {
-                    moveToTrash(id, item.name, "wardrobe", item, item.imageUrl as string | undefined);
-                    setSavedImages(savedImages.filter((w: { id: string; name: string; imageUrl?: string }) => w.id !== id));
-                    toast.success(`"${item.name}" çöp kutusuna taşındı`);
-                } else {
-                    toast.error('Görsel silinemedi');
-                }
-            }
-        });
-    };
-
-    const confirmDeleteBrand = (id: string) => {
-        const item = brands.find(b => b.id === id);
-        if (!item) return;
-        setDeleteConfirm({
-            isOpen: true,
-            itemId: id,
-            itemName: item.name,
-            itemType: "brand",
-            onConfirm: async () => {
-                const success = await deleteEntity(id);
-                if (success) {
-                    moveToTrash(id, item.name, "brand", item);
-                    setBrands(brands.filter(b => b.id !== id));
-                    toast.success(`"${item.name}" çöp kutusuna taşındı`);
-                } else {
-                    toast.error('Marka silinemedi');
-                }
-            }
-        });
-    };
 
     const confirmDeleteProject = (id: string) => {
         const proj = projects.find(p => p.id === id);
@@ -790,30 +455,6 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
 
                 // UI güncelle - backend'den dönen verilerle
                 switch (item.type) {
-                    case "karakter":
-                    case "character":  // Backend alias
-                        console.log("Adding to characters");
-                        setCharacters([...characters, {
-                            id: restored.id,
-                            name: restored.name || item.name
-                        }]);
-                        break;
-                    case "lokasyon":
-                    case "location":  // Backend alias
-                        console.log("Adding to locations");
-                        setLocations([...locations, {
-                            id: restored.id,
-                            name: restored.name || item.name
-                        }]);
-                        break;
-                    case "wardrobe":
-                        console.log("Adding to saved images");
-                        setSavedImages([...savedImages, {
-                            id: restored.id,
-                            name: restored.name || item.name,
-                            imageUrl: (item as { imageUrl?: string })?.imageUrl
-                        }]);
-                        break;
                     case "proje":
                     case "session":  // Backend "session" tip döndürüyor
                         console.log("Adding to projects:", { id: restored.id, name: restored.title || item.name });
@@ -827,14 +468,6 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                     case "preset":
                         // Preset geri yüklendi — sidebar refresh olacak
                         console.log("Preset restored");
-                        break;
-                    case "marka":
-                    case "brand":  // Backend alias
-                        console.log("Adding brand to characters");
-                        setCharacters([...characters, {
-                            id: restored.id,
-                            name: restored.name || item.name
-                        }]);
                         break;
                     default:
                         console.log("Unknown type:", item.type);
@@ -1078,61 +711,6 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         <span className="rail-label">Ayarlar</span>
                     </button>
 
-                    <button className="rail-btn" onClick={() => setAdminOpen(true)}>
-                        <Shield size={24} />
-                        <span className="rail-label">Admin</span>
-                    </button>
-
-                    <div className="rail-divider" />
-
-                    {/* User avatar */}
-                    <div style={{ position: 'relative' }}>
-                        <div
-                            className="rail-btn"
-                            onClick={() => setUserMenuOpen(!userMenuOpen)}
-                            style={{ cursor: 'pointer', padding: '0 8px' }}
-                        >
-                            <div className="rail-avatar">
-                                {user?.avatar_url ? (
-                                    <img src={user.avatar_url} alt={user.full_name || "User"} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                    <span>{(user?.full_name || user?.email || "U")[0].toUpperCase()}</span>
-                                )}
-                            </div>
-                            <span className="rail-label">{user?.full_name || 'Profil'}</span>
-                        </div>
-
-                        {/* User dropdown */}
-                        {userMenuOpen && (
-                            <div
-                                style={{
-                                    position: 'fixed', bottom: 16, left: 72,
-                                    width: 220, borderRadius: 12, overflow: 'hidden',
-                                    background: 'var(--card)', border: '1px solid var(--border)',
-                                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)', zIndex: 99999,
-                                    backdropFilter: 'blur(20px)'
-                                }}
-                            >
-                                <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}>
-                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{user?.full_name || "User"}</div>
-                                    <div style={{ fontSize: 11, color: 'var(--foreground-muted)' }}>{user?.email}</div>
-                                </div>
-                                <button
-                                    onClick={() => { setUserMenuOpen(false); logout(); }}
-                                    style={{
-                                        width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                                        padding: '8px 12px', fontSize: 13, color: '#ef4444',
-                                        background: 'transparent', border: 'none', cursor: 'pointer'
-                                    }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.1)')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                                >
-                                    <LogOut size={14} />
-                                    Çıkış Yap
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* ── SLIDING DRAWER ── */}
@@ -1320,72 +898,15 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         </>
                     )}
 
-                    {/* === ENTITIES PANEL === */}
+                    {/* === PLUGINS PANEL === */}
                     {drawerPanel === 'entities' && (
                         <>
                             <div className="drawer-header">
-                                <h3>Varlıklar</h3>
+                                <h3>Eklentiler</h3>
                             </div>
 
-                            {/* Entity Search */}
-                            <div style={{ padding: '8px 12px' }}>
-                                <div style={{ position: 'relative' }}>
-                                    <Search size={14} style={{
-                                        position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-                                        color: 'var(--foreground-muted)'
-                                    }} />
-                                    <input
-                                        type="text"
-                                        placeholder="Varlık ara..."
-                                        value={entitySearchQuery}
-                                        onChange={(e) => setEntitySearchQuery(e.target.value)}
-                                        style={{
-                                            width: '100%', padding: '6px 12px 6px 32px',
-                                            fontSize: 12, borderRadius: 8, border: '1px solid var(--border)',
-                                            background: 'var(--card)', color: 'var(--foreground)', outline: 'none'
-                                        }}
-                                    />
-                                    {entitySearchQuery && (
-                                        <button
-                                            onClick={() => setEntitySearchQuery("")}
-                                            style={{
-                                                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                                                background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-muted)'
-                                            }}
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
 
                             <div style={{ flex: 1, overflowY: 'auto' }}>
-                                {/* Characters */}
-                                <CollapsibleSection
-                                    title="Karakterler"
-                                    icon={<Users size={16} />}
-                                    items={filteredCharacters}
-                                    onDelete={confirmDeleteCharacter}
-                                    onItemClick={(item) => onSetInputText?.(`${item.name} `)}
-                                />
-
-                                {/* Locations */}
-                                <CollapsibleSection
-                                    title="Lokasyonlar"
-                                    icon={<MapPin size={16} />}
-                                    items={filteredLocations}
-                                    onDelete={confirmDeleteLocation}
-                                    onItemClick={(item) => onSetInputText?.(`${item.name} `)}
-                                />
-
-                                {/* Brands */}
-                                <CollapsibleSection
-                                    title="Markalar"
-                                    icon={<Tag size={16} />}
-                                    items={filteredBrands}
-                                    onDelete={confirmDeleteBrand}
-                                    onItemClick={(item) => onSetInputText?.(`${item.name} `)}
-                                />
 
                                 {/* Creative Plugins — başlık her zaman görünür */}
                                 <div style={{ marginTop: 8 }}>
@@ -1485,10 +1006,6 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 }}
             />
 
-            <AdminPanelModal
-                isOpen={adminOpen}
-                onClose={() => setAdminOpen(false)}
-            />
 
             <ConfirmDeleteModal
                 isOpen={deleteConfirm?.isOpen ?? false}
@@ -1554,8 +1071,6 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 onRefresh={() => { }}
                 onItemDeleted={(id, name, imageUrl, mediaType) => {
                     moveToTrash(id, name, "wardrobe", { reference_image_url: imageUrl, type: mediaType }, imageUrl);
-                    // Sidebar entity listesinden de kaldır
-                    setSavedImages(prev => prev.filter(w => w.id !== id));
                 }}
             />
         </>

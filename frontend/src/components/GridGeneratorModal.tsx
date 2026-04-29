@@ -464,7 +464,7 @@ Cinematic storyboard quality, consistent character.`;
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex flex-col items-center gap-0">
                             <h1 className="text-3xl font-bold tracking-wide">
-                                <span className="text-white" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Luxora</span>
+                                <span className="text-white" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero</span>
                                 <span className="text-[#C9A84C]">.</span>
                             </h1>
                             <span className="text-sm font-light tracking-[0.2em] text-gray-500">Grids</span>

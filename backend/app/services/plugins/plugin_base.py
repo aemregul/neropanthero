@@ -30,7 +30,7 @@ class PluginInfo:
     version: str
     description: str
     category: PluginCategory
-    author: str = "Pepper Root"
+    author: str = "Nero Panthero"
     requires_api_key: bool = False
     api_key_env_var: Optional[str] = None
     capabilities: list[str] = field(default_factory=list)

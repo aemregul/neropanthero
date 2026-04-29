@@ -23,7 +23,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Luxora AI Studio",
+  title: "Nero Panthero AI Studio",
   description: "AI ile iç mekan tasarımı — doğal dille fotorealistik render",
   icons: {
     icon: [

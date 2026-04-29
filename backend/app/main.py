@@ -1,5 +1,5 @@
 """
-Pepper Root AI Agency - Ana uygulama.
+Nero Panthero AI Studio - Ana uygulama.
 """
 from contextlib import asynccontextmanager
 
@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.cache import cache
-from app.api.routes import sessions, chat, generate, entities, upload, plugins, admin, grid, auth, system, search, ws
+from app.api.routes import sessions, chat, generate, upload, plugins, grid, auth, system, search, ws
 from app.services.plugins.plugin_loader import initialize_plugins
 
 
@@ -156,10 +156,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix=settings.API_PREFIX)  # Auth first
 app.include_router(sessions.router, prefix=settings.API_PREFIX)
 app.include_router(chat.router, prefix=settings.API_PREFIX)
-app.include_router(entities.router, prefix=settings.API_PREFIX)
 app.include_router(upload.router, prefix=settings.API_PREFIX)
 app.include_router(plugins.router, prefix=settings.API_PREFIX)
-app.include_router(admin.router, prefix=settings.API_PREFIX)
 app.include_router(grid.router, prefix=settings.API_PREFIX)
 app.include_router(system.router, prefix=settings.API_PREFIX)
 app.include_router(search.router, prefix=settings.API_PREFIX)

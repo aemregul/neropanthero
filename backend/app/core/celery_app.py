@@ -18,7 +18,7 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Celery app instance
 celery_app = Celery(
-    "pepper_root",
+    "nero_panthero",
     broker=REDIS_URL,
     backend=REDIS_URL,
     include=[

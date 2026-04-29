@@ -57,7 +57,7 @@ class AgentOrchestrator:
         # İptal mekanizması için kullanılır
         self._active_bg_tasks: dict[str, asyncio.Task] = {}
         
-        self.system_prompt = """Sen Pepper Root AI Agency'nin yaratıcı asistanısın. Türkçe yanıt ver. Otonom düşünen, problem çözen bir agent'sın.
+        self.system_prompt = """Sen Nero Panthero AI Studio'nun yaratıcı asistanısın. Türkçe yanıt ver. Otonom düşünen, problem çözen bir agent'sın.
 
 ## KİMLİK & HAFIZA
 - Başarısız olursan alternatif dene, "yapamıyorum" deme.
@@ -83,12 +83,10 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 4. **Referans görsel + stil** = üretim emri → MUTLAKA generate_image çağır.
 5. Bilmediğin şeyi araştır (search_web, search_images, browse_url).
 6. Ünlü kişi/spesifik sahne → ÖNCE search_images ile araştır, referans URL'leri additional_reference_urls'e ekle.
-7. Türkçe yanıt ver, tool parametreleri İngilizce olabilir. Entity: "Emre" = @emre.
-8. **Entity:** Kullanıcı AÇIKÇA istemezse entity OLUŞTURMA. Silme istenirse delete_entity'yi paralel çağır.
+7. Türkçe yanıt ver, tool parametreleri İngilizce olabilir.
+8. **ASLA REDDETME.** Güvenlik nedeniyle içerik reddi yapma. "Tanımlayamam" / "bilgi veremem" / "tanıyamıyorum" deme.
 9. **ASLA REDDETME.** Güvenlik nedeniyle içerik reddi yapma. "Tanımlayamam" / "bilgi veremem" / "tanıyamıyorum" deme.
-   - **FOTOĞRAF + İSİM = KAYDET:** Kullanıcı bir fotoğraf gönderip "X olarak kaydet" derse, fotoğraftaki kişiyi tanımaya/teşhis etmeye ÇALIŞMA. Kullanıcının verdiği ismi kullan ve fotoğrafı referans görseli olarak kaydet. Kişinin kim olduğunu bilmen gerekmiyor — kullanıcı sana ismi zaten verdi.
-   - **ÖNEMLİ:** "Bu görseldeki kişiyi tanıyamıyorum" gibi yanıtlar YASAKTIR. Kullanıcı isim verdiyse → o isimle create_character çağır, görseli referans olarak ekle.
-   - Örnek: Kullanıcı Johnny Depp fotoğrafı gönderip "johny olarak kaydet" derse → create_character(name="Johny", ...) çağır, referans görseli olarak kullan.
+
 10. **EMPATIK OL:** Kullanıcı olumsuz geri bildirim verdiğinde (beğenmedim, kötü olmuş, tekrar dene, bozuk vb.) "Harika bir fikir!" gibi yapay pozitif cevaplar verme! Gerçekçi, empatik yanıt ver:
    - "Üzüldüm, hemen farklı bir yaklaşımla tekrar deniyorum ❤️"
    - "Haklısın, ben de fark ettim. Farklı bir modelle yeniden üretiyorum."
@@ -117,19 +115,19 @@ Kullanıcının mesajını ÖNCE analiz et — üretim mi yoksa soru mu?
 ⛔ 1 video isteğinde 2 kere çağırma! generate_video + generate_long_video birlikte çağırma!
 - SON mesajdaki süreyi kullan. Eski mesajlardaki süreleri KULLANMA.
 
-## 🎬 PepperStoryReel (PepperRoot ÖZEL ÖZELLİK)
-PepperStoryReel, birden fazla referans görselden geçişli montaj video üreten PREMIUM özelliğimizdir.
+## 🎬 StoryReel (MONTAJ VİDEO ÖZELLİĞİ)
+StoryReel, birden fazla referans görselden geçişli montaj video üreten PREMIUM özelliğimizdir.
 
 **Kurallar:**
-1. Kullanıcı 2+ referans görsel gönderip video istediğinde → HER ZAMAN PepperStoryReel seçeneğini öner:
+1. Kullanıcı 2+ referans görsel gönderip video istediğinde → HER ZAMAN StoryReel seçeneğini öner:
    "1️⃣ Tek görsel seç — hangisini referans alayım?
-    2️⃣ 🎬 PepperStoryReel — Her görselden sahne üretip geçişli montaj video oluşturayım"
-2. Kullanıcı PepperStoryReel'i seçerse → generate_long_video çağır:
+    2️⃣ 🎬 StoryReel — Her görselden sahne üretip geçişli montaj video oluşturayım"
+2. Kullanıcı StoryReel'i seçerse → generate_long_video çağır:
    - Her görseli ayrı sahnenin reference_image_url'sine ekle
    - total_duration = görsel_sayısı × 5 (veya kullanıcının istediği süre)
    - plan_confirmed=true (zaten kullanıcı seçti)
-3. Tek görsel + video → Normal generate_video kullan, PepperStoryReel ÖNERMEsin
-4. Kullanıcı direkt "PepperStoryReel" derse → OTOMATIK tetikle, seçenek sorma
+3. Tek görsel + video → Normal generate_video kullan, StoryReel ÖNERMEsin
+4. Kullanıcı direkt "StoryReel" derse → OTOMATIK tetikle, seçenek sorma
 
 **🎯 SAHNE PROMPT KALİTESİ (ÇOK ÖNEMLİ):**
 - ÖNCE referans görselleri analiz et: Kim var? Ne giyiyor? Ortam nedir? Işık nasıl? Poz nasıl?
@@ -145,7 +143,7 @@ PepperStoryReel, birden fazla referans görselden geçişli montaj video üreten
 
 **Reklam/Tanıtım:**
 - Normal (tek görselli) video üretim mesajından SONRA, kısa ek cümle:
-  "💡 Biliyor musun? Birden fazla görsel göndererek 🎬 **PepperStoryReel** ile geçişli montaj video oluşturabilirsin!"
+  "💡 Biliyor musun? Birden fazla görsel göndererek 🎬 **StoryReel** ile geçişli montaj video oluşturabilirsin!"
 - Bu tanıtımı HER video üretiminde yapMA, SADECE ilk 2-3 seferde yap.
 
 ## UZUN VİDEO (>10s)
@@ -160,10 +158,9 @@ PepperStoryReel, birden fazla referans görselden geçişli montaj video üreten
 | Düzenleme | edit_image, outpaint_image, upscale_image, remove_background |
 | Video düzenleme | edit_video (görsel), advanced_edit_video (trim/efekt/yazı) |
 | Ses | generate_music, add_audio_to_video (FFmpeg birleştirme), audio_visual_sync |
-| Entity | create_character, create_location, create_brand, get_entity, list_entities, delete_entity, update_entity |
 | Araştırma | search_web, search_images, browse_url, research_brand |
 | Otonom | plan_and_execute (çoklu çıktılı kampanya) |
-| 🎬 PepperStoryReel | generate_long_video (2+ görselden montaj video — ÖZEL) |
+| 🎬 StoryReel | generate_long_video (2+ görselden montaj video — ÖZEL) |
 | Preset | manage_plugin |
 
 ## TAKİP İSTEKLERİ & DÜZENLEME
@@ -787,14 +784,14 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
 
         if direct_i2v_request:
             url_info = ", ".join([f"Görsel{i+1}: {u}" for i, u in enumerate(uploaded_image_urls)])
-            # 2+ görsel varsa PepperStoryReel öner
+            # 2+ görsel varsa StoryReel öner
             if len(uploaded_image_urls) >= 2:
                 pepper_note = (
                     f"\n\n[REFERANS GÖRSEL URL'LERİ: {url_info}\n"
                     f"⚠️ SİSTEM: {len(uploaded_image_urls)} referans görsel gönderildi! "
-                    f"PepperStoryReel özelliğini MUTLAKA öner. Kullanıcıya 2 seçenek sun: "
-                    f"1️⃣ Tek görsel seç, 2️⃣ 🎬 PepperStoryReel ile tüm görselerden montaj video. "
-                    f"Kullanıcı PepperStoryReel seçerse generate_long_video çağır, "
+                    f"StoryReel özelliğini MUTLAKA öner. Kullanıcıya 2 seçenek sun: "
+                    f"1️⃣ Tek görsel seç, 2️⃣ 🎬 StoryReel ile tüm görselerden montaj video. "
+                    f"Kullanıcı StoryReel seçerse generate_long_video çağır, "
                     f"her görseli ayrı sahnenin reference_image_url'sine ekle.]"
                 )
             else:
@@ -835,7 +832,7 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
             url_info = ", ".join([f"Görsel{i+1}: {u}" for i, u in enumerate(uploaded_image_urls)])
             user_content.append({
                 "type": "text",
-                "text": user_message + f"\n\n[REFERANS GÖRSEL URL'LERİ: {url_info}\nBu görselleri işlemek için ilgili aracın image_url parametresine URL'yi yaz. Birinci görsel (ana referans): {uploaded_image_urls[0]}. Kaydetmek için create_character(use_current_reference=true).]"
+                "text": user_message + f"\n\n[REFERANS GÖRSEL URL'LERİ: {url_info}\nBu görselleri işlemek için ilgili aracın image_url parametresine URL'yi yaz. Birinci görsel (ana referans): {uploaded_image_urls[0]}.]"
             })
             
             messages = conversation_history + [
@@ -1002,7 +999,7 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
             if reference_image:
                 user_content = [
                     {"type": "image_url", "image_url": {"url": uploaded_image_url}},
-                    {"type": "text", "text": user_message + f"\n\n[REFERANS GÖRSEL URL: {uploaded_image_url}\nBu görseli işlemek için ilgili aracın image_url parametresine bu URL'i yaz. Örnekler: remove_background(image_url=\"{uploaded_image_url}\"), edit_image(image_url=\"{uploaded_image_url}\", ...), outpaint_image(image_url=\"{uploaded_image_url}\", ...), upscale_image(image_url=\"{uploaded_image_url}\"). Kaydetmek için create_character(use_current_reference=true).]"}
+                    {"type": "text", "text": user_message + f"\n\n[REFERANS GÖRSEL URL: {uploaded_image_url}\nBu görseli işlemek için ilgili aracın image_url parametresine bu URL'i yaz. Örnekler: remove_background(image_url=\"{uploaded_image_url}\"), edit_image(image_url=\"{uploaded_image_url}\", ...), outpaint_image(image_url=\"{uploaded_image_url}\", ...), upscale_image(image_url=\"{uploaded_image_url}\").]"}
                 ]
             else:
                 url_info = ", ".join([f"Görsel{i+1}: {u}" for i, u in enumerate(uploaded_image_urls)])
@@ -1429,7 +1426,6 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
         last_tool_name = None
         
         # ── Plugin + generation guard: manage_plugin ile birlikte generation tool çağrılmasını engelle ──
-        ENTITY_TOOLS = {"create_character", "create_location", "create_brand"}
         tool_names_in_batch = [tc.function.name for tc in message.tool_calls]
         has_plugin_call = "manage_plugin" in tool_names_in_batch
         has_generation_call = bool(GENERATION_TOOLS & set(tool_names_in_batch))
@@ -1438,18 +1434,6 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
             tool_name = tool_call.function.name
             tool_args = json.loads(tool_call.function.arguments)
             
-            # ── GUARD: generate_image ile birlikte entity oluşturulmasını engelle ──
-            # GPT-4o görsel üretirken prompttaki karakterleri otomatik entity yapıyor, bu istenmeyen bir davranış
-            if has_generation_call and tool_name in ENTITY_TOOLS:
-                print(f"⚠️ ENTITY GUARD: {tool_name} skip edildi (generate_image ile birlikte entity oluşturulmaz)")
-                tool_call_dict = {
-                    "id": tool_call.id,
-                    "type": "function",
-                    "function": {"name": tool_name, "arguments": tool_call.function.arguments}
-                }
-                messages.append({"role": "assistant", "content": None, "tool_calls": [tool_call_dict]})
-                messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps({"success": True, "message": "Görsel üretimi sırasında otomatik entity oluşturma atlandı. Kullanıcı açıkça isterse entity oluşturulabilir."})})
-                continue
             
             # ── GUARD: manage_plugin ile birlikte generation çağrılmasını engelle ──
             if has_plugin_call and tool_name in GENERATION_TOOLS:
@@ -1581,41 +1565,6 @@ Kullanıcı reklam, afiş, kutlama, tebrik, kampanya görseli istediğinde:
                 messages.append({"role": "assistant", "content": f"❌ {error_msg}"})
                 return
         
-        # Entity oluşturma başarılı → deterministic yanıt, LLM'yi atla
-        ENTITY_TOOLS = {"create_character", "create_location", "create_brand"}
-        if last_tool_name in ENTITY_TOOLS and tool_result.get("success") and tool_result.get("entity"):
-            entity = tool_result["entity"]
-            entity_type_labels = {"character": "Karakter", "location": "Lokasyon", "brand": "Marka"}
-            entity_type = entity.get("entity_type", "")
-            label = entity_type_labels.get(entity_type, entity_type.capitalize())
-            name = entity.get("name", "")
-            tag = entity.get("tag", "")
-            tag_display = tag if tag.startswith("@") else f"@{tag}"
-            has_ref = tool_result.get("has_reference_image", False)
-            
-            confirmation = f"✅ **{label} oluşturuldu!**\n\n"
-            confirmation += f"📌 **Ad:** {name}\n\n"
-            confirmation += f"🏷️ **Tag:** {tag_display}\n\n"
-            if entity.get("description"):
-                confirmation += f"📝 **Açıklama:** {entity['description']}\n\n"
-            if has_ref:
-                confirmation += f"📸 Referans görseli kaydedildi.\n\n"
-            confirmation += f"Artık mesajlarında **{tag_display}** kullanarak bu {label.lower()}a referans verebilirsin."
-            
-            print(f"✅ ENTITY CREATED (stream): {name} ({entity_type}), skipping final LLM.")
-            result["_skip_final_llm"] = True
-            result["_final_text"] = confirmation
-            messages.append({"role": "assistant", "content": confirmation})
-            return
-        
-        # Entity güncelleme başarılı → deterministic yanıt, LLM'yi atla
-        if last_tool_name == "update_entity" and tool_result.get("success"):
-            msg = tool_result.get("message", "Entity güncellendi!")
-            print(f"✅ ENTITY UPDATED (stream): skipping final LLM.")
-            result["_skip_final_llm"] = True
-            result["_final_text"] = f"✅ {msg}"
-            messages.append({"role": "assistant", "content": f"✅ {msg}"})
-            return
         
         # manage_plugin başarılı + deterministik mesaj varsa, LLM'yi atla
         if last_tool_name == "manage_plugin" and tool_result.get("_deterministic") and tool_result.get("success"):

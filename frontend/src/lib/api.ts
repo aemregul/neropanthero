@@ -1,4 +1,4 @@
-// API Client for Luxora AI Studio Backend
+// API Client for Nero Panthero AI Studio Backend
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const API_PREFIX = '/api/v1';

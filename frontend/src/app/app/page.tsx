@@ -8,11 +8,9 @@ import { AssetsPanel } from "@/components/AssetsPanel";
 import { NewProjectModal } from "@/components/NewProjectModal";
 import { createSession, getSessions } from "@/lib/api";
 import { FolderPlus, Sparkles } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
 
   const [assetsCollapsed, setAssetsCollapsed] = useState(false);
 
@@ -47,7 +45,7 @@ export default function Home() {
 
         if (projects.length > 0) {
           // localStorage'dan son aktif projeyi geri yükle
-          const savedProjectId = localStorage.getItem('pepper_active_project');
+          const savedProjectId = localStorage.getItem('nero_active_project');
           const savedProject = savedProjectId ? projects.find(p => p.id === savedProjectId) : null;
           setActiveProjectId(savedProject ? savedProject.id : projects[0].id);
           setHasNoProjects(false);
@@ -64,12 +62,12 @@ export default function Home() {
     };
 
     init();
-  }, [user, entityRefreshKey]);
+  }, [entityRefreshKey]);
 
   // Proje değiştiğinde SADECE activeProjectId güncellenir, chat aynı kalır
   const handleProjectChange = (projectId: string) => {
     setActiveProjectId(projectId);
-    localStorage.setItem('pepper_active_project', projectId);
+    localStorage.setItem('nero_active_project', projectId);
     setHasNoProjects(false);
   };
 
@@ -108,7 +106,7 @@ export default function Home() {
     try {
       const newSession = await createSession(name, description, category);
       setActiveProjectId(newSession.id);
-      localStorage.setItem('pepper_active_project', newSession.id);
+      localStorage.setItem('nero_active_project', newSession.id);
       setHasNoProjects(false);
       setEntityRefreshKey(prev => prev + 1);
     } catch (error) {
@@ -161,7 +159,7 @@ export default function Home() {
               <Sparkles size={40} className="text-white" />
             </div>
             <h1 className="text-2xl font-bold mb-3" style={{ color: "var(--foreground)", fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>
-              Luxora AI Studio&apos;ya Hoş Geldiniz
+              Nero Panthero AI Studio&apos;ya Hoş Geldiniz
             </h1>
             <p className="mb-8" style={{ color: "var(--foreground-muted)" }}>
               AI destekli iç mekan tasarımı için yeni bir proje oluşturun.

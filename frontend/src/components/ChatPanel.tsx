@@ -1466,7 +1466,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
                     </div>
                     <div className="flex items-center gap-1">
-                        <span className="font-medium" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Luxora</span>
+                        <span className="font-medium" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero</span>
                         <span style={{ color: '#C9A84C' }}>AI Studio</span>
                         <ChevronDown size={16} style={{ color: "var(--foreground-muted)" }} />
                     </div>
@@ -1523,7 +1523,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                             <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
                             </div>
-                            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Luxora AI</h2>
+                            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero AI</h2>
                             <p className="text-sm mb-8" style={{ color: "var(--foreground-muted)" }}>
                                 AI destekli iç mekan tasarım asistanınız
                             </p>

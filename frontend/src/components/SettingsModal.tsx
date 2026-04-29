@@ -228,7 +228,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     <span>Hakkında</span>
                                 </div>
                                 <div className="p-3 rounded-lg text-sm" style={{ background: "var(--background)", color: "var(--foreground-muted)" }}>
-                                    <p><strong>Luxora AI Studio</strong></p>
+                                    <p><strong>Nero Panthero AI Studio</strong></p>
                                     <p className="text-xs mt-1">Versiyon 1.0.0</p>
                                     <p className="text-xs mt-1">Yapay zeka destekli görsel üretim platformu</p>
                                 </div>

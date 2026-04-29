@@ -1,12 +1,12 @@
 # ============================================================
-# Pepper Root AI Agency — Proje Konfigürasyonu
+# Nero Panthero AI Studio — Proje Konfigürasyonu
 # ============================================================
 # Bu dosya yapısal ayarları tutar.
 # Hassas bilgiler (API key, secret) buraya KONMAZ → .env dosyalarında
 # ============================================================
 
 app:
-  name: "Pepper Root AI Agency"
+  name: "Nero Panthero AI Studio"
   version: "1.0.0"
   description: "Agent-first AI yaratıcı stüdyo"
   debug: false
@@ -20,7 +20,7 @@ backend:
   cors:
     allowed_origins:
       - "http://localhost:3000"
-      - "https://pepper-root-ai-agency.vercel.app"
+      - "https://neropanthero.vercel.app"
     allow_credentials: true
     allow_methods: ["*"]
     allow_headers: ["*"]
@@ -36,11 +36,11 @@ database:
     driver: "postgresql+asyncpg"
     host: "localhost"
     port: 5432
-    name: "pepper_root"
-    user: "pepper_root"
+    name: "neropanthero"
+    user: "neropanthero"
     # password → .env dosyasından
   docker:
-    container: "pepper_root_db"
+    container: "nero_panthero_db"
     image: "postgres:15-alpine"
   migration:
     tool: "alembic"
@@ -55,7 +55,7 @@ redis:
   max_memory: "256mb"
   eviction_policy: "allkeys-lru"
   docker:
-    container: "pepper_root_redis"
+    container: "nero_panthero_redis"
     image: "redis:7-alpine"
 
 # ============== AI MODELLER ==============
@@ -119,12 +119,12 @@ deployment:
     builder: "nixpacks"
     start_command: "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
     health_endpoint: "/api/health"
-    url: "https://pepperrootaiagency-production.up.railway.app"
+    url: "https://neropanthero-production.up.railway.app"
 
   frontend:
     platform: "vercel"
     framework: "nextjs"
-    url: "https://pepper-root-ai-agency.vercel.app"
+    url: "https://neropanthero.vercel.app"
 
 # ============== LİMİTLER ==============
 limits:

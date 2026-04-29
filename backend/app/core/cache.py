@@ -1,5 +1,5 @@
 """
-Redis Cache Service for Pepper Root AI Agency.
+Redis Cache Service for Nero Panthero AI Studio.
 Provides caching for sessions, entities, and AI responses.
 """
 import json

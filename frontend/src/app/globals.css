@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 /* ====================================
-   LUXORA AI STUDIO - Quiet Luxury Design
+   NERO PANTHERO AI STUDIO - Quiet Luxury Design
    Gold + Onyx Dark Theme
    ==================================== */
 
-/* Dark Mode (Varsayılan) - Luxora Onyx */
+/* Dark Mode (Varsayılan) - Nero Panthero Onyx */
 :root {
   --background: #140F0A;
   --background-secondary: #1A1510;
@@ -192,7 +192,7 @@ body {
 
 /* ====================================
    SIDEBAR V2 — Premium Glassmorphism
-   Luxora: warm onyx palette,
+   Nero Panthero: warm onyx palette,
    glass cards, gold accents
    ==================================== */
 

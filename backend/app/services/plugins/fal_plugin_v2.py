@@ -124,7 +124,7 @@ class FalPluginV2(PluginBase):
             version="3.0.0",
             description="Görsel ve video üretimi için fal.ai AI modelleri (Smart Router + Auto-Retry)",
             category=PluginCategory.IMAGE_GENERATION,
-            author="Pepper Root",
+            author="Nero Panthero",
             requires_api_key=True,
             api_key_env_var="FAL_KEY",
             capabilities=[

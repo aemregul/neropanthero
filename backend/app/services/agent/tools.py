@@ -54,63 +54,9 @@ AGENT_TOOLS_ANTHROPIC = [
             },
             "required": ["prompt"]
         }
-    },
-    {
-        "name": "create_character",
-        "description": "Yeni bir karakter oluşturur ve hafızaya kaydeder. Kullanıcı görsel gönderip 'bunu kaydet' derse reference_image_url'yi mutlaka doldur.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "description": "Karakterin adı"},
-                "description": {"type": "string", "description": "Karakterin detaylı görsel açıklaması (kullanıcının dilinde yaz)"},
-                "reference_image_url": {"type": "string", "description": "Referans görsel URL'si"},
-                "use_current_reference": {"type": "boolean", "description": "Mevcut referans görseli kullan"},
-                "attributes": {"type": "object", "description": "Fiziksel ve kişilik özellikleri"}
-            },
-            "required": ["name", "description"]
-        }
-    },
-    {
-        "name": "create_location",
-        "description": "Yeni bir mekan oluşturur ve hafızaya kaydeder.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "description": "Mekanın adı"},
-                "description": {"type": "string", "description": "Mekanın detaylı görsel açıklaması (kullanıcının dilinde yaz)"},
-                "attributes": {"type": "object", "description": "Ek özellikler"}
-            },
-            "required": ["name", "description"]
-        }
-    },
-    {
-        "name": "get_entity",
-        "description": "Kayıtlı bir entity hakkında bilgi getirir.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "tag": {"type": "string", "description": "Entity'nin tag'i (örn: @emre)"}
-            },
-            "required": ["tag"]
-        }
-    },
-    {
-        "name": "list_entities",
-        "description": "Bu oturumdaki tüm kayıtlı karakterleri, mekanları ve markaları listeler.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "entity_type": {
-                    "type": "string",
-                    "enum": ["character", "location", "brand", "all"],
-                    "description": "Listelenecek entity tipi"
-                }
-            }
-        }
-    },
     {
         "name": "generate_video",
-        "description": "SADECE 5-10 saniyelik KISA video üretir (ARKA PLAN GÖREVİ). ⚠️ KRİTİK KURAL: Kullanıcı 15 saniye, 20 saniye, 30 saniye, 1 dakika, 2 dakika veya daha UZUN video isterse BU ARACI KULLANMA! Bunun yerine generate_long_video kullan. Bu araç MAKSİMUM 10 saniye üretir. BU ARACI TEK SEFERDE SADECE 1 KERE ÇAĞIR! ⚠️ ÇOKLU GÖRSEL: Kullanıcı 2+ referans görsel ile video isterse PepperStoryReel özelliğini öner → kabul ederse generate_long_video kullan, her görseli ayrı sahnenin reference_image_url'sine ekle.",
+        "description": "SADECE 5-10 saniyelik KISA video üretir (ARKA PLAN GÖREVİ). ⚠️ KRİTİK KURAL: Kullanıcı 15 saniye, 20 saniye, 30 saniye, 1 dakika, 2 dakika veya daha UZUN video isterse BU ARACI KULLANMA! Bunun yerine generate_long_video kullan. Bu araç MAKSİMUM 10 saniye üretir. BU ARACI TEK SEFERDE SADECE 1 KERE ÇAĞIR! ⚠️ ÇOKLU GÖRSEL: Kullanıcı 2+ referans görsel ile video isterse StoryReel özelliğini öner → kabul ederse generate_long_video kullan, her görseli ayrı sahnenin reference_image_url'sine ekle.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -204,103 +150,6 @@ AGENT_TOOLS_ANTHROPIC = [
                 "image_url": {"type": "string", "description": "Arka planı kaldırılacak görselin URL'si"}
             },
             "required": ["image_url"]
-        }
-    },
-    {
-        "name": "delete_entity",
-        "description": "Bir karakteri veya mekanı sil. ÖNEMLİ: Eğer kullanıcı 'karakterleri sil' gibi ÇOĞUL bir ifade kullanırsa, oluşturulmuş olan (veya panelde görünen) tüm hedeflenen entity'ler için BU ARACI PARALEL OLARAK BİRDEN FAZLA KEZ ÇAĞIR.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "entity_tag": {"type": "string", "description": "Silinecek entity'nin tag'i (örn: @emre, @kisi_1)"}
-            },
-            "required": ["entity_tag"]
-        }
-    },
-    {
-        "name": "update_entity",
-        "description": "Kayıtlı bir karakterin, mekanın veya markanın adını veya açıklamasını günceller. Kullanıcı 'ismini değiştir', 'yeniden adlandır', 'rename' dediğinde kullan.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "entity_tag": {"type": "string", "description": "Güncellenecek entity'nin mevcut tag'i (örn: @emre, @paris)"},
-                "new_name": {"type": "string", "description": "Yeni isim (opsiyonel). Tag otomatik güncellenir."},
-                "new_description": {"type": "string", "description": "Yeni açıklama (opsiyonel)"}
-            },
-            "required": ["entity_tag"]
-        }
-    },
-    {
-        "name": "manage_wardrobe",
-        "description": "Wardrobe (kıyafet) yönetimi.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "action": {"type": "string", "enum": ["add", "remove", "list"], "description": "İşlem"},
-                "wardrobe_id": {"type": "string", "description": "Kıyafet ID"},
-                "name": {"type": "string", "description": "Kıyafet adı"},
-                "description": {"type": "string", "description": "Kıyafet açıklaması"}
-            },
-            "required": ["action"]
-        }
-    },
-    {
-        "name": "create_brand",
-        "description": "Yeni bir marka oluşturur ve hafızaya kaydeder. Kullanıcı marka bilgilerini verdiğinde kullan.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "description": "Markanın adı (örn: Nike, Apple)"},
-                "description": {"type": "string", "description": "Markanın kısa açıklaması ve kimliği"},
-                "logo_url": {"type": "string", "description": "Logo görseli URL'si (opsiyonel)"},
-                "attributes": {
-                    "type": "object",
-                    "description": "Marka özellikleri",
-                    "properties": {
-                        "colors": {
-                            "type": "object",
-                            "properties": {
-                                "primary": {"type": "string", "description": "Ana renk (hex kodu)"},
-                                "secondary": {"type": "string", "description": "İkincil renk"},
-                                "accent": {"type": "string", "description": "Vurgu rengi"}
-                            }
-                        },
-                        "tagline": {"type": "string", "description": "Slogan (örn: Just Do It)"},
-                        "industry": {"type": "string", "description": "Sektör (örn: Spor Giyim, Teknoloji)"},
-                        "tone": {"type": "string", "description": "Marka tonu (örn: Dinamik, Lüks, Samimi)"},
-                        "target_audience": {"type": "string", "description": "Hedef kitle"},
-                        "fonts": {"type": "array", "items": {"type": "string"}, "description": "Kullanılan fontlar"},
-                        "banned_words": {"type": "array", "items": {"type": "string"}, "description": "Marka iletişiminde KESİNLİKLE kullanılmaması gereken kelimeler/konseptler (Brand Book kuralları)"},
-                        "mandatory_aesthetic": {"type": "string", "description": "Üretilen tüm görsellerde zorunlu kılınan estetik kuralı (Örn: 'Sadece siyah font, karanlık arka plan, neon ışık', 'Pastel tonlar, aydınlık ortam')"},
-                        "social_media": {
-                            "type": "object",
-                            "properties": {
-                                "instagram": {"type": "string"},
-                                "twitter": {"type": "string"},
-                                "website": {"type": "string"}
-                            }
-                        }
-                    }
-                }
-            },
-            "required": ["name", "description"]
-        }
-    },
-    {
-        "name": "research_brand",
-        "description": "Web'den bir marka hakkında araştırma yapar ve bilgileri çıkartır. Sosyal medya hesaplarını, renk paletini, içerik stilini analiz eder. Araştırma sonuçlarını kaydetmek için save=true kullan.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "brand_name": {"type": "string", "description": "Araştırılacak markanın adı"},
-                "research_depth": {
-                    "type": "string",
-                    "enum": ["basic", "detailed", "comprehensive"],
-                    "description": "basic: sadece temel bilgiler, detailed: sosyal medya dahil, comprehensive: içerik analizi dahil"
-                },
-                "save": {"type": "boolean", "description": "Araştırma sonucunu marka olarak kaydet"}
-            },
-            "required": ["brand_name"]
         }
     },
     {

@@ -94,7 +94,7 @@ async def get_current_user_required(
         return user
     
     # Dev mode: auto-create/return default user for local development
-    default_email = "dev@pepperroot.ai"
+    default_email = "dev@neropanthero.ai"
     result = await db.execute(select(User).where(User.email == default_email))
     dev_user = result.scalar_one_or_none()
     
