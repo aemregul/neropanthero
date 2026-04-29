@@ -1452,53 +1452,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            {/* Header */}
-            <header
-                className={`${isCompact ? 'h-12 px-3' : 'h-14 px-4 lg:px-6'} flex items-center justify-between border-b shrink-0`}
-                style={{
-                    background: "var(--background-secondary)",
-                    borderColor: "var(--border)"
-                }}
-            >
-                <div className={`flex items-center gap-2 ${isCompact ? '' : 'pl-12 lg:pl-0'}`}>
-                    <div
-                        className={`${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg flex items-center justify-center`}
-                        style={{ background: 'linear-gradient(135deg, #D4B85C, #8B6D28)' }}
-                    >
-                        <svg width={isCompact ? 10 : 14} height={isCompact ? 10 : 14} viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <span className={`font-medium ${isCompact ? 'text-sm' : ''}`} style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero</span>
-                        <span className={isCompact ? 'text-sm' : ''} style={{ color: '#C9A84C' }}>AI</span>
-                    </div>
 
-                    {/* Connection status */}
-                    <div>
-                        {isConnected === null ? (
-                            <Loader2 className="w-3 h-3 animate-spin" style={{ color: "var(--foreground-muted)" }} />
-                        ) : isConnected && !isOffline ? (
-                            <div className="w-2 h-2 rounded-full bg-green-500" title="Bağlı" />
-                        ) : (
-                            <div className="w-2 h-2 rounded-full bg-red-500" title="Bağlantı yok" />
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-1">
-                    <button className="p-1.5 rounded-lg hover:bg-[var(--card)]">
-                        <MoreHorizontal size={16} style={{ color: "var(--foreground-muted)" }} />
-                    </button>
-                    {isCompact && onCollapseChat && (
-                        <button
-                            onClick={onCollapseChat}
-                            className="p-1.5 rounded-lg hover:bg-[var(--card)] transition-colors"
-                            title="Chat'i Daralt"
-                        >
-                            <PanelLeftClose size={16} style={{ color: "var(--foreground-muted)" }} />
-                        </button>
-                    )}
-                </div>
-            </header>
 
             {/* Offline banner */}
             {isOffline && (
@@ -1526,80 +1480,33 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
             <div
                 ref={scrollContainerRef}
                 className="flex-1 overflow-y-auto p-4 lg:p-6"
-                style={{ background: "var(--background)" }}
+                style={{ background: "var(--background)", position: 'relative' }}
             >
-                <div className="max-w-3xl mx-auto space-y-4">
-                    {messages.length === 0 && !isLoading && (
-                        <div className="flex flex-col items-center justify-center py-16">
-                            {/* Logo & Title */}
-                            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
-                            </div>
-                            <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Nero Panthero AI</h2>
-                            <p className="text-sm mb-8" style={{ color: "var(--foreground-muted)" }}>
-                                AI destekli iç mekan tasarım asistanınız
-                            </p>
+                {/* Watermark — centered in chat area, responsive */}
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                    overflow: 'hidden',
+                }}>
+                    <div style={{
+                        width: '60%',
+                        maxWidth: 500,
+                        minWidth: 200,
+                        aspectRatio: '1 / 1',
+                        backgroundImage: 'url(/panther-watermark.png)',
+                        backgroundSize: 'contain',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'center',
+                        opacity: 0.04,
+                    }} />
+                </div>
+                <div className="max-w-3xl mx-auto space-y-4" style={{ position: 'relative', zIndex: 1 }}>
 
-                            {/* Quick Actions */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
-                                <button
-                                    onClick={() => setInput("Modern minimalist tarzda bir oturma odası tasarımı oluştur. Açık tonlarda, geniş pencereli, doğal ışık alan bir mekan olsun.")}
-                                    className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
-                                    style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                                >
-                                    <span className="text-lg mb-2 block">🏠</span>
-                                    <span className="text-sm font-medium">Oda Tasarımı</span>
-                                    <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Fotorealistik iç mekan üret
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => setInput("Bir salon için mobilya önerileri ver. Modern tarzdaki bir oturma odasına uygun koltuk, sehpa ve TV ünitesi seçenekleri olsun.")}
-                                    className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
-                                    style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                                >
-                                    <span className="text-lg mb-2 block">🛋️</span>
-                                    <span className="text-sm font-medium">Mobilya Önerisi</span>
-                                    <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Tarza uygun mobilya seç
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => setInput("Lamel panel tasarımı yapmak istiyorum. 15cm genişlik, 2cm aralık, meşe rengi, TV ünitesinin yan duvarına uygun olsun.")}
-                                    className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
-                                    style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                                >
-                                    <span className="text-lg mb-2 block">🏛️</span>
-                                    <span className="text-sm font-medium">Duvar Paneli</span>
-                                    <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Parametrik lamel tasarımı
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => setInput("Merhaba! Tüm yeteneklerini ve yapabileceklerini detaylı olarak açıkla. Görsel üretimi, karakter yönetimi, video oluşturma ve diğer özelliklerini anlat.")}
-                                    className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
-                                    style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                                >
-                                    <span className="text-lg mb-2 block">💡</span>
-                                    <span className="text-sm font-medium">Ne Yapabilirim?</span>
-                                    <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Tüm özellikleri keşfet
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => setInput("Bu odanın renk paletini değiştirmek istiyorum. Duvarları su yeşili, zemini açık meşe olsun. Fotorealistik render al.")}
-                                    className="p-4 rounded-xl text-left transition-all hover:scale-[1.02]"
-                                    style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                                >
-                                    <span className="text-lg mb-2 block">🎨</span>
-                                    <span className="text-sm font-medium">Renk & Malzeme</span>
-                                    <p className="text-xs mt-1" style={{ color: "var(--foreground-muted)" }}>
-                                        Fotorealistik render al
-                                    </p>
-                                </button>
-                            </div>
-                        </div>
-                    )}
 
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -1689,9 +1596,7 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                 </div>
                             ) : (
                                 <div className="flex gap-3 max-w-[85%] group/feedback">
-                                    <div style={{ width: 24, height: 24, borderRadius: 6, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4 }}>
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
-                                    </div>
+                                    <img src="/panther-watermark.png" alt="AI" style={{ width: 24, height: 24, objectFit: 'contain', flexShrink: 0, marginTop: 4 }} />
                                     <div className="flex-1 flex flex-col gap-2">
                                         {/* Text bubble — strip inline images if image_url exists */}
                                         {(() => {
@@ -2043,11 +1948,11 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
 
 
                         {/* Text Input Row */}
-                        <div className="flex items-end gap-2 p-2">
+                        <div className="flex items-center gap-2 p-2">
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`p-2 rounded-lg transition-colors shrink-0 mb-0.5 ${attachedFiles.length > 0 ? 'bg-[var(--accent)]/20' : 'hover:bg-[var(--background-secondary)]'}`}
+                                className={`p-2 rounded-lg transition-colors shrink-0 ${attachedFiles.length > 0 ? 'bg-[var(--accent)]/20' : 'hover:bg-[var(--background-secondary)]'}`}
                                 title="Referans görsel ekle (maks. 10)"
                             >
                                 <Paperclip size={20} style={{ color: attachedFiles.length > 0 ? 'var(--accent)' : 'var(--foreground-muted)' }} />
@@ -2085,32 +1990,11 @@ export function ChatPanel({ sessionId: initialSessionId, onNewAsset, onEntityCha
                                 rows={1}
                             />
 
-                            <div className="flex items-end gap-1 shrink-0 mb-0.5">
+                            <div className="flex items-center gap-1 shrink-0">
 
 
-                                {/* Plugin Yap Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const pluginMessage = "Bu sohbetteki bilgilerden bir preset oluştur.";
-                                        setInput(pluginMessage);
-                                        // Auto-send after a tick so React state updates first
-                                        setTimeout(() => {
-                                            const form = document.querySelector('form');
-                                            if (form) form.requestSubmit();
-                                        }, 50);
-                                    }}
-                                    className="p-2 rounded-lg transition-all hover:shadow-md"
-                                    style={{
-                                        background: "linear-gradient(135deg, rgba(201, 168, 76, 0.2) 0%, rgba(184, 150, 58, 0.15) 100%)",
-                                        border: "1px solid rgba(201, 168, 76, 0.3)"
-                                    }}
-                                    title="Preset Oluştur"
-                                    disabled={isLoading || !isConnected}
-                                >
-                                    <Sparkles size={18} style={{ color: '#C9A84C' }} />
-                                </button>
-                                {/* Mic icon removed — was non-functional */}
+
+
                                 {isLoading ? (
                                     <button
                                         type="button"

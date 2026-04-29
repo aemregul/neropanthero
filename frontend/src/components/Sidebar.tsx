@@ -19,7 +19,9 @@ import {
     Trash2,
     Pencil,
     Grid3x3,
-    GripVertical
+    GripVertical,
+    PanelLeftClose,
+    PanelLeftOpen
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
@@ -38,6 +40,40 @@ interface SidebarItem {
     id: string;
     name: string;
     type: "project" | "character" | "location" | "wardrobe";
+}
+
+function SidebarItem({ collapsed, icon, label, active, onClick, accent, badge }: {
+    collapsed: boolean; icon: React.ReactNode; label: string;
+    active?: boolean; onClick: () => void; accent?: boolean; badge?: boolean;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            title={label}
+            style={{
+                display: 'flex',
+                flexDirection: collapsed ? 'column' : 'row',
+                alignItems: 'center',
+                gap: collapsed ? 3 : 10,
+                padding: collapsed ? '8px 4px' : '7px 10px',
+                borderRadius: 10,
+                border: 'none',
+                background: active ? 'rgba(201,168,76,0.12)' : 'transparent',
+                cursor: 'pointer',
+                width: collapsed ? 56 : '100%',
+                transition: 'background 0.15s',
+                position: 'relative',
+            }}
+        >
+            <span style={{ color: active ? 'var(--accent)' : accent ? 'var(--accent)' : 'var(--foreground-muted)', display: 'flex', alignItems: 'center' }}>{icon}</span>
+            {collapsed ? (
+                <span style={{ fontSize: 9, color: active ? 'var(--accent)' : 'var(--foreground-muted)' }}>{label}</span>
+            ) : (
+                <span style={{ fontSize: 13, color: active ? 'var(--accent)' : 'var(--foreground)', whiteSpace: 'nowrap' }}>{label}</span>
+            )}
+            {badge && <span style={{ position: 'absolute', top: collapsed ? 4 : 8, right: collapsed ? 12 : 10, width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />}
+        </button>
+    );
 }
 
 // Mock data
@@ -72,10 +108,10 @@ const mockPresets: CreativePlugin[] = [
         author: "Ben",
         isPublic: false,
         config: {
-            character: { id: "variable", name: "Değişken", isVariable: true },
+            character: { id: "variable", name: "DeÄŸişken", isVariable: true },
             location: { id: "mutfak", name: "Modern Mutfak", settings: "" },
             timeOfDay: "Gün Batımı",
-            cameraAngles: ["Orta Plan (Medium Shot)", "Yakın Çekim (Close-up)"],
+            cameraAngles: ["Orta Plan (Medium Shot)", "Yakın Ã‡ekim (Close-up)"],
             style: "Sıcak Tonlar"
         },
         createdAt: new Date(),
@@ -89,7 +125,7 @@ const mockPresets: CreativePlugin[] = [
         author: "Ben",
         isPublic: true,
         config: {
-            character: { id: "variable", name: "Değişken", isVariable: true },
+            character: { id: "variable", name: "DeÄŸişken", isVariable: true },
             location: { id: "outdoor", name: "Outdoor - Park", settings: "" },
             timeOfDay: "Sabah",
             cameraAngles: ["Geniş Açı (Wide Shot)", "Orta Plan (Medium Shot)"],
@@ -106,7 +142,7 @@ const mockPresets: CreativePlugin[] = [
 interface SidebarProps {
     activeProjectId?: string;
     onProjectChange?: (projectId: string) => void;
-    onProjectDelete?: () => void;  // Proje silindiğinde çağrılır
+    onProjectDelete?: () => void;  // Proje silindiÄŸinde çaÄŸrılır
     sessionId?: string | null;
     refreshKey?: number;
     onSendPrompt?: (prompt: string) => void;
@@ -121,6 +157,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
 
     const toast = useToast();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -165,7 +202,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         if (projectId === dragProjectId) return;
-        // Üst/alt yarı tespiti — hangi tarafa bırakılacağını belirle
+        // Ãœst/alt yarı tespiti â€” hangi tarafa bırakılacaÄŸını belirle
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const midY = rect.top + rect.height / 2;
         const pos = e.clientY < midY ? 'above' : 'below';
@@ -312,7 +349,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         fetchPresets();
     }, [sessionId, refreshKey]);
 
-    // Plugin listesi değiştiğinde parent'a bildir
+    // Plugin listesi deÄŸiştiÄŸinde parent'a bildir
     useEffect(() => {
         if (onPluginsLoaded) {
             const simplified = presetsList.map(p => {
@@ -413,7 +450,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                     setProjects(remainingProjects);
                     toast.success(`"${proj.name}" çöp kutusuna taşındı`);
 
-                    // Eğer aktif proje silindiyse, ana sayfayı bilgilendir
+                    // EÄŸer aktif proje silindiyse, ana sayfayı bilgilendir
                     if (proj.active || remainingProjects.length === 0) {
                         onProjectDelete?.();
                     }
@@ -425,7 +462,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         });
     };
 
-    // Restore from trash - backend'e bağlı
+    // Restore from trash - backend'e baÄŸlı
     const handleRestore = async (item: TrashItem) => {
         try {
             console.log("=== RESTORE DEBUG ===");
@@ -453,7 +490,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         setProjects(prevProjects => [...prevProjects, newProject]);
                         break;
                     case "preset":
-                        // Preset geri yüklendi — sidebar refresh olacak
+                        // Preset geri yüklendi â€” sidebar refresh olacak
                         console.log("Preset restored");
                         break;
                     default:
@@ -478,7 +515,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         }
     };
 
-    // Permanent delete - backend'e bağlı
+    // Permanent delete - backend'e baÄŸlı
     const handlePermanentDelete = async (id: string) => {
         try {
             await permanentDeleteTrashItem(id);
@@ -496,7 +533,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
             const currentItems = [...trashItems];
             await Promise.all(currentItems.map(item => permanentDeleteTrashItem(item.id)));
             setTrashItems([]);
-            toast.success('Tüm öğeler silindi');
+            toast.success('Tüm öÄŸeler silindi');
         } catch (error) {
             console.error('Tümünü silme hatası:', error);
             // Hata durumunda backend'den tekrar yükle
@@ -519,9 +556,9 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
         try {
             await Promise.all(ids.map(id => permanentDeleteTrashItem(id)));
             setTrashItems(prev => prev.filter(t => !ids.includes(t.id)));
-            toast.success(`${ids.length} öğe silindi`);
+            toast.success(`${ids.length} öÄŸe silindi`);
         } catch (error) {
-            console.error('Çoklu silme hatası:', error);
+            console.error('Ã‡oklu silme hatası:', error);
             // Hata durumunda backend'den tekrar yükle
             const items = await getTrashItems();
             const trashList: TrashItem[] = items.map((i: TrashItemData) => ({
@@ -542,12 +579,12 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
     // Category helpers
     const categoryEmoji = (cat?: string) => {
         switch (cat) {
-            case 'reklam': return '📢';
-            case 'sosyal_medya': return '📱';
-            case 'film': return '🎬';
-            case 'marka': return '🏷️';
-            case 'kisisel': return '🌱';
-            default: return '📁';
+            case 'reklam': return '\u{1F4E2}';
+            case 'sosyal_medya': return '\u{1F4F1}';
+            case 'film': return '\u{1F3AC}';
+            case 'marka': return '\u{1F3F7}';
+            case 'kisisel': return '\u{1F331}';
+            default: return '\u{1F4C1}';
         }
     };
 
@@ -574,7 +611,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
     };
 
     // Drawer panel state
-    const [drawerPanel, setDrawerPanel] = useState<'projects' | 'entities' | null>('projects');
+    const [drawerPanel, setDrawerPanel] = useState<'projects' | 'entities' | null>(null);
 
     const toggleDrawer = (panel: 'projects' | 'entities') => {
         setDrawerPanel(prev => prev === panel ? null : panel);
@@ -599,261 +636,96 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 />
             )}
 
-            {/* ===== TWO-LAYER SIDEBAR ===== */}
+            {/* ===== SIDEBAR ===== */}
             <div
-                className={`fixed lg:relative flex z-50 transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-                style={{ height: '100vh' }}
+                className={`fixed lg:relative flex flex-col z-50 transition-all duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+                style={{
+                    height: '100vh',
+                    width: sidebarCollapsed ? 64 : 200,
+                    background: 'var(--background-secondary)',
+                    borderRight: '1px solid var(--border)',
+                    padding: sidebarCollapsed ? '10px 0 8px' : '10px 8px 8px',
+                    alignItems: sidebarCollapsed ? 'center' : 'stretch',
+                }}
             >
-                {/* ── ICON RAIL ── */}
-                <div className="sidebar-rail">
-                    {/* Logo */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '4px 0', marginBottom: 8 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #D4B85C, #8B6D28)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="black"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                {/* Logo */}
+                <div
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    style={{
+                        display: 'flex', alignItems: 'center',
+                        padding: sidebarCollapsed ? '4px 0 12px' : '0 0 8px',
+                        cursor: 'pointer',
+                        justifyContent: 'center',
+                    }}
+                    title={sidebarCollapsed ? "Genişlet" : "Daralt"}
+                >
+                    {sidebarCollapsed ? (
+                        <img src="/panther-watermark.png" alt="Nero Panthero" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                    ) : (
+                        <img src="/nero-panthero-full.png" alt="Nero Panthero" style={{ width: '100%', objectFit: 'contain', filter: 'invert(1) hue-rotate(180deg)', mixBlendMode: 'screen' }} />
+                    )}
+                </div>
+
+                {/* Projeler */}
+                <SidebarItem collapsed={sidebarCollapsed} icon={<FolderOpen size={18} />} label="Projeler" active={drawerPanel === 'projects'} onClick={() => setDrawerPanel(drawerPanel === 'projects' ? null : 'projects')} />
+
+                {/* Section: CREATE */}
+                {!sidebarCollapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--foreground-muted)', letterSpacing: 1.2, textTransform: 'uppercase', padding: '14px 10px 4px', opacity: 0.6 }}>Oluştur</div>}
+                <SidebarItem collapsed={sidebarCollapsed} icon={<Plus size={18} />} label="Yeni Proje" onClick={() => setNewProjectOpen(true)} accent />
+                <SidebarItem collapsed={sidebarCollapsed} icon={<Grid3x3 size={18} />} label="Grid Oluşturucu" onClick={() => setGridGeneratorOpen(true)} />
+
+                {/* Section: TOOLS */}
+                {!sidebarCollapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--foreground-muted)', letterSpacing: 1.2, textTransform: 'uppercase', padding: '14px 10px 4px', opacity: 0.6 }}>Araçlar</div>}
+                <SidebarItem collapsed={sidebarCollapsed} icon={<Search size={18} />} label="Ara" onClick={() => setSearchOpen(true)} />
+
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+
+                {/* Bottom */}
+                <SidebarItem collapsed={sidebarCollapsed} icon={<Trash2 size={18} />} label="Çöp" onClick={() => setTrashOpen(true)} badge={trashItems.length > 0} />
+                <SidebarItem collapsed={sidebarCollapsed} icon={<Settings size={18} />} label="Ayarlar" onClick={() => setSettingsOpen(true)} />
+            </div>
+
+            {/* ===== FLYOUT PROJECT PANEL ===== */}
+            {drawerPanel === 'projects' && (
+                <div style={{ width: 200, height: '100vh', flexShrink: 0, background: 'var(--background-secondary)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 12px 8px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>Projeler</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <button onClick={() => setNewProjectOpen(true)} className="p-1 rounded-md hover:bg-[var(--card)] transition-colors" title="Yeni Proje" style={{ background: 'rgba(201,168,76,0.1)' }}><Plus size={14} style={{ color: 'var(--accent)' }} /></button>
+                            <button onClick={() => setDrawerPanel(null)} className="p-0.5 rounded hover:bg-[var(--card)]"><X size={14} style={{ color: 'var(--foreground-muted)' }} /></button>
                         </div>
                     </div>
-
-                    {/* Main nav */}
-                    <button
-                        className={`rail-btn ${drawerPanel === 'projects' ? 'active' : ''}`}
-                        onClick={() => toggleDrawer('projects')}
-                    >
-                        <FolderOpen size={24} />
-                        <span className="rail-label">Projeler</span>
-                    </button>
-
-                    <div className="rail-divider" />
-
-                    {/* Feature tools */}
-                    <button
-                        className="rail-feature-btn"
-                        onClick={() => setGridGeneratorOpen(true)}
-                        style={{
-                            background: 'rgba(201, 168, 76, 0.10)',
-                            border: '1px solid rgba(201, 168, 76, 0.25)',
-                            color: '#C9A84C'
-                        }}
-                    >
-                        <Grid3x3 size={20} />
-                        <span className="rail-label" style={{ color: '#C9A84C' }}>Grid Oluşturucu</span>
-                    </button>
-                    {/* Spacer */}
-                    <div className="rail-spacer" />
-                    <div className="rail-divider" />
-
-                    {/* Bottom tools */}
-                    <button className="rail-btn" onClick={() => setSearchOpen(true)}>
-                        <Search size={24} />
-                        <span className="rail-label">Ara</span>
-                    </button>
-
-                    <button className="rail-btn" onClick={() => setTrashOpen(true)} style={{ position: 'relative' }}>
-                        <Trash2 size={24} />
-                        <span className="rail-label">Çöp Kutusu</span>
-                        {trashItems.length > 0 && (
-                            <span style={{
-                                position: 'absolute', top: 4, right: 4,
-                                width: 8, height: 8, borderRadius: '50%',
-                                background: '#ef4444'
-                            }} />
-                        )}
-                    </button>
-
-                    <button className="rail-btn" onClick={() => setSettingsOpen(true)}>
-                        <Settings size={24} />
-                        <span className="rail-label">Ayarlar</span>
-                    </button>
-
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0 6px' }}>
+                        {isLoadingProjects ? (
+                            <div style={{ textAlign: 'center', padding: 20, color: 'var(--foreground-muted)', fontSize: 11 }}>Yükleniyor...</div>
+                        ) : projects.length === 0 ? (
+                            <button onClick={() => setNewProjectOpen(true)} style={{ width: '100%', padding: 10, borderRadius: 8, background: 'rgba(201,168,76,0.06)', border: '1px dashed rgba(201,168,76,0.2)', color: 'var(--foreground-muted)', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                                <Plus size={12} /> İlk Projeyi Oluştur
+                            </button>
+                        ) : projects.map((project) => {
+                            const isEditing = editingProjectId === project.id;
+                            const isActive = project.active;
+                            return (
+                                <div key={project.id} className="group" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, marginBottom: 1, cursor: isEditing ? 'text' : 'pointer', background: isActive ? 'rgba(201,168,76,0.12)' : 'transparent', borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent', transition: 'all 0.15s' }} onClick={() => !isEditing && handleProjectClick(project.id)} onDoubleClick={(e) => { e.stopPropagation(); startEditingProject(project.id, project.name); }} onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--card)'; }} onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}>
+                                    <span style={{ fontSize: 13, flexShrink: 0 }}>{categoryEmoji(project.category)}</span>
+                                    {isEditing ? (
+                                        <input ref={editInputRef} type="text" value={editingProjectName} onChange={(e) => setEditingProjectName(e.target.value)} onBlur={() => saveProjectName(project.id)} onKeyDown={(e) => { if (e.key === 'Enter') saveProjectName(project.id); if (e.key === 'Escape') cancelEditingProject(); }} onClick={(e) => e.stopPropagation()} style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid var(--accent)', outline: 'none', fontSize: 11, color: 'var(--foreground)', padding: '1px 0', minWidth: 0 }} autoFocus />
+                                    ) : (
+                                        <span style={{ flex: 1, fontSize: 11, color: isActive ? 'var(--foreground)' : 'var(--foreground-muted)', fontWeight: isActive ? 500 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.name}</span>
+                                    )}
+                                    {!isEditing && (
+                                        <div style={{ display: 'flex', gap: 1, opacity: 0, transition: 'opacity 0.1s' }} className="group-hover:!opacity-100">
+                                            <button onClick={(e) => { e.stopPropagation(); startEditingProject(project.id, project.name); }} className="p-0.5 rounded hover:bg-[var(--card-hover)]"><Pencil size={10} style={{ color: 'var(--foreground-muted)' }} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); confirmDeleteProject(project.id); }} className="p-0.5 rounded hover:bg-red-500/20"><Trash2 size={10} style={{ color: '#ef4444' }} /></button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-
-                {/* ── SLIDING DRAWER ── */}
-                <div className={`sidebar-drawer ${drawerPanel === null ? 'collapsed' : ''}`}>
-                    {/* Close button (mobile) */}
-                    <button
-                        onClick={() => setMobileOpen(false)}
-                        className="lg:hidden absolute top-4 right-4 z-50"
-                    >
-                        <X size={20} />
-                    </button>
-
-                    {/* === PROJECTS PANEL === */}
-                    {drawerPanel === 'projects' && (
-                        <>
-                            <div className="drawer-header">
-                                <h3>Projeler</h3>
-                                <button
-                                    onClick={() => setNewProjectOpen(true)}
-                                    className="rail-btn"
-                                    style={{ width: 28, height: 28 }}
-                                    title="Yeni Proje"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            </div>
-
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-                                {isLoadingProjects ? (
-                                    <div style={{ textAlign: 'center', padding: 24, color: 'var(--foreground-muted)', fontSize: 12 }}>
-                                        Yükleniyor...
-                                    </div>
-                                ) : projects.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: 24, color: 'var(--foreground-muted)', fontSize: 12 }}>
-                                        Henüz proje yok
-                                    </div>
-                                ) : (
-                                    projects.map((project) => {
-                                        const isEditing = editingProjectId === project.id;
-                                        const colors = categoryColor(project.category);
-                                        return (
-                                            <div key={project.id} style={{ position: 'relative' }}>
-                                                {/* Drop indicator — above */}
-                                                {dragOverProjectId === project.id && dragOverPosition === 'above' && dragProjectId !== project.id && (
-                                                    <div style={{
-                                                        position: 'absolute', top: -1, left: 8, right: 8, height: 2,
-                                                        background: 'var(--accent)', borderRadius: 2, zIndex: 10,
-                                                        boxShadow: '0 0 6px var(--accent)'
-                                                    }} />
-                                                )}
-
-                                                <div
-                                                    draggable={!isEditing}
-                                                    onDragStart={(e) => handleProjectDragStart(e, project.id)}
-                                                    onDragOver={(e) => handleProjectDragOver(e, project.id)}
-                                                    onDrop={(e) => handleProjectDrop(e, project.id)}
-                                                    onDragEnd={handleProjectDragEnd}
-                                                    className={`project-card-v2 group ${project.active ? 'active' : ''}`}
-                                                    style={{
-                                                        cursor: isEditing ? 'text' : 'pointer',
-                                                        opacity: dragProjectId === project.id ? 0.35 : 1,
-                                                        transform: dragProjectId === project.id ? 'scale(0.97)' : 'scale(1)',
-                                                        transition: 'opacity 0.2s ease, transform 0.2s ease'
-                                                    }}
-                                                    onClick={() => !isEditing && handleProjectClick(project.id)}
-                                                    onDoubleClick={(e) => {
-                                                        e.stopPropagation();
-                                                        startEditingProject(project.id, project.name);
-                                                    }}
-                                                >
-                                                    {/* Drag handle — only visible on hover */}
-                                                    {!isEditing && (
-                                                        <div
-                                                            style={{
-                                                                display: 'flex', alignItems: 'center',
-                                                                cursor: 'grab', opacity: 0, transition: 'opacity 0.15s',
-                                                                padding: '0 2px', marginLeft: -4
-                                                            }}
-                                                            className="group-hover:opacity-100!"
-                                                            onMouseDown={(e) => e.stopPropagation()}
-                                                        >
-                                                            <GripVertical size={14} style={{ color: 'var(--foreground-muted)' }} />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Thumbnail */}
-                                                    <div className="project-thumb" style={{ position: 'relative' }}>
-                                                        {categoryEmoji(project.category)}
-                                                    </div>
-
-                                                    {/* Info */}
-                                                    <div className="project-info">
-                                                        {isEditing ? (
-                                                            <input
-                                                                ref={editInputRef}
-                                                                type="text"
-                                                                value={editingProjectName}
-                                                                onChange={(e) => setEditingProjectName(e.target.value)}
-                                                                onBlur={() => saveProjectName(project.id)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') saveProjectName(project.id);
-                                                                    if (e.key === 'Escape') cancelEditingProject();
-                                                                }}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                style={{
-                                                                    width: '100%', background: 'transparent',
-                                                                    border: 'none', borderBottom: '1px solid var(--accent)',
-                                                                    outline: 'none', fontSize: 13, color: 'var(--foreground)',
-                                                                    padding: '2px 0'
-                                                                }}
-                                                                autoFocus
-                                                            />
-                                                        ) : (
-                                                            <>
-                                                                <div className="project-name">{project.name}</div>
-                                                                <div className="project-meta">
-                                                                    {project.category && (
-                                                                        <span
-                                                                            className="category-badge"
-                                                                            style={{ background: colors.bg, color: colors.text }}
-                                                                        >
-                                                                            {categoryLabel(project.category)}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Actions */}
-                                                    {!isEditing && (
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, opacity: 0, transition: 'opacity 0.15s' }}
-                                                            className="group-hover:opacity-100!"
-                                                        >
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); startEditingProject(project.id, project.name); }}
-                                                                className="p-1 rounded hover:bg-[var(--card-hover)]"
-                                                                title="Yeniden Adlandır"
-                                                            >
-                                                                <Pencil size={12} style={{ color: 'var(--foreground-muted)' }} />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); confirmDeleteProject(project.id); }}
-                                                                className="p-1 rounded hover:bg-red-500/20"
-                                                                title="Sil"
-                                                            >
-                                                                <Trash2 size={12} style={{ color: '#ef4444' }} />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Drop indicator — below */}
-                                                {dragOverProjectId === project.id && dragOverPosition === 'below' && dragProjectId !== project.id && (
-                                                    <div style={{
-                                                        position: 'absolute', bottom: -1, left: 8, right: 8, height: 2,
-                                                        background: 'var(--accent)', borderRadius: 2, zIndex: 10,
-                                                        boxShadow: '0 0 6px var(--accent)'
-                                                    }} />
-                                                )}
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-
-                            {/* New project button at bottom */}
-                            <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }}>
-                                <button
-                                    onClick={() => setNewProjectOpen(true)}
-                                    style={{
-                                        width: '100%', padding: '8px 12px', borderRadius: 8,
-                                        background: 'rgba(201, 168, 76, 0.08)', border: '1px solid rgba(201, 168, 76, 0.15)',
-                                        color: 'var(--accent)', fontSize: 13, fontWeight: 500,
-                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.15)')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)')}
-                                >
-                                    <Plus size={14} />
-                                    Yeni Proje
-                                </button>
-                            </div>
-                        </>
-                    )}
-
-
-                </div>
-            </div>
+            )}
 
             {/* ===== MODALS ===== */}
             <SettingsModal
@@ -875,7 +747,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         const newSession = await createSession(name, description, category);
                         setProjects([...projects, { id: newSession.id, name, active: false, category, description }]);
                     } catch (error) {
-                        console.error('Proje oluşturulamadı:', error);
+                        console.error('Proje Oluşturulamadı:', error);
                         setProjects([...projects, { id: Date.now().toString(), name, active: false }]);
                     }
                 }}
@@ -887,7 +759,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 onClose={() => setDeleteConfirm(null)}
                 onConfirm={() => deleteConfirm?.onConfirm()}
                 itemName={deleteConfirm?.itemName ?? ""}
-                itemType={deleteConfirm?.itemType ?? "öğe"}
+                itemType={deleteConfirm?.itemType ?? "öÄŸe"}
             />
 
             <TrashModal

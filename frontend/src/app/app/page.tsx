@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { ChatPanel } from "@/components/ChatPanel";
@@ -14,6 +14,39 @@ export default function Home() {
 
   const [assetsCollapsed, setAssetsCollapsed] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [chatWidth, setChatWidth] = useState(380);
+  const isResizing = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(380);
+
+  // Chat panel resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    startX.current = e.clientX;
+    startWidth.current = chatWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!isResizing.current) return;
+      const delta = ev.clientX - startX.current;
+      const maxW = Math.floor(window.innerWidth * 0.5);
+      const newWidth = Math.max(300, Math.min(startWidth.current + delta, maxW));
+      setChatWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, [chatWidth]);
 
   // === PROJE-BAZLI CHAT MİMARİSİ ===
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -184,7 +217,7 @@ export default function Home() {
             <div
               className="h-screen shrink-0 flex flex-col border-r"
               style={{
-                width: 380,
+                width: chatWidth,
                 background: "var(--background-secondary)",
                 borderColor: "var(--border)",
               }}
@@ -202,6 +235,29 @@ export default function Home() {
                 onAssetUrlConsumed={() => setPendingAssetUrl(null)}
                 onCollapseChat={() => setChatCollapsed(true)}
                 isCompact
+              />
+            </div>
+          )}
+
+          {/* Resize Handle */}
+          {!chatCollapsed && (
+            <div
+              onMouseDown={handleResizeStart}
+              className="h-screen shrink-0 flex items-center justify-center group"
+              style={{
+                width: 6,
+                cursor: 'col-resize',
+                background: 'transparent',
+                zIndex: 20,
+              }}
+              title="Sürükleyerek genişlet"
+            >
+              <div
+                className="w-[3px] h-12 rounded-full transition-all duration-200 group-hover:h-20 group-hover:w-[4px]"
+                style={{
+                  background: 'var(--border)',
+                  opacity: 0.5,
+                }}
               />
             </div>
           )}

@@ -88,7 +88,7 @@ export function NewProjectModal({ isOpen, onClose, onSubmit }: NewProjectModalPr
                             type="text"
                             value={projectName}
                             onChange={(e) => setProjectName(e.target.value)}
-                            placeholder="Örn: Nike Yaz Koleksiyonu"
+                            placeholder="Proje adını girin..."
                             className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
                             style={{
                                 background: "var(--background)",
@@ -117,30 +117,7 @@ export function NewProjectModal({ isOpen, onClose, onSubmit }: NewProjectModalPr
                         />
                     </div>
 
-                    {/* Kategori */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground-muted)" }}>
-                            <Tag size={14} className="inline mr-1" />
-                            Kategori
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {CATEGORIES.map((cat) => (
-                                <button
-                                    key={cat.value}
-                                    type="button"
-                                    onClick={() => setCategory(category === cat.value ? "" : cat.value)}
-                                    className="px-3 py-2 rounded-lg text-xs font-medium transition-all text-left"
-                                    style={{
-                                        background: category === cat.value ? `${cat.color}20` : "var(--background)",
-                                        border: `1px solid ${category === cat.value ? cat.color : "var(--border)"}`,
-                                        color: category === cat.value ? cat.color : "var(--foreground-muted)",
-                                    }}
-                                >
-                                    {cat.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
 
                     {/* Buttons */}
                     <div className="flex gap-2 justify-end pt-2">

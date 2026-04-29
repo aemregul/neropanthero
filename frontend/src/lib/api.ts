@@ -326,13 +326,15 @@ export async function getSessionHistory(sessionId: string): Promise<MessageRespo
 // Entity (Character, Location, Wardrobe) APIs
 // Uses user-based endpoint - entities are GLOBAL across all projects for a user
 export async function getEntities(sessionId: string): Promise<Entity[]> {
+  try {
     // Use /entities/ endpoint which returns ALL user entities (not session-specific)
     const response = await fetch(`${API_BASE_URL}${API_PREFIX}/entities/?session_id=${sessionId}`, {
         headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch entities');
+        console.warn('getEntities: endpoint not available, returning empty array');
+        return [];
     }
 
     const data = await response.json();
@@ -351,6 +353,10 @@ export async function getEntities(sessionId: string): Promise<Entity[]> {
     // If neither, return empty array
     console.warn('Unexpected entities response format:', data);
     return [];
+  } catch (error) {
+    console.warn('getEntities failed, returning empty array:', error);
+    return [];
+  }
 }
 
 export async function createEntity(
@@ -679,14 +685,18 @@ export interface PresetData {
 }
 
 export async function getPresets(sessionId?: string): Promise<PresetData[]> {
-    const url = sessionId
-        ? `${API_BASE_URL}${API_PREFIX}/admin/presets?session_id=${sessionId}`
-        : `${API_BASE_URL}${API_PREFIX}/admin/presets`;
-    const response = await fetch(url, {
-        headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch presets');
-    return response.json();
+    try {
+        const url = sessionId
+            ? `${API_BASE_URL}${API_PREFIX}/admin/presets?session_id=${sessionId}`
+            : `${API_BASE_URL}${API_PREFIX}/admin/presets`;
+        const response = await fetch(url, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) return [];
+        return response.json();
+    } catch {
+        return [];
+    }
 }
 
 export async function createPreset(plugin: {
@@ -738,16 +748,20 @@ export interface TrashItemData {
 }
 
 export async function getTrashItems(): Promise<TrashItemData[]> {
-    const response = await fetch(`${API_BASE_URL}${API_PREFIX}/admin/trash?_t=${Date.now()}`, {
-        headers: {
-            ...getAuthHeaders(),
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-        },
-        cache: 'no-store',
-    });
-    if (!response.ok) throw new Error('Failed to fetch trash items');
-    return response.json();
+    try {
+        const response = await fetch(`${API_BASE_URL}${API_PREFIX}/admin/trash?_t=${Date.now()}`, {
+            headers: {
+                ...getAuthHeaders(),
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+            },
+            cache: 'no-store',
+        });
+        if (!response.ok) return [];
+        return response.json();
+    } catch {
+        return [];
+    }
 }
 
 export async function restoreTrashItem(itemId: string): Promise<{

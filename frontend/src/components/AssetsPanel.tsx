@@ -56,6 +56,7 @@ export function AssetsPanel({
     const [renameValue, setRenameValue] = useState("");
     const [selectMode, setSelectMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [gridSize, setGridSize] = useState(180);
     const toast = useToast();
 
     const toggleSelect = (id: string) => {
@@ -420,6 +421,15 @@ export function AssetsPanel({
                         )}
                     </div>
                     <div className="flex items-center gap-1">
+                        <input
+                            type="range"
+                            min={80}
+                            max={320}
+                            value={gridSize}
+                            onChange={(e) => setGridSize(Number(e.target.value))}
+                            style={{ width: 80, accentColor: 'var(--accent)', height: 3, cursor: 'pointer', opacity: 0.7 }}
+                            title={`Görsel boyutu: ${gridSize}px`}
+                        />
                         <button
                             onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
                             className={`p-1.5 rounded-lg transition-colors ${selectMode ? '' : 'hover:bg-[var(--card)]'}`}
@@ -471,10 +481,8 @@ export function AssetsPanel({
                             className="gallery-grid"
                             style={{
                                 display: 'grid',
-                                gridTemplateColumns: isMainGallery
-                                    ? 'repeat(auto-fill, minmax(220px, 1fr))'
-                                    : 'repeat(2, 1fr)',
-                                gap: isMainGallery ? 8 : 6,
+                                gridTemplateColumns: `repeat(auto-fill, minmax(${gridSize}px, 1fr))`,
+                                gap: 6,
                             }}
                         >
                             {filteredAssets.map((asset) => (
