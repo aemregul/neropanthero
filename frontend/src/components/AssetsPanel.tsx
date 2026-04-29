@@ -402,83 +402,27 @@ export function AssetsPanel({
                 className="hidden lg:flex flex-col w-[300px] xl:w-[340px] h-screen border-l"
                 style={{ background: "var(--background-secondary)", borderColor: "var(--border)" }}
             >
-                {/* Filter Tabs Header */}
-                <header className="h-14 px-3 border-b shrink-0 flex items-center" style={{ borderColor: "var(--border)" }}>
-                    <div className="flex items-center w-full gap-1">
-                        {/* Filter tabs group */}
-                        <div className="flex items-center gap-0.5 flex-1 justify-evenly">
-                            {filterTabs.map(tab => {
-                                const Icon = tab.icon;
-                                const isActive = activeFilter === tab.key;
-                                const hasItems = tab.count > 0;
-                                return (
-                                    <button
-                                        key={tab.key}
-                                        onClick={() => setActiveFilter(tab.key)}
-                                        className={`relative p-2 rounded-lg transition-all duration-200 ${isActive ? "shadow-md" : "hover:bg-[var(--card)]"}`}
-                                        style={isActive ? {
-                                            background: "var(--accent)",
-                                            color: "white",
-                                        } : { color: "var(--foreground-muted)" }}
-                                        title={`${tab.label} (${tab.count})`}
-                                    >
-                                        <Icon size={16} />
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Divider */}
-                        <div className="w-px h-6 shrink-0" style={{ background: "var(--border)" }} />
-
-                        {/* Action buttons group */}
-                        <div className="flex items-center gap-0.5">
-                            {/* Search toggle */}
-                            <button
-                                onClick={() => setShowSearch(!showSearch)}
-                                className={`p-2 rounded-lg transition-colors ${showSearch ? "bg-[var(--card)]" : "hover:bg-[var(--card)]"}`}
-                            >
-                                <Search size={16} style={{ color: showSearch ? "var(--accent)" : "var(--foreground-muted)" }} />
-                            </button>
-
-                            {/* Refresh */}
-                            <button
-                                onClick={fetchAssets}
-                                className="p-2 rounded-lg hover:bg-[var(--card)] transition-colors"
-                                title="Yenile"
-                            >
-                                <RefreshCw size={16} className={isLoading || isRefreshing ? "animate-spin" : ""} style={{ color: "var(--foreground-muted)" }} />
-                            </button>
-
-                            {/* Collapse */}
-                            <button
-                                onClick={onToggle}
-                                className="p-2 rounded-lg hover:bg-[var(--card)] transition-colors"
-                            >
-                                <ChevronRight size={16} style={{ color: "var(--foreground-muted)" }} />
-                            </button>
-                        </div>
+                {/* Header */}
+                <header className="h-12 px-4 border-b shrink-0 flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+                    <span className="text-sm font-medium" style={{ color: "var(--foreground-muted)" }}>
+                        Görseller {assets.length > 0 && <span style={{ opacity: 0.5 }}>({assets.length})</span>}
+                    </span>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={fetchAssets}
+                            className="p-1.5 rounded-lg hover:bg-[var(--card)] transition-colors"
+                            title="Yenile"
+                        >
+                            <RefreshCw size={14} className={isLoading || isRefreshing ? "animate-spin" : ""} style={{ color: "var(--foreground-muted)" }} />
+                        </button>
+                        <button
+                            onClick={onToggle}
+                            className="p-1.5 rounded-lg hover:bg-[var(--card)] transition-colors"
+                            title="Paneli Gizle"
+                        >
+                            <ChevronRight size={14} style={{ color: "var(--foreground-muted)" }} />
+                        </button>
                     </div>
-
-                    {/* Search bar (conditional) */}
-                    {showSearch && (
-                        <div className="mt-2 mb-1 relative">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--foreground-muted)" }} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Ara..."
-                                autoFocus
-                                className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm outline-none"
-                                style={{
-                                    background: "var(--card)",
-                                    color: "var(--foreground)",
-                                    border: "1px solid var(--border)",
-                                }}
-                            />
-                        </div>
-                    )}
                 </header>
 
                 {/* Assets Grid */}

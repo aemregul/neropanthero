@@ -10,26 +10,15 @@ import {
     ChevronDown,
     ChevronRight,
     FolderOpen,
-    Brain,
-    Users,
-    MapPin,
-    Shirt,
-    ImageIcon,
     Search,
     Plus,
-
     Menu,
     X,
     Settings,
-    Shield,
-    User,
     Puzzle,
     Trash2,
-
     Pencil,
     Grid3x3,
-
-    Tag,
     GripVertical
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
@@ -42,9 +31,7 @@ import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { TrashModal, TrashItem } from "./TrashModal";
 import { SavePluginModal, PluginDetailModal, CreativePlugin } from "./CreativePluginModal";
 import { useToast } from "./ToastProvider";
-import { CommunityHubModal } from "./CommunityHubModal";
 import { GridGeneratorModal } from "./GridGeneratorModal";
-import { SavedImagesModal } from "./SavedImagesModal";
 import { useKeyboardShortcuts, SHORTCUTS } from "@/hooks/useKeyboardShortcuts";
 
 interface SidebarItem {
@@ -635,17 +622,9 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         <span className="rail-label">Projeler</span>
                     </button>
 
-                    <button
-                        className={`rail-btn ${drawerPanel === 'entities' ? 'active' : ''}`}
-                        onClick={() => toggleDrawer('entities')}
-                    >
-                        <Brain size={24} />
-                        <span className="rail-label">Varlıklar</span>
-                    </button>
-
                     <div className="rail-divider" />
 
-                    {/* Feature tools — each with unique color */}
+                    {/* Feature tools */}
                     <button
                         className="rail-feature-btn"
                         onClick={() => setGridGeneratorOpen(true)}
@@ -657,32 +636,6 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                     >
                         <Grid3x3 size={20} />
                         <span className="rail-label" style={{ color: '#C9A84C' }}>Grid Oluşturucu</span>
-                    </button>
-
-                    <button
-                        className="rail-feature-btn"
-                        onClick={() => setSavedImagesOpen(true)}
-                        style={{
-                            background: 'rgba(201, 168, 76, 0.08)',
-                            border: '1px solid rgba(201, 168, 76, 0.20)',
-                            color: '#B8963A'
-                        }}
-                    >
-                        <ImageIcon size={20} />
-                        <span className="rail-label" style={{ color: '#B8963A' }}>Kaydedilenler</span>
-                    </button>
-
-                    <button
-                        className="rail-feature-btn"
-                        onClick={() => setCommunityHubOpen(true)}
-                        style={{
-                            background: 'rgba(184, 150, 58, 0.08)',
-                            border: '1px solid rgba(184, 150, 58, 0.20)',
-                            color: '#A68B30'
-                        }}
-                    >
-                        <Users size={20} />
-                        <span className="rail-label" style={{ color: '#A68B30' }}>Topluluk</span>
                     </button>
                     {/* Spacer */}
                     <div className="rail-spacer" />
@@ -898,85 +851,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                         </>
                     )}
 
-                    {/* === PLUGINS PANEL === */}
-                    {drawerPanel === 'entities' && (
-                        <>
-                            <div className="drawer-header">
-                                <h3>Eklentiler</h3>
-                            </div>
 
-
-                            <div style={{ flex: 1, overflowY: 'auto' }}>
-
-                                {/* Creative Plugins — başlık her zaman görünür */}
-                                <div style={{ marginTop: 8 }}>
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                        padding: '8px 16px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: 'var(--foreground-muted)' }}>
-                                            <Puzzle size={14} />
-                                            <span>Yaratıcı Eklentiler</span>
-                                            {presetsList.length > 0 && (
-                                                <span style={{ opacity: 0.6 }}>({presetsList.length})</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {presetsList.length > 0 ? (
-                                        <div>
-                                            {presetsList.map((plugin) => (
-                                                <div
-                                                    key={plugin.id}
-                                                    onClick={() => { setSelectedPlugin(plugin); setPluginDetailOpen(true); }}
-                                                    className="group"
-                                                    style={{
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                        padding: '6px 16px 6px 28px', cursor: 'pointer', fontSize: 13,
-                                                        color: 'var(--foreground-muted)', transition: 'background 0.15s'
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                                                        <span style={{
-                                                            width: 6, height: 6, borderRadius: '50%',
-                                                            background: plugin.isPublic ? '#C9A84C' : '#f59e0b', flexShrink: 0
-                                                        }} />
-                                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plugin.name}</span>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            deletePreset(plugin.id).then(success => {
-                                                                if (success) {
-                                                                    setPresetsList(presetsList.filter(p => p.id !== plugin.id));
-                                                                    // Çöp kutusuna anında ekle
-                                                                    moveToTrash(
-                                                                        plugin.id,
-                                                                        plugin.name,
-                                                                        "preset",
-                                                                        { description: plugin.description },
-                                                                        undefined
-                                                                    );
-                                                                }
-                                                            });
-                                                        }}
-                                                        className="p-1 rounded hover:bg-red-500/20 opacity-0 group-hover:!opacity-100 transition-opacity"
-                                                        style={{ flexShrink: 0 }}
-                                                        title="Sil"
-                                                    >
-                                                        <Trash2 size={12} style={{ color: '#ef4444' }} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div style={{ padding: '4px 16px 8px 28px', fontSize: 12, color: 'var(--foreground-muted)', opacity: 0.5 }}>
-                                            Henüz preset eklenmemiş
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </>
-                    )}
                 </div>
             </div>
 
@@ -1057,22 +932,7 @@ export function Sidebar({ activeProjectId, onProjectChange, onProjectDelete, ses
                 }}
             />
 
-            <CommunityHubModal
-                isOpen={communityHubOpen}
-                onClose={() => setCommunityHubOpen(false)}
-                projects={projects}
-                activeProjectId={sessionId || undefined}
-                sessionId={sessionId}
-            />
-            <SavedImagesModal
-                isOpen={savedImagesOpen}
-                onClose={() => setSavedImagesOpen(false)}
-                sessionId={sessionId}
-                onRefresh={() => { }}
-                onItemDeleted={(id, name, imageUrl, mediaType) => {
-                    moveToTrash(id, name, "wardrobe", { reference_image_url: imageUrl, type: mediaType }, imageUrl);
-                }}
-            />
+
         </>
     );
 }

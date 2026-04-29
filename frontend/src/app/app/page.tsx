@@ -15,9 +15,7 @@ export default function Home() {
   const [assetsCollapsed, setAssetsCollapsed] = useState(false);
 
   // === PROJE-BAZLI CHAT MİMARİSİ ===
-  // activeProjectId: seçili proje — hem chat hem asset session
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-
   const [isLoading, setIsLoading] = useState(true);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [pendingInputText, setPendingInputText] = useState<string | null>(null);
@@ -26,25 +24,18 @@ export default function Home() {
   const [installedPlugins, setInstalledPlugins] = useState<Array<{ id: string; name: string; promptText: string }>>([]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
-
-  // Refresh triggers
-  const [entityRefreshKey, setEntityRefreshKey] = useState(0);
-  const [assetRefreshKey, setAssetRefreshKey] = useState(0);
-
   const [hasNoProjects, setHasNoProjects] = useState(false);
-
-  // Auth kontrolü kaldırıldı — direkt erişim
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [assetRefreshKey, setAssetRefreshKey] = useState(0);
 
   // === PROJE LİSTESİ BAŞLAT ===
   useEffect(() => {
     const init = async () => {
       try {
         const sessions = await getSessions();
-        // main_chat session'ını proje listesinden çıkar
         const projects = sessions.filter(s => s.category !== 'main_chat');
 
         if (projects.length > 0) {
-          // localStorage'dan son aktif projeyi geri yükle
           const savedProjectId = localStorage.getItem('nero_active_project');
           const savedProject = savedProjectId ? projects.find(p => p.id === savedProjectId) : null;
           setActiveProjectId(savedProject ? savedProject.id : projects[0].id);
@@ -62,14 +53,19 @@ export default function Home() {
     };
 
     init();
-  }, [entityRefreshKey]);
+  }, [refreshKey]);
 
-  // Proje değiştiğinde SADECE activeProjectId güncellenir, chat aynı kalır
   const handleProjectChange = (projectId: string) => {
     setActiveProjectId(projectId);
     localStorage.setItem('nero_active_project', projectId);
     setHasNoProjects(false);
   };
+
+  const handleProjectDelete = useCallback(() => {
+    setActiveProjectId(null);
+    setHasNoProjects(true);
+    setRefreshKey(prev => prev + 1);
+  }, []);
 
   const handleNewAsset = useCallback((asset?: { url: string; type: string }) => {
     if (asset?.url && asset.type !== "refresh") {
@@ -81,26 +77,6 @@ export default function Home() {
     setAssetRefreshKey(prev => prev + 1);
   }, []);
 
-  const handleEntityChange = useCallback(() => {
-    setEntityRefreshKey(prev => prev + 1);
-  }, []);
-
-  const handleProjectDelete = useCallback(() => {
-    setActiveProjectId(null);
-    setHasNoProjects(true);
-    setEntityRefreshKey(prev => prev + 1);
-  }, []);
-
-  // Asset silindiğinde çöp kutusunu güncelle
-  const handleAssetDeleted = useCallback(() => {
-    setEntityRefreshKey(prev => prev + 1);  // Sidebar trash'i yeniler
-  }, []);
-
-  // Çöp kutusundan asset geri yüklenince media panel'ı güncelle
-  const handleAssetRestore = useCallback(() => {
-    setAssetRefreshKey(prev => prev + 1);  // AssetsPanel'i yeniler
-  }, []);
-
   const handleCreateProject = async (name: string, description?: string, category?: string) => {
     setIsCreatingProject(true);
     try {
@@ -108,7 +84,7 @@ export default function Home() {
       setActiveProjectId(newSession.id);
       localStorage.setItem('nero_active_project', newSession.id);
       setHasNoProjects(false);
-      setEntityRefreshKey(prev => prev + 1);
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Proje oluşturulamadı:", error);
     } finally {
@@ -127,22 +103,18 @@ export default function Home() {
     );
   }
 
-
-
   return (
     <main className="flex h-screen overflow-hidden">
-      {/* Sidebar — proje geçişi sadece activeProjectId değiştirir */}
+      {/* Sidebar */}
       <Sidebar
         activeProjectId={activeProjectId || ""}
         onProjectChange={handleProjectChange}
         onProjectDelete={handleProjectDelete}
         sessionId={activeProjectId}
-        refreshKey={entityRefreshKey}
+        refreshKey={refreshKey}
         onSendPrompt={setPendingPrompt}
         onSetInputText={setPendingInputText}
         onPluginsLoaded={setInstalledPlugins}
-        onAssetRestore={handleAssetRestore}
-        onAttachAssetUrl={(url, type) => setPendingAssetUrl({ url, type })}
       />
 
       {/* Chat — proje seçili değilse hoşgeldin ekranı */}
@@ -197,7 +169,7 @@ export default function Home() {
         <ChatPanel
           sessionId={activeProjectId || undefined}
           onNewAsset={handleNewAsset}
-          onEntityChange={handleEntityChange}
+          onEntityChange={() => {}}
           pendingPrompt={pendingPrompt}
           onPromptConsumed={() => setPendingPrompt(null)}
           pendingInputText={pendingInputText}
@@ -208,7 +180,7 @@ export default function Home() {
         />
       )}
 
-      {/* Assets Panel — aktif projedeki asset'leri gösterir */}
+      {/* Assets Panel — oluşturulan görselleri gösterir */}
       <AssetsPanel
         collapsed={assetsCollapsed}
         onToggle={() => setAssetsCollapsed(!assetsCollapsed)}
@@ -216,8 +188,7 @@ export default function Home() {
         refreshKey={assetRefreshKey}
         incomingAsset={incomingAsset}
         onIncomingAssetConsumed={() => setIncomingAsset(null)}
-        onSaveToImages={handleEntityChange}
-        onAssetDeleted={handleAssetDeleted}
+        onAssetDeleted={() => setRefreshKey(prev => prev + 1)}
         onAttachAssetUrl={(url, type) => setPendingAssetUrl({ url, type })}
       />
 

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.cache import cache
-from app.api.routes import sessions, chat, generate, upload, plugins, grid, auth, system, search, ws
+from app.api.routes import sessions, chat, generate, upload, plugins, grid, system, search, ws
 from app.services.plugins.plugin_loader import initialize_plugins
 
 
@@ -153,7 +153,6 @@ app.add_middleware(
 # app.add_middleware(MonitoringMiddleware, slow_threshold_ms=5000)
 
 # API Route'ları
-app.include_router(auth.router, prefix=settings.API_PREFIX)  # Auth first
 app.include_router(sessions.router, prefix=settings.API_PREFIX)
 app.include_router(chat.router, prefix=settings.API_PREFIX)
 app.include_router(upload.router, prefix=settings.API_PREFIX)
